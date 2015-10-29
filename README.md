@@ -26,7 +26,7 @@ You may provide places as additional information:
 * where a letter has been received: "addresseePlace" (with the appropriate "addresseePlaceID" as proper [GeoNames URL](http://www.geonames.org/))
 
 If your printed letters are numbered, put the numbers in a additional column named "key". 
-If a name is put within brackets it sets @cert to 'medium'.
+If a date is put within brackets it sets @cert to 'medium'.
 
 ## License
 
