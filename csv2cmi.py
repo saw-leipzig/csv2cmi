@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.8.2
+# version 0.8.5
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -87,15 +87,20 @@ with open(fileName, 'rt') as letterTable:
             sender = SubElement(entry, 'correspAction')
             sender.set('type', 'sent')
             senderName = SubElement(sender, 'persName')
-            senderName.text = str(letter['sender'])
+            if letter['sender'].startswith('[') and letter['sender'].endswith(']'):
+                senderName.set('evidence', 'conjecture')
+                letter['sender']=letter['sender'][1:-1]
+                print ("Info: Added @evidence for <persName> in line ",table.line_num)
+            senderName.text = letter['sender']
             if str(letter['senderID']):
-                senderName.set('ref', 'http://d-nb.info/gnd/' +
-                               str(letter['senderID']))
+                senderName.set('ref', 'http://d-nb.info/gnd/' + str(letter['senderID']))
         if ('senderPlace' in table.fieldnames) and (str(letter['senderPlace'])):
             senderPlace = SubElement(sender, 'placeName')
+            if letter['senderPlace'].startswith('[') and letter['senderPlace'].endswith(']'):
+                senderPlace.set('evidence', 'conjecture')
+                letter['senderPlace']=letter['senderPlace'][1:-1]
+                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
             senderPlace.text = str(letter['senderPlace'])
-            if (str(letter['senderPlace'])[0] == '[') and (str(letter['senderPlace'])[-1] == ']'):
-                senderPlace.set('cert', 'medium')
             if str(letter['senderPlaceID']):
                 senderPlace.set('ref', str(letter['senderPlaceID']))
         if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
@@ -112,17 +117,21 @@ with open(fileName, 'rt') as letterTable:
             addressee = SubElement(entry, 'correspAction')
             addressee.set('type', 'received')
             addresseeName = SubElement(addressee, 'persName')
-            addresseeName.text = str(letter['addressee'])
-            if (str(letter['addressee'])[0] == '[') and (str(letter['addressee'])[-1] == ']'):
-                addresseeName.set('cert', 'medium')
+            if letter['addressee'].startswith('[') and letter['addressee'].endswith(']'):
+                addresseeName.set('evidence', 'conjecture')
+                letter['addressee']=letter['addressee'][1:-1]
+                print ("Info: Added @evidence for <persName> in line ",table.line_num)
+            addresseeName.text = letter['addressee']
             if str(letter['addresseeID']):
                 addresseeName.set(
                     'ref', 'http://d-nb.info/gnd/' + str(letter['addresseeID']))
         if ('addresseePlace' in table.fieldnames) and (str(letter['addresseePlace'])):
             addresseePlace = SubElement(addressee, 'placeName')
-            addresseePlace.text = str(letter['addresseePlace'])
-            if (str(letter['addresseePlace'])[0] == '[') and (str(letter['addresseePlace'])[-1] == ']'):
-                addresseeName.set('cert', 'medium')
+            if letter['addresseePlace'].startswith('[') and letter['addresseePlace'].endswith(']'):
+                addresseePlace.set('evidence', 'conjecture')
+                letter['addresseePlace']=letter['addresseePlace'][1:-1]
+                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
+            addresseePlace.text = letter['addresseePlace']
             if str(letter['addresseePlaceID']):
                 addresseePlace.set('ref', str(letter['addresseePlaceID']))
 
