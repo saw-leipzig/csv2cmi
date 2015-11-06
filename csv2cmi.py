@@ -13,6 +13,24 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 import datetime
 from xml.dom import minidom
 
+# enter here your name and the title of your edition
+fileName = 'NicolaiLetters.csv'
+projectName = 'Briefe Otto Nicolais'
+editorName = 'Klaus Rettinghaus'
+edition = 'Klaus Rettinghaus: Studien zum geistlichen Werk Otto Nicolais'
+editionRef = 'http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:kobv:83-opus4-57390'
+editionType = 'print'  # if your edition is online replace with 'online'
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 def isodate(datestring):
         try:
             datetime.datetime.strptime(datestring, '%Y-%m-%d')
@@ -31,12 +49,22 @@ def isodate(datestring):
         else:
             return True
 
-# enter here your name and the title of your edition
-fileName = 'NicolaiLetters.csv'
-editorName = 'Klaus Rettinghaus'
-edition = 'Klaus Rettinghaus: Studien zum geistlichen Werk Otto Nicolais'
-editionRef = 'http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:kobv:83-opus4-57390'
-editionType = 'print'  # if your edition is online enter 'online'
+# function for putting the place in <correspAction>
+def createPlace(placestring):
+        if letter[placestring]:
+            placeName = SubElement(sender, 'placeName')
+            if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
+                placeName.set('evidence', 'conjecture')
+                letter[placestring]=letter[placestring][1:-1]
+                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
+            placeName.text = str(letter[placestring])
+            if (placestring+'ID' in table.fieldnames) and (letter[placestring+'ID']):
+                if 'http://www.geonames.org/' in letter[placestring+'ID']:
+                    placeName.set('ref', str(letter[placestring+'ID']))
+                else:
+                    print (bcolors.WARNING,"Warning: No standardized ID in line",table.line_num,bcolors.ENDC)
+            else:
+                print (bcolors.WARNING,"Warning: Missing ID for",letter[placestring],"in line",table.line_num,bcolors.ENDC)
 
 # building cmi
 # generating root element
@@ -50,7 +78,7 @@ teiHeader = SubElement(root, 'teiHeader')
 fileDesc = SubElement(teiHeader, 'fileDesc')
 titleStmt = SubElement(fileDesc, 'titleStmt')
 title = SubElement(titleStmt, 'title')
-title.text = 'Briefe Otto Nicolais'
+title.text = projectName
 editor = SubElement(titleStmt, 'editor')
 editor.text = editorName
 publicationStmt = SubElement(fileDesc, 'publicationStmt')
@@ -83,7 +111,7 @@ with open(fileName, 'rt') as letterTable:
         entry = SubElement(profileDesc, 'correspDesc')
         if ('key' in table.fieldnames) and (str(letter['key'])):
             entry.set('key', str(letter['key']))
-        if str(letter['sender']):
+        if letter['sender']:
             sender = SubElement(entry, 'correspAction')
             sender.set('type', 'sent')
             senderName = SubElement(sender, 'persName')
@@ -94,15 +122,10 @@ with open(fileName, 'rt') as letterTable:
             senderName.text = letter['sender']
             if str(letter['senderID']):
                 senderName.set('ref', 'http://d-nb.info/gnd/' + str(letter['senderID']))
-        if ('senderPlace' in table.fieldnames) and (str(letter['senderPlace'])):
-            senderPlace = SubElement(sender, 'placeName')
-            if letter['senderPlace'].startswith('[') and letter['senderPlace'].endswith(']'):
-                senderPlace.set('evidence', 'conjecture')
-                letter['senderPlace']=letter['senderPlace'][1:-1]
-                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
-            senderPlace.text = str(letter['senderPlace'])
-            if str(letter['senderPlaceID']):
-                senderPlace.set('ref', str(letter['senderPlaceID']))
+
+        if 'senderPlace' in table.fieldnames:
+            createPlace('senderPlace')
+
         if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
             senderDate = SubElement(sender, 'date')
             if ('[' in str(letter['senderDate'])) and (']' in str(letter['senderDate'])):
@@ -111,9 +134,9 @@ with open(fileName, 'rt') as letterTable:
                 print ("Info: Added @cert for <date> in line ",table.line_num)
             senderDate.set('when', str(letter['senderDate']))
         else:
-            print ("Warning: Couldn't set <date> for <correspAction> in line ",table.line_num," (no ISO format)")
+            print (bcolors.WARNING,"Warning: Couldn't set <date> for <correspAction> in line",table.line_num,"(no ISO format)",bcolors.ENDC)
 
-        if str(letter['addressee']):
+        if letter['addressee']:
             addressee = SubElement(entry, 'correspAction')
             addressee.set('type', 'received')
             addresseeName = SubElement(addressee, 'persName')
@@ -125,15 +148,8 @@ with open(fileName, 'rt') as letterTable:
             if str(letter['addresseeID']):
                 addresseeName.set(
                     'ref', 'http://d-nb.info/gnd/' + str(letter['addresseeID']))
-        if ('addresseePlace' in table.fieldnames) and (str(letter['addresseePlace'])):
-            addresseePlace = SubElement(addressee, 'placeName')
-            if letter['addresseePlace'].startswith('[') and letter['addresseePlace'].endswith(']'):
-                addresseePlace.set('evidence', 'conjecture')
-                letter['addresseePlace']=letter['addresseePlace'][1:-1]
-                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
-            addresseePlace.text = letter['addresseePlace']
-            if str(letter['addresseePlaceID']):
-                addresseePlace.set('ref', str(letter['addresseePlaceID']))
+        if 'addresseePlace' in table.fieldnames:
+            createPlace('addresseePlace')
 
 # generate empty body
 text = SubElement(root, 'text')
