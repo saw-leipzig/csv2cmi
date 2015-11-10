@@ -7,21 +7,24 @@
 # licensed under MIT license
 
 # needs Python3
-import os
-import csv
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 import datetime
+import csv
+import os
+import random
+import string
+from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
 # enter here your name and the title of your edition
-fileName = 'NicolaiLetters.csv'
-projectName = 'Briefe Otto Nicolais'
+fileName = 'LetterTable.csv'
+projectName = 'Carl Philipp Emanuel Bach: Briefe und Dokumente'
 editorName = 'Klaus Rettinghaus'
-edition = 'Klaus Rettinghaus: Studien zum geistlichen Werk Otto Nicolais'
-editionRef = 'http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:kobv:83-opus4-57390'
-editionType = 'print'  # if your edition is online replace with 'online'
+edition = ''
+editionType = 'print'  # 'hybrid' or 'online' if appropriate
+
 
 class bcolors:
+    #blender colors 
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -31,40 +34,65 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def isodate(datestring):
+    try:
+        datetime.datetime.strptime(datestring, '%Y-%m-%d')
+    except:
         try:
-            datetime.datetime.strptime(datestring, '%Y-%m-%d')
+            datetime.datetime.strptime(datestring, '%Y-%m')
         except:
             try:
-                datetime.datetime.strptime(datestring, '%Y-%m')
-            except:
-                try:
-                    datetime.datetime.strptime(datestring, '%Y')
-                except ValueError:
-                    return False
-                else:
-                    return True
+                datetime.datetime.strptime(datestring, '%Y')
+            except ValueError:
+                return False
             else:
                 return True
         else:
             return True
+    else:
+        return True
 
-# function for putting the place in <correspAction>
+
 def createPlace(placestring):
-        if letter[placestring]:
-            placeName = SubElement(sender, 'placeName')
-            if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
-                placeName.set('evidence', 'conjecture')
-                letter[placestring]=letter[placestring][1:-1]
-                print ("Info: Added @evidence for <placeName> in line ",table.line_num)
-            placeName.text = str(letter[placestring])
-            if (placestring+'ID' in table.fieldnames) and (letter[placestring+'ID']):
-                if 'http://www.geonames.org/' in letter[placestring+'ID']:
-                    placeName.set('ref', str(letter[placestring+'ID']))
-                else:
-                    print (bcolors.WARNING,"Warning: No standardized ID in line",table.line_num,bcolors.ENDC)
+    # function for putting the place in <correspAction>
+    if letter[placestring]:
+        placeName = SubElement(sender, 'placeName')
+        if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
+            placeName.set('evidence', 'conjecture')
+            letter[placestring] = letter[placestring][1:-1]
+            print ("Info: Added @evidence for <placeName> in line",
+                   table.line_num)
+        placeName.text = str(letter[placestring])
+        if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
+            if 'http://www.geonames.org/' in letter[placestring + 'ID']:
+                placeName.set('ref', str(letter[placestring + 'ID']))
             else:
-                print (bcolors.WARNING,"Warning: Missing ID for",letter[placestring],"in line",table.line_num,bcolors.ENDC)
+                print (bcolors.WARNING + "Warning: No standardized ID in line",
+                       table.line_num, bcolors.ENDC)
+        else:
+            print (bcolors.WARNING + "Warning: Missing ID for", letter[
+                   placestring], "in line", table.line_num, bcolors.ENDC)
+
+
+def createEdition(biblText, biblID):
+    # creates a new entry within <sourceDesc>
+    bibl = SubElement(sourceDesc, 'bibl')
+    bibl.text = biblText
+    bibl.set('type', editionType)
+    bibl.set('xml:id', biblID)
+
+
+def getEditonID(editionTitle):
+    editionID = ''
+    for bibl in sourceDesc.findall('bibl'):
+        if editionTitle == bibl.text:
+            editionID = bibl.get('xml:id')
+    if not editionID:
+        editionID = 'edition_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
+            8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+        createEdition(editionTitle, editionID)
+    return editionID
 
 # building cmi
 # generating root element
@@ -93,13 +121,7 @@ availability = SubElement(publicationStmt, 'availability')
 licence = SubElement(availability, 'licence')
 licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
 licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
-# static source description
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
-bibl = SubElement(sourceDesc, 'bibl')
-bibl.set('type', editionType)
-ref = SubElement(bibl, 'ref')
-ref.set('target', editionRef)
-ref.text = edition
 
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
@@ -107,21 +129,34 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 with open(fileName, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
     print('Recognized columns:', table.fieldnames)
+    if not('edition' in table.fieldnames) or (edition == ''):
+        print (bcolors.WARNING +
+               "Warning: No edition stated. Please set manually." + bcolors.ENDC)
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
-        if ('key' in table.fieldnames) and (str(letter['key'])):
-            entry.set('key', str(letter['key']))
-        if letter['sender']:
+        if ('edition' in table.fieldnames) and ('key' in table.fieldnames):
+            if (letter['key']) and (str(letter['edition']) != ''):
+                entry.set('key', str(letter['key']))
+                entry.set('source', '#' + getEditonID(letter['edition']))
+            else:
+                print (bcolors.FAIL + "Error: Key without edition in line",
+                       table.line_num, bcolors.ENDC)
+
+        if (letter['sender']) or (letter['senderPlace']) or (letter['senderDate']):
             sender = SubElement(entry, 'correspAction')
             sender.set('type', 'sent')
+
+        if letter['sender']:
             senderName = SubElement(sender, 'persName')
             if letter['sender'].startswith('[') and letter['sender'].endswith(']'):
                 senderName.set('evidence', 'conjecture')
-                letter['sender']=letter['sender'][1:-1]
-                print ("Info: Added @evidence for <persName> in line ",table.line_num)
+                letter['sender'] = letter['sender'][1:-1]
+                print ("Info: Added @evidence for <persName> in line",
+                       table.line_num)
             senderName.text = letter['sender']
             if str(letter['senderID']):
-                senderName.set('ref', 'http://d-nb.info/gnd/' + str(letter['senderID']))
+                senderName.set('ref', 'http://d-nb.info/gnd/' +
+                               str(letter['senderID']))
 
         if 'senderPlace' in table.fieldnames:
             createPlace('senderPlace')
@@ -129,21 +164,25 @@ with open(fileName, 'rt') as letterTable:
         if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
             senderDate = SubElement(sender, 'date')
             if ('[' in str(letter['senderDate'])) and (']' in str(letter['senderDate'])):
-                letter['senderDate']=letter['senderDate'][1:-1]
-                senderDate.set('cert','medium')
-                print ("Info: Added @cert for <date> in line ",table.line_num)
+                letter['senderDate'] = letter['senderDate'][1:-1]
+                senderDate.set('cert', 'medium')
+                print ("Info: Added @cert for <date> in line", table.line_num)
             senderDate.set('when', str(letter['senderDate']))
         else:
-            print (bcolors.WARNING,"Warning: Couldn't set <date> for <correspAction> in line",table.line_num,"(no ISO format)",bcolors.ENDC)
+            print (bcolors.WARNING + "Warning: Couldn't set <date> for <correspAction> in line",
+                   table.line_num, "(no ISO format)", bcolors.ENDC)
 
-        if letter['addressee']:
+        if (letter['addressee']):
             addressee = SubElement(entry, 'correspAction')
             addressee.set('type', 'received')
+
+        if letter['addressee']:
             addresseeName = SubElement(addressee, 'persName')
             if letter['addressee'].startswith('[') and letter['addressee'].endswith(']'):
                 addresseeName.set('evidence', 'conjecture')
-                letter['addressee']=letter['addressee'][1:-1]
-                print ("Info: Added @evidence for <persName> in line ",table.line_num)
+                letter['addressee'] = letter['addressee'][1:-1]
+                print ("Info: Added @evidence for <persName> in line",
+                       table.line_num)
             addresseeName.text = letter['addressee']
             if str(letter['addresseeID']):
                 addresseeName.set(
