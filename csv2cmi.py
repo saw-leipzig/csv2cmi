@@ -17,7 +17,7 @@ from xml.dom import minidom
 
 # enter here your name and the title of your edition
 fileName = 'LetterTable.csv'
-projectName = 'Carl Philipp Emanuel Bach: Briefe und Dokumente'
+projectName = 'Letters project'
 editorName = 'Klaus Rettinghaus'
 edition = ''
 editionType = 'print'  # 'hybrid' or 'online' if appropriate
