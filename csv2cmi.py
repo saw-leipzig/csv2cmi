@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.8.5
+# version 0.9
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -24,7 +24,7 @@ editionType = 'print'  # 'hybrid' or 'online' if appropriate
 
 
 class bcolors:
-    #blender colors 
+    # blender colors
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -134,14 +134,20 @@ with open(fileName, 'rt') as letterTable:
                "Warning: No edition stated. Please set manually." + bcolors.ENDC)
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
-        if ('edition' in table.fieldnames) and ('key' in table.fieldnames):
-            if (letter['key']) and (str(letter['edition']) != ''):
-                entry.set('key', str(letter['key']))
-                entry.set('source', '#' + getEditonID(letter['edition']))
-            else:
-                print (bcolors.FAIL + "Error: Key without edition in line",
-                       table.line_num, bcolors.ENDC)
+        if ('edition' in table.fieldnames) and (str(letter['edition']) != ''):
+            entry.set('source', '#' + getEditonID(letter['edition']))
+            if 'key' in table.fieldnames:
+                try:
+                    letterNumber = int(letter['key'])
+                    entry.set('key', str(letterNumber))
+                except:
+                    if 'html://' in str(letter['key']):
+                        entry.set('ref', str(letter['key']))
+        elif ('key' in table.fieldnames) and (letter['key']):
+            print (bcolors.FAIL + "Error: Key without edition in line",
+                   table.line_num, bcolors.ENDC)
 
+        # sender info block
         if (letter['sender']) or (letter['senderPlace']) or (letter['senderDate']):
             sender = SubElement(entry, 'correspAction')
             sender.set('type', 'sent')
@@ -172,6 +178,7 @@ with open(fileName, 'rt') as letterTable:
             print (bcolors.WARNING + "Warning: Couldn't set <date> for <correspAction> in line",
                    table.line_num, "(no ISO format)", bcolors.ENDC)
 
+        # addressee info block
         if (letter['addressee']):
             addressee = SubElement(entry, 'correspAction')
             addressee.set('type', 'received')
@@ -197,5 +204,4 @@ p = SubElement(body, 'p')
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.splitext(os.path.basename(fileName))[
-           0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
+tree.write(os.path.splitext(os.path.basename(fileName))[0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
