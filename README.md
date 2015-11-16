@@ -27,6 +27,8 @@ You may provide places as additional information:
 If your letters are printed across different editions, add an "edition" column and put in there the bibliographic records. Numbering of letters should be stated in a additional column named "key". Alternatively you may enter in this column a link to the edited letter on the web.
 If a date is put within brackets it sets @cert to 'medium', for persName and placeName alike @evidence is set.
 
+*Check, that your table is using UTF8-encoding!*
+
 ## License
 
 This program is available under [The MIT License (MIT)](https://opensource.org/licenses/MIT)
