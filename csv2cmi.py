@@ -54,10 +54,24 @@ def isodate(datestring):
         return True
 
 
+def createPerson(namestring):
+    if letter[namestring]:
+        persName = SubElement(action, 'persName')
+        if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
+            persName.set('evidence', 'conjecture')
+            letter[namestring] = letter[namestring][1:-1]
+            print ("Info: Added @evidence for <persName> in line",
+                   table.line_num)
+        persName.text = str(letter[namestring])
+        if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
+            persName.set('ref', 'http://d-nb.info/gnd/' +
+                         str(letter['senderID']))
+
+
 def createPlace(placestring):
     # function for putting the place in <correspAction>
     if letter[placestring]:
-        placeName = SubElement(sender, 'placeName')
+        placeName = SubElement(action, 'placeName')
         if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
             placeName.set('evidence', 'conjecture')
             letter[placestring] = letter[placestring][1:-1]
@@ -148,27 +162,16 @@ with open(fileName, 'rt') as letterTable:
                    table.line_num, bcolors.ENDC)
 
         # sender info block
-        if (letter['sender']) or (letter['senderPlace']) or (letter['senderDate']):
-            sender = SubElement(entry, 'correspAction')
-            sender.set('type', 'sent')
+        if (letter['sender']) or (('senderPlace' in table.fieldnames) and (letter['senderPlace'])) or (letter['senderDate']):
+            action = SubElement(entry, 'correspAction')
+            action.set('type', 'sent')
 
-        if letter['sender']:
-            senderName = SubElement(sender, 'persName')
-            if letter['sender'].startswith('[') and letter['sender'].endswith(']'):
-                senderName.set('evidence', 'conjecture')
-                letter['sender'] = letter['sender'][1:-1]
-                print ("Info: Added @evidence for <persName> in line",
-                       table.line_num)
-            senderName.text = letter['sender']
-            if str(letter['senderID']):
-                senderName.set('ref', 'http://d-nb.info/gnd/' +
-                               str(letter['senderID']))
-
-        if 'senderPlace' in table.fieldnames:
-            createPlace('senderPlace')
+            createPerson('sender')
+            if 'senderPlace' in table.fieldnames:
+                createPlace('senderPlace')
 
         if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
-            senderDate = SubElement(sender, 'date')
+            senderDate = SubElement(action, 'date')
             if ('[' in str(letter['senderDate'])) and (']' in str(letter['senderDate'])):
                 letter['senderDate'] = letter['senderDate'][1:-1]
                 senderDate.set('cert', 'medium')
@@ -179,23 +182,13 @@ with open(fileName, 'rt') as letterTable:
                    table.line_num, "(no ISO format)", bcolors.ENDC)
 
         # addressee info block
-        if (letter['addressee']):
-            addressee = SubElement(entry, 'correspAction')
-            addressee.set('type', 'received')
+        if (letter['addressee']) or (('addresseePlace' in table.fieldnames) and (letter['addresseePlace'])) or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
+            action = SubElement(entry, 'correspAction')
+            action.set('type', 'received')
 
-        if letter['addressee']:
-            addresseeName = SubElement(addressee, 'persName')
-            if letter['addressee'].startswith('[') and letter['addressee'].endswith(']'):
-                addresseeName.set('evidence', 'conjecture')
-                letter['addressee'] = letter['addressee'][1:-1]
-                print ("Info: Added @evidence for <persName> in line",
-                       table.line_num)
-            addresseeName.text = letter['addressee']
-            if str(letter['addresseeID']):
-                addresseeName.set(
-                    'ref', 'http://d-nb.info/gnd/' + str(letter['addresseeID']))
-        if 'addresseePlace' in table.fieldnames:
-            createPlace('addresseePlace')
+            createPerson('addressee')
+            if 'addresseePlace' in table.fieldnames:
+                createPlace('addresseePlace')
 
 # generate empty body
 text = SubElement(root, 'text')
@@ -204,4 +197,5 @@ p = SubElement(body, 'p')
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.splitext(os.path.basename(fileName))[0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
+tree.write(os.path.splitext(os.path.basename(fileName))[
+           0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
