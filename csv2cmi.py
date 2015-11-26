@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.5
+# version 0.9.6
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -103,10 +103,15 @@ def getEditonID(editionTitle):
         if editionTitle == bibl.text:
             editionID = bibl.get('xml:id')
     if not editionID:
-        editionID = 'edition_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
-            8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+        editionID = createID('edition')
         createEdition(editionTitle, editionID)
     return editionID
+
+
+def createID(id_prefix):
+    fullID = id_prefix + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
+        8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+    return fullID
 
 # building cmi
 # generating root element
@@ -143,11 +148,12 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 with open(fileName, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
     print('Recognized columns:', table.fieldnames)
-    if not('edition' in table.fieldnames) or (edition == ''):
+    if not('edition' in table.fieldnames) and (edition == ''):
         print (bcolors.WARNING +
                "Warning: No edition stated. Please set manually." + bcolors.ENDC)
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
+        entry.set('xml:id', createID('letter'))
         if ('edition' in table.fieldnames) and (str(letter['edition']) != ''):
             entry.set('source', '#' + getEditonID(letter['edition']))
             if 'key' in table.fieldnames:
