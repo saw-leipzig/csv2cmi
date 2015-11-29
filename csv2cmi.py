@@ -65,7 +65,7 @@ def createPerson(namestring):
         persName.text = str(letter[namestring])
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
             persName.set('ref', 'http://d-nb.info/gnd/' +
-                         str(letter['senderID']))
+                         str(letter[namestring + 'ID']))
 
 
 def createPlace(placestring):
