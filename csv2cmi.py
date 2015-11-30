@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.6
+# version 0.9.7
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -64,6 +64,7 @@ def createPerson(namestring):
                    table.line_num)
         persName.text = str(letter[namestring])
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
+            letter[namestring + 'ID'] = letter[namestring + 'ID'].strip()
             persName.set('ref', 'http://d-nb.info/gnd/' +
                          str(letter[namestring + 'ID']))
 
@@ -72,6 +73,7 @@ def createPlace(placestring):
     # function for putting the place in <correspAction>
     if letter[placestring]:
         placeName = SubElement(action, 'placeName')
+        letter[placestring] = letter[placestring].strip()
         if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
             placeName.set('evidence', 'conjecture')
             letter[placestring] = letter[placestring][1:-1]
@@ -79,6 +81,7 @@ def createPlace(placestring):
                    table.line_num)
         placeName.text = str(letter[placestring])
         if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
+            letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
             if 'http://www.geonames.org/' in letter[placestring + 'ID']:
                 placeName.set('ref', str(letter[placestring + 'ID']))
             else:
