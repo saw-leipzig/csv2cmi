@@ -12,6 +12,7 @@ import csv
 import os
 import random
 import string
+import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
@@ -187,7 +188,8 @@ with open(fileName, 'rt') as letterTable:
         entry = SubElement(profileDesc, 'correspDesc')
         entry.set('xml:id', createID('letter'))
         if ('edition' in table.fieldnames) and (str(letter['edition']) != ''):
-            entry.set('source', '#' + getEditonID(letter['edition']))
+            edition = letter['edition']
+            entry.set('source', '#' + getEditonID(edition))
             if 'key' in table.fieldnames:
                 try:
                     letterNumber = int(letter['key'])
