@@ -9,7 +9,6 @@ It's intended for printed (print only) editions and catalogues of letters.
 
 For now it is a rather stupid program:
 * it assumes provided person ids are a [GND number from the German National Library](http://www.dnb.de/gnd)
-* there is no way to differentiate between persons (persName) and organizations
 * only a single date can be set
 
 ## Usage
