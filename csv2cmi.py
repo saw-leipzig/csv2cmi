@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.7
+# version 0.9.8
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -56,17 +56,46 @@ def isodate(datestring):
 
 def createPerson(namestring):
     if letter[namestring]:
-        persName = SubElement(action, 'persName')
+        rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
+        if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
+            letter[namestring + 'ID'] = letter[namestring + 'ID'].strip()
+            authID = 'http://d-nb.info/gnd/' + str(letter[namestring + 'ID'])
+            if profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None:
+                try:
+                    gndrdf = ElementTree(
+                        file=urllib.request.urlopen(authID + '/about/rdf'))
+                except urllib.error.HTTPError:
+                    print(bcolors.FAIL + "Error: Authority file not found" + bcolors.ENDC)
+                    persName = SubElement(action, 'persName')
+                    authID = ''
+                except urllib.error.URLError as argh:
+                    print(bcolors.FAIL + "Error: Failed to reach GND" + bcolors.ENDC)
+                    persName = SubElement(action, 'persName')
+                else:
+                    gndrdf_root = gndrdf.getroot()
+                    rdftype = gndrdf_root.find(
+                        './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                    if 'Corporate' in rdftype:
+                        persName = SubElement(action, 'orgName')
+                    elif ('DifferentiatedPerson' in rdftype) or ('Pseudonym' in rdftype) or ('Royal' in rdftype):
+                        persName = SubElement(action, 'persName')
+                    elif 'UndifferentiatedPerson' in rdftype:
+                        print(bcolors.FAIL + "Error:", namestring +
+                              "ID links to undifferentiated Person" + bcolors.ENDC)
+                    else:
+                        print(rdftype)
+            else:
+                persName = SubElement(action, 'persName')
+            if authID != '':
+                persName.set('ref', authID)
+        else:
+            persName = SubElement(action, 'persName')
         if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
             persName.set('evidence', 'conjecture')
             letter[namestring] = letter[namestring][1:-1]
             print ("Info: Added @evidence for <persName> in line",
                    table.line_num)
         persName.text = str(letter[namestring])
-        if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
-            letter[namestring + 'ID'] = letter[namestring + 'ID'].strip()
-            persName.set('ref', 'http://d-nb.info/gnd/' +
-                         str(letter[namestring + 'ID']))
 
 
 def createPlace(placestring):
