@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <!--Generated from table of letters with csv2cmi-->
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Letters project</title>
+        <editor>Klaus Rettinghaus</editor>
+      </titleStmt>
+      <publicationStmt>
+        <publisher>Klaus Rettinghaus</publisher>
+        <idno type="url">Example.xml</idno>
+        <date when="2015-12-04T17:49:37.494650" />
+        <availability>
+          <licence target="https://creativecommons.org/licenses/by/4.0/">This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0</licence>
+        </availability>
+      </publicationStmt>
+      <sourceDesc>
+        <bibl type="print" xml:id="edition_6jzgpmrm_y8068gky">Bach-Dokumente Bd. 1, Leipzig 1963</bibl>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <correspDesc key="23" source="#edition_6jzgpmrm_y8068gky" xml:id="letter_uf386r8r_w4qefbr8">
+        <correspAction type="sent">
+          <persName ref="http://d-nb.info/gnd/11850553X">Johann Sebastian Bach</persName>
+          <placeName ref="http://www.geonames.org/2879139">Leipzig</placeName>
+          <date when="1730-10-28" />
+        </correspAction>
+        <correspAction type="received">
+          <persName ref="http://d-nb.info/gnd/118685112">Georg Erdmann</persName>
+          <placeName ref="http://www.geonames.org/3099434">Danzig</placeName>
+        </correspAction>
+      </correspDesc>
+    </profileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <p />
+    </body>
+  </text>
+</TEI>
