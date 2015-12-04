@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.8
+# version 0.9.9
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -59,14 +59,15 @@ def createPerson(namestring):
     if letter[namestring]:
         rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
-            letter[namestring + 'ID'] = letter[namestring + 'ID'].strip()
-            authID = 'http://d-nb.info/gnd/' + str(letter[namestring + 'ID'])
+            authID = 'http://d-nb.info/gnd/' + \
+                str(letter[namestring + 'ID'].strip())
             if profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None:
                 try:
                     gndrdf = ElementTree(
                         file=urllib.request.urlopen(authID + '/about/rdf'))
                 except urllib.error.HTTPError:
-                    print(bcolors.FAIL + "Error: Authority file not found" + bcolors.ENDC)
+                    print(bcolors.FAIL + "Error: Authority file not found for", namestring +
+                          "ID in line", table.line_num, bcolors.ENDC)
                     persName = SubElement(action, 'persName')
                     authID = ''
                 except urllib.error.URLError as argh:
@@ -78,13 +79,12 @@ def createPerson(namestring):
                         './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                     if 'Corporate' in rdftype:
                         persName = SubElement(action, 'orgName')
-                    elif ('DifferentiatedPerson' in rdftype) or ('Pseudonym' in rdftype) or ('Royal' in rdftype):
-                        persName = SubElement(action, 'persName')
-                    elif 'UndifferentiatedPerson' in rdftype:
-                        print(bcolors.FAIL + "Error:", namestring +
-                              "ID links to undifferentiated Person" + bcolors.ENDC)
                     else:
-                        print(rdftype)
+                        persName = SubElement(action, 'persName')
+                    if 'UndifferentiatedPerson' in rdftype:
+                        print(bcolors.WARNING + "Warning:", namestring +
+                              "ID in line", table.line_num, "links to undifferentiated Person" + bcolors.ENDC)
+                        authID = ''
             else:
                 persName = SubElement(action, 'persName')
             if authID != '':
@@ -181,25 +181,29 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 with open(fileName, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
     print('Recognized columns:', table.fieldnames)
-    if not('edition' in table.fieldnames) and (edition == ''):
-        print (bcolors.WARNING +
-               "Warning: No edition stated. Please set manually." + bcolors.ENDC)
+    if not('edition' in table.fieldnames):
+        if edition:
+            createEdition(edition, createID('edition'))
+        else:
+            print (bcolors.WARNING +
+                   "Warning: No edition stated. Please set manually." + bcolors.ENDC)
+            bibl = SubElement(sourceDesc, 'bibl')
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
         entry.set('xml:id', createID('letter'))
-        if ('edition' in table.fieldnames) and (str(letter['edition']) != ''):
-            edition = letter['edition']
+        if 'edition' in table.fieldnames:
+            edition = letter['edition'].strip()
+        if edition:
             entry.set('source', '#' + getEditonID(edition))
-            if 'key' in table.fieldnames:
-                try:
-                    letterNumber = int(letter['key'])
-                    entry.set('key', str(letterNumber))
-                except:
-                    if 'html://' in str(letter['key']):
-                        entry.set('ref', str(letter['key']))
-        elif ('key' in table.fieldnames) and (letter['key']):
-            print (bcolors.FAIL + "Error: Key without edition in line",
-                   table.line_num, bcolors.ENDC)
+        if 'key' in table.fieldnames and letter['key']:
+            if not(edition):
+                print (bcolors.FAIL + "Error: Key without edition in line",
+                       table.line_num, bcolors.ENDC)
+            else:
+                if 'html://' in str(letter['key']):
+                    entry.set('ref', str(letter['key']).strip())
+                else:
+                    entry.set('key', str(letter['key']).strip())
 
         # sender info block
         if (letter['sender']) or (('senderPlace' in table.fieldnames) and (letter['senderPlace'])) or (letter['senderDate']):
@@ -222,7 +226,7 @@ with open(fileName, 'rt') as letterTable:
                    table.line_num, "(no ISO format)", bcolors.ENDC)
 
         # addressee info block
-        if (letter['addressee']) or (('addresseePlace' in table.fieldnames) and (letter['addresseePlace'])) or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
+        if letter['addressee'] or 'addresseePlace' in table.fieldnames or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
             action = SubElement(entry, 'correspAction')
             action.set('type', 'received')
 
