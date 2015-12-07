@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.9
+# version 0.9.10
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -9,9 +9,11 @@
 # needs Python3
 import datetime
 import csv
+import logging
 import os
 import random
 import string
+import sys
 import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
@@ -23,17 +25,17 @@ editorName = 'Klaus Rettinghaus'
 edition = ''
 editionType = 'print'  # 'hybrid' or 'online' if appropriate
 
+# define log output
+logging.basicConfig(format='%(levelname)s: %(message)s')
 
-class bcolors:
-    # blender colors
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+# simple test for file
+if sys.argv[-1] != sys.argv[0]:
+    fileName = sys.argv[-1]
+try:
+    open(fileName, 'rt')
+except:
+    logging.error('File not found')
+    exit()
 
 
 def isodate(datestring):
@@ -66,12 +68,12 @@ def createPerson(namestring):
                     gndrdf = ElementTree(
                         file=urllib.request.urlopen(authID + '/about/rdf'))
                 except urllib.error.HTTPError:
-                    print(bcolors.FAIL + "Error: Authority file not found for", namestring +
-                          "ID in line", table.line_num, bcolors.ENDC)
+                    logging.error(
+                        'Authority file not found for %sID in line %s', namestring, table.line_num)
                     persName = SubElement(action, 'persName')
                     authID = ''
                 except urllib.error.URLError as argh:
-                    print(bcolors.FAIL + "Error: Failed to reach GND" + bcolors.ENDC)
+                    logging.error('Failed to reach GND')
                     persName = SubElement(action, 'persName')
                 else:
                     gndrdf_root = gndrdf.getroot()
@@ -82,8 +84,8 @@ def createPerson(namestring):
                     else:
                         persName = SubElement(action, 'persName')
                     if 'UndifferentiatedPerson' in rdftype:
-                        print(bcolors.WARNING + "Warning:", namestring +
-                              "ID in line", table.line_num, "links to undifferentiated Person" + bcolors.ENDC)
+                        logging.warning(
+                            '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
                         authID = ''
             else:
                 persName = SubElement(action, 'persName')
@@ -94,8 +96,8 @@ def createPerson(namestring):
         if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
             persName.set('evidence', 'conjecture')
             letter[namestring] = letter[namestring][1:-1]
-            print ("Info: Added @evidence for <persName> in line",
-                   table.line_num)
+            logging.info('Added @evidence for <persName> in line %s',
+                         table.line_num)
         persName.text = str(letter[namestring])
 
 
@@ -107,19 +109,19 @@ def createPlace(placestring):
         if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
             placeName.set('evidence', 'conjecture')
             letter[placestring] = letter[placestring][1:-1]
-            print ("Info: Added @evidence for <placeName> in line",
-                   table.line_num)
+            logging.info('Added @evidence for <placeName> in line %s',
+                         table.line_num)
         placeName.text = str(letter[placestring])
         if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
             letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
             if 'http://www.geonames.org/' in letter[placestring + 'ID']:
                 placeName.set('ref', str(letter[placestring + 'ID']))
             else:
-                print (bcolors.WARNING + "Warning: No standardized ID in line",
-                       table.line_num, bcolors.ENDC)
+                logging.warning("no standardized %sID in line %s",
+                                placestring, table.line_num)
         else:
-            print (bcolors.WARNING + "Warning: Missing ID for", letter[
-                   placestring], "in line", table.line_num, bcolors.ENDC)
+            logging.warning('ID for %s missing in line %s', letter[
+                placestring], table.line_num)
 
 
 def createEdition(biblText, biblID):
@@ -180,13 +182,12 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 
 with open(fileName, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
-    print('Recognized columns:', table.fieldnames)
+    logging.info('Recognized columns: %s', table.fieldnames)
     if not('edition' in table.fieldnames):
         if edition:
             createEdition(edition, createID('edition'))
         else:
-            print (bcolors.WARNING +
-                   "Warning: No edition stated. Please set manually." + bcolors.ENDC)
+            logging.warning('No edition stated. Please set manually.')
             bibl = SubElement(sourceDesc, 'bibl')
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
@@ -197,8 +198,7 @@ with open(fileName, 'rt') as letterTable:
             entry.set('source', '#' + getEditonID(edition))
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
-                print (bcolors.FAIL + "Error: Key without edition in line",
-                       table.line_num, bcolors.ENDC)
+                logging.error("Key without edition in line %s", table.line_num)
             else:
                 if 'html://' in str(letter['key']):
                     entry.set('ref', str(letter['key']).strip())
@@ -219,11 +219,12 @@ with open(fileName, 'rt') as letterTable:
             if ('[' in str(letter['senderDate'])) and (']' in str(letter['senderDate'])):
                 letter['senderDate'] = letter['senderDate'][1:-1]
                 senderDate.set('cert', 'medium')
-                print ("Info: Added @cert for <date> in line", table.line_num)
+                logging.info('Added @cert for <date> in line %s',
+                             table.line_num)
             senderDate.set('when', str(letter['senderDate']))
         else:
-            print (bcolors.WARNING + "Warning: Couldn't set <date> for <correspAction> in line",
-                   table.line_num, "(no ISO format)", bcolors.ENDC)
+            logging.warning('senderDate in line %s not set (no ISO)',
+                            table.line_num)
 
         # addressee info block
         if letter['addressee'] or 'addresseePlace' in table.fieldnames or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
@@ -233,6 +234,8 @@ with open(fileName, 'rt') as letterTable:
             createPerson('addressee')
             if 'addresseePlace' in table.fieldnames:
                 createPlace('addresseePlace')
+
+letterTable.close()
 
 # generate empty body
 text = SubElement(root, 'text')
