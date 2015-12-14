@@ -3,7 +3,7 @@
 ## About
 
 CSV2CMI is a little program to transform a table of letters (given as .csv) into the [CMI format](https://github.com/TEI-Correspondence-SIG/CMIF).
-The CMI format is the underlying data format for the web service ‘[correspSearch](http://correspsearch.bbaw.de/)’ which facilitates searching across diverse distributed letter repositories.
+The CMI format is the underlying data format for the web service *[correspSearch](http://correspsearch.bbaw.de/)* which facilitates searching across diverse distributed letter repositories.
 
 It's intended for printed (print only) editions and catalogues of letters.
 
@@ -12,7 +12,7 @@ It's intended for printed (print only) editions and catalogues of letters.
 You have to name your columns as follows:
 * name of the sender: "sender"
 * name of the addressee: "addressee"
-* IDs of the named person: "senderID" and "addresseeID"
+* IDs of the named person or organization: "senderID" and "addresseeID" (this is essential for *correspSearch*)
 * the date, when the letter has been sent: "senderDate"
 
 You may provide places as additional information:
