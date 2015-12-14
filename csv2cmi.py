@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.10
+# version 0.9.11
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -28,6 +28,9 @@ editionType = 'print'  # 'hybrid' or 'online' if appropriate
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
+# define RDF types
+
+
 # simple test for file
 if sys.argv[-1] != sys.argv[0]:
     fileName = sys.argv[-1]
@@ -36,6 +39,14 @@ try:
 except:
     logging.error('File not found')
     exit()
+
+# check internet connection via DNB
+try:
+    urllib.request.urlopen('http://193.175.100.220', timeout=1)
+    connection = True
+except:
+    logging.error('No internet connection')
+    connection = False
 
 
 def isodate(datestring):
@@ -61,35 +72,68 @@ def createPerson(namestring):
     if letter[namestring]:
         rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
-            authID = 'http://d-nb.info/gnd/' + \
-                str(letter[namestring + 'ID'].strip())
-            if profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None:
-                try:
-                    gndrdf = ElementTree(
-                        file=urllib.request.urlopen(authID + '/about/rdf'))
-                except urllib.error.HTTPError:
-                    logging.error(
-                        'Authority file not found for %sID in line %s', namestring, table.line_num)
+            if 'http://' not in str(letter[namestring + 'ID'].strip()):
+                authID = 'http://d-nb.info/gnd/' + \
+                    str(letter[namestring + 'ID'].strip())
+            else:
+                authID = str(letter[namestring + 'ID'].strip())
+            if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
+                if 'viaf' in authID:
+                    try:
+                        gndrdf = ElementTree(
+                            file=urllib.request.urlopen(authID + '/rdf.xml'))
+                    except urllib.error.HTTPError:
+                        logging.error(
+                            'Authority file not found for %sID in line %s', namestring, table.line_num)
+                        persName = SubElement(action, 'persName')
+                        authID = ''
+                    except urllib.error.URLError as argh:
+                        logging.error('Failed to reach VIAF')
+                        persName = SubElement(action, 'persName')
+                    else:
+                        gndrdf_root = gndrdf.getroot()
+                        rdftype = gndrdf_root.find(
+                            './rdf:Description[2]/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                        if 'Organization' in rdftype:
+                            persName = SubElement(action, 'orgName')
+                        elif 'Person' in rdftype:
+                            persName = SubElement(action, 'persName')
+                        else:
+                            logging.warning(
+                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                            persName = SubElement(action, 'persName')
+                            authID = ''
+                elif 'gnd' in authID:
+                    try:
+                        gndrdf = ElementTree(
+                            file=urllib.request.urlopen(authID + '/about/rdf'))
+                    except urllib.error.HTTPError:
+                        logging.error(
+                            'Authority file not found for %sID in line %s', namestring, table.line_num)
+                        persName = SubElement(action, 'persName')
+                        authID = ''
+                    except urllib.error.URLError as argh:
+                        logging.error('Failed to reach GND')
+                        persName = SubElement(action, 'persName')
+                    else:
+                        gndrdf_root = gndrdf.getroot()
+                        rdftype = gndrdf_root.find(
+                            './/rdf:type', rdf).get('rdf:resource',rdf)
+                        if 'Corporate' in rdftype:
+                            persName = SubElement(action, 'orgName')
+                        else:
+                            persName = SubElement(action, 'persName')
+                        if 'UndifferentiatedPerson' in rdftype:
+                            logging.warning(
+                                '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
+                            authID = ''
+                else:
+                    logging.error('No proper autority record in line %s', table.line_num)
                     persName = SubElement(action, 'persName')
                     authID = ''
-                except urllib.error.URLError as argh:
-                    logging.error('Failed to reach GND')
-                    persName = SubElement(action, 'persName')
-                else:
-                    gndrdf_root = gndrdf.getroot()
-                    rdftype = gndrdf_root.find(
-                        './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                    if 'Corporate' in rdftype:
-                        persName = SubElement(action, 'orgName')
-                    else:
-                        persName = SubElement(action, 'persName')
-                    if 'UndifferentiatedPerson' in rdftype:
-                        logging.warning(
-                            '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
-                        authID = ''
             else:
                 persName = SubElement(action, 'persName')
-            if authID != '':
+            if authID:
                 persName.set('ref', authID)
         else:
             persName = SubElement(action, 'persName')
