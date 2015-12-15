@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.11
+# version 0.9.11.1
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -244,7 +244,7 @@ with open(fileName, 'rt') as letterTable:
             if not(edition):
                 logging.error("Key without edition in line %s", table.line_num)
             else:
-                if 'html://' in str(letter['key']):
+                if 'http://' in str(letter['key']):
                     entry.set('ref', str(letter['key']).strip())
                 else:
                     entry.set('key', str(letter['key']).strip())
