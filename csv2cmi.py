@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # csv2cmi
-# version 0.9.11.1
+# version 0.9.11.2
 # Copyright (c) 2015 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
@@ -118,7 +118,7 @@ def createPerson(namestring):
                     else:
                         gndrdf_root = gndrdf.getroot()
                         rdftype = gndrdf_root.find(
-                            './/rdf:type', rdf).get('rdf:resource',rdf)
+                            './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                         if 'Corporate' in rdftype:
                             persName = SubElement(action, 'orgName')
                         else:
