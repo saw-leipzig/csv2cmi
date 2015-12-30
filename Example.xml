@@ -10,24 +10,24 @@
       <publicationStmt>
         <publisher>Klaus Rettinghaus</publisher>
         <idno type="url">Example.xml</idno>
-        <date when="2015-12-04T17:49:37.494650" />
+        <date when="2015-12-30T20:32:02.708936" />
         <availability>
           <licence target="https://creativecommons.org/licenses/by/4.0/">This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0</licence>
         </availability>
       </publicationStmt>
       <sourceDesc>
-        <bibl type="print" xml:id="edition_6jzgpmrm_y8068gky">Bach-Dokumente Bd. 1, Leipzig 1963</bibl>
+        <bibl type="print" xml:id="edition_8iv1j08r_e7cy6m2q">Bach-Dokumente Bd. 1, Leipzig 1963</bibl>
       </sourceDesc>
     </fileDesc>
     <profileDesc>
-      <correspDesc key="23" source="#edition_6jzgpmrm_y8068gky" xml:id="letter_uf386r8r_w4qefbr8">
+      <correspDesc key="23" source="#edition_8iv1j08r_e7cy6m2q" xml:id="letter_vgjlektv_88m8nc0b">
         <correspAction type="sent">
-          <persName ref="http://d-nb.info/gnd/11850553X">Johann Sebastian Bach</persName>
+          <persName ref="http://viaf.org/viaf/12304462">Johann Sebastian Bach</persName>
           <placeName ref="http://www.geonames.org/2879139">Leipzig</placeName>
           <date when="1730-10-28" />
         </correspAction>
         <correspAction type="received">
-          <persName ref="http://d-nb.info/gnd/118685112">Georg Erdmann</persName>
+          <persName ref="http://viaf.org/viaf/3264804">Georg Erdmann</persName>
           <placeName ref="http://www.geonames.org/3099434">Danzig</placeName>
         </correspAction>
       </correspDesc>
