@@ -10,17 +10,17 @@
       <publicationStmt>
         <publisher>Klaus Rettinghaus</publisher>
         <idno type="url">Example.xml</idno>
-        <date when="2015-12-30T20:32:02.708936" />
+        <date when="2016-02-03T13:33:41.308047" />
         <availability>
           <licence target="https://creativecommons.org/licenses/by/4.0/">This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0</licence>
         </availability>
       </publicationStmt>
       <sourceDesc>
-        <bibl type="print" xml:id="edition_8iv1j08r_e7cy6m2q">Bach-Dokumente Bd. 1, Leipzig 1963</bibl>
+        <bibl type="print" xml:id="edition_smfp89lf_7035u3he">Bach-Dokumente Bd. 1, Leipzig 1963</bibl>
       </sourceDesc>
     </fileDesc>
     <profileDesc>
-      <correspDesc key="23" source="#edition_8iv1j08r_e7cy6m2q" xml:id="letter_vgjlektv_88m8nc0b">
+      <correspDesc key="23" source="#edition_smfp89lf_7035u3he" xml:id="letter_qwjd5pca_973bms1u">
         <correspAction type="sent">
           <persName ref="http://viaf.org/viaf/12304462">Johann Sebastian Bach</persName>
           <placeName ref="http://www.geonames.org/2879139">Leipzig</placeName>
