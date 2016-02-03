@@ -1,25 +1,24 @@
-# -*- coding: utf-8 -*-
-
 # csv2cmi
-# version 0.9.11.2
-# Copyright (c) 2015 Klaus Rettinghaus
+#
+# Copyright (c) 2015–2016 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
 # needs Python3
+import argparse
 import datetime
 import csv
 import logging
 import os
 import random
 import string
-import sys
 import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
+__version__ = '1.0'
+
 # enter here your name and the title of your edition
-fileName = 'LetterTable.csv'
 projectName = 'Letters project'
 editorName = 'Klaus Rettinghaus'
 edition = ''
@@ -27,15 +26,28 @@ editionType = 'print'  # 'hybrid' or 'online' if appropriate
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
+logs = logging.getLogger()
 
-# define RDF types
+# define RDF namespace
+rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
 
+# define arguments
+parser = argparse.ArgumentParser(
+    description='convert tables of letters to CMI')
+parser.add_argument('filename', help='input file (.csv)')
+parser.add_argument('-v', '--verbose',
+                    help='increase output verbosity', action='store_true')
+parser.add_argument('--version', action='version',
+                    version='%(prog)s ' + __version__)
+args = parser.parse_args()
+
+# set verbosity
+if args.verbose:
+    logs.setLevel('INFO')
 
 # simple test for file
-if sys.argv[-1] != sys.argv[0]:
-    fileName = sys.argv[-1]
 try:
-    open(fileName, 'rt')
+    open(args.filename, 'rt').close()
 except:
     logging.error('File not found')
     exit()
@@ -70,7 +82,6 @@ def isodate(datestring):
 
 def createPerson(namestring):
     if letter[namestring]:
-        rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
             if 'http://' not in str(letter[namestring + 'ID'].strip()):
                 authID = 'http://d-nb.info/gnd/' + \
@@ -80,7 +91,7 @@ def createPerson(namestring):
             if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
                 if 'viaf' in authID:
                     try:
-                        gndrdf = ElementTree(
+                        viafrdf = ElementTree(
                             file=urllib.request.urlopen(authID + '/rdf.xml'))
                     except urllib.error.HTTPError:
                         logging.error(
@@ -91,8 +102,8 @@ def createPerson(namestring):
                         logging.error('Failed to reach VIAF')
                         persName = SubElement(action, 'persName')
                     else:
-                        gndrdf_root = gndrdf.getroot()
-                        rdftype = gndrdf_root.find(
+                        viafrdf_root = viafrdf.getroot()
+                        rdftype = viafrdf_root.find(
                             './rdf:Description[2]/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                         if 'Organization' in rdftype:
                             persName = SubElement(action, 'orgName')
@@ -128,7 +139,8 @@ def createPerson(namestring):
                                 '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
                             authID = ''
                 else:
-                    logging.error('No proper autority record in line %s', table.line_num)
+                    logging.error(
+                        'No proper authority record in line %s for %s', table.line_num, namestring)
                     persName = SubElement(action, 'persName')
                     authID = ''
             else:
@@ -212,7 +224,7 @@ publisher = SubElement(publicationStmt, 'publisher')
 publisher.text = editorName
 idno = SubElement(publicationStmt, 'idno')
 idno.set('type', 'url')
-idno.text = os.path.splitext(os.path.basename(fileName))[0] + '.xml'
+idno.text = os.path.splitext(os.path.basename(args.filename))[0] + '.xml'
 date = SubElement(publicationStmt, 'date')
 date.set('when', str(datetime.datetime.now().isoformat()))
 availability = SubElement(publicationStmt, 'availability')
@@ -224,7 +236,7 @@ sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
 
-with open(fileName, 'rt') as letterTable:
+with open(args.filename, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
     logging.info('Recognized columns: %s', table.fieldnames)
     if not('edition' in table.fieldnames):
@@ -279,8 +291,6 @@ with open(fileName, 'rt') as letterTable:
             if 'addresseePlace' in table.fieldnames:
                 createPlace('addresseePlace')
 
-letterTable.close()
-
 # generate empty body
 text = SubElement(root, 'text')
 body = SubElement(text, 'body')
@@ -288,5 +298,5 @@ p = SubElement(body, 'p')
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.splitext(os.path.basename(fileName))[
+tree.write(os.path.splitext(os.path.basename(args.filename))[
            0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
