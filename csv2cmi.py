@@ -18,6 +18,7 @@ from xml.dom import minidom
 
 __version__ = '1.0'
 
+
 # enter here your name and the title of your edition
 projectName = 'Letters project'
 editorName = 'Klaus Rettinghaus'
