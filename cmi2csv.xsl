@@ -1,53 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- * cmi2csv * -->
-<!-- version 1.0 -->
+<!--      * cmi2csv *      -->
+<!--         2.0.0         -->
+<!--   * programmed by *   -->
+<!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
   <xsl:output encoding="UTF-8" method="text"/>
+  <xsl:strip-space elements="*"/>
+  <!-- define csv seperator -->
+  <xsl:variable name="sep" select="','"/>
   <xsl:template match="/">
-    <xsl:text>sender,senderID,senderPlace,senderPlaceID,senderDate,addressee,addresseeID,addresseePlace,addresseePlaceID,addresseeDate,edition,key
-    </xsl:text>
-    <xsl:for-each select="//tei:correspDesc">
-      <xsl:text>"</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='sent']/tei:persName"/>
-      <xsl:text>",</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='sent']/tei:persName/@ref"/>
-      <xsl:text>,"</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='sent']/tei:placeName"/>
-      <xsl:text>",</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='sent']/tei:placeName/@ref"/>
-      <xsl:text>,</xsl:text>
-      <xsl:if test="tei:correspAction[@type='sent']/tei:date/@cert">
+    <xsl:text>sender,senderID,senderPlace,senderPlaceID,senderDate,addressee,addresseeID,addresseePlace,addresseePlaceID,addresseeDate,edition,key&#10;</xsl:text>
+    <xsl:apply-templates/>
+  </xsl:template>
+  <xsl:template match="tei:fileDesc"/>
+  <xsl:template match="tei:profileDesc">
+    <xsl:apply-templates/>
+  </xsl:template>
+  <xsl:template match="tei:correspDesc">
+    <xsl:apply-templates select="tei:correspAction[@type='sent']"/>
+    <xsl:if test="not(tei:correspAction[@type='sent'])">
+      <xsl:value-of select="concat($sep,$sep,$sep,$sep)"/>
+    </xsl:if>
+    <xsl:value-of select="$sep"/>
+    <xsl:apply-templates select="tei:correspAction[@type='received']"/>
+    <xsl:if test="not(tei:correspAction[@type='received'])">
+      <xsl:value-of select="concat($sep,$sep,$sep,$sep)"/>
+    </xsl:if>
+    <xsl:value-of select="$sep"/>
+    <xsl:choose>
+      <xsl:when test="@source">
+        <xsl:variable name="biblref">
+          <xsl:value-of select="substring-after(@source,'#')"/>
+        </xsl:variable>
+        <xsl:value-of select="concat('&quot;',/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:bibl[@xml:id=$biblref],'&quot;')"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="concat('&quot;',normalize-space(/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc),'&quot;')"/>
+      </xsl:otherwise>
+    </xsl:choose>
+    <xsl:value-of select="$sep"/>
+    <xsl:choose>
+      <xsl:when test="@key">
+        <xsl:value-of select="concat('&quot;',@key,'&quot;')"/>
+      </xsl:when>
+      <xsl:when test="@ref and not(@key)">
+        <xsl:value-of select="@ref"/>
+      </xsl:when>
+    </xsl:choose>
+    <xsl:value-of select="'&#10;'"/>
+  </xsl:template>
+  <xsl:template match="tei:correspAction">
+    <xsl:value-of select="concat('&quot;',normalize-space(tei:persName),'&quot;')"/>
+    <xsl:value-of select="$sep"/>
+    <xsl:value-of select="tei:persName/@ref"/>
+    <xsl:value-of select="$sep"/>
+    <xsl:value-of select="concat('&quot;',normalize-space(tei:placeName),'&quot;')"/>
+    <xsl:value-of select="$sep"/>
+    <xsl:value-of select="tei:placeName/@ref"/>
+    <xsl:value-of select="$sep"/>
+    <xsl:if test="tei:date/@when">
+      <xsl:if test="tei:date/@cert">
         <xsl:text>[</xsl:text>
       </xsl:if>
-      <xsl:value-of select="tei:correspAction[@type='sent']/tei:date/@when"/>
-      <xsl:if test="tei:correspAction[@type='sent']/tei:date/@cert">
+      <xsl:value-of select="tei:date/@when"/>
+      <xsl:if test="tei:date/@cert">
         <xsl:text>]</xsl:text>
       </xsl:if>
-      <xsl:text>,"</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='received']/tei:persName"/>
-      <xsl:text>",</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='received']/tei:persName/@ref"/>
-      <xsl:text>,"</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='received']/tei:placeName"/>
-      <xsl:text>",</xsl:text>
-      <xsl:value-of select="tei:correspAction[@type='received']/tei:placeName/@ref"/>
-      <xsl:text>,</xsl:text>
-      <xsl:if test="tei:correspAction[@type='received']/tei:date/@cert">
-        <xsl:text>[</xsl:text>
-      </xsl:if>
-      <xsl:value-of select="tei:correspAction[@type='received']/tei:date/@when"/>
-      <xsl:if test="tei:correspAction[@type='received']/tei:date/@cert">
-        <xsl:text>]</xsl:text>
-      </xsl:if>
-      <xsl:text>,"</xsl:text>
-      <xsl:variable name="biblref">
-        <xsl:value-of select="substring-after(@source,'#')"/>
-      </xsl:variable>
-      <xsl:value-of select="/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:bibl[@xml:id=$biblref]"/>
-      <xsl:text>",</xsl:text>
-      <xsl:value-of select="@key"/>
-      <xsl:text>
-      </xsl:text>
-    </xsl:for-each>
+    </xsl:if>
   </xsl:template>
 </xsl:stylesheet>
