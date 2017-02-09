@@ -6,8 +6,9 @@
 
 # needs Python3
 import argparse
-import datetime
+import configparser
 import csv
+import datetime
 import logging
 import os
 import random
@@ -16,14 +17,15 @@ import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
-__version__ = '1.0'
+__version__ = '1.2'
 
-
-# enter here your name and the title of your edition
-projectName = 'Letters project'
-editorName = 'Klaus Rettinghaus'
-edition = ''
-editionType = 'print'  # 'hybrid' or 'online' if appropriate
+# read config file
+config = configparser.ConfigParser()
+try:
+    config.read_file(open('csv2cmi.ini'))
+except:
+    logging.error('No configuration file found')
+    exit()
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -183,6 +185,10 @@ def createPlace(placestring):
 
 def createEdition(biblText, biblID):
     # creates a new entry within <sourceDesc>
+    if config.get('Edition', 'type'):
+        editionType = config.get('Edition', 'type')
+    else:
+        editionType = 'print'
     bibl = SubElement(sourceDesc, 'bibl')
     bibl.text = biblText
     bibl.set('type', editionType)
@@ -215,17 +221,25 @@ root.append(Comment('Generated from table of letters with csv2cmi'))
 teiHeader = SubElement(root, 'teiHeader')
 # file description
 fileDesc = SubElement(teiHeader, 'fileDesc')
+# title statement
 titleStmt = SubElement(fileDesc, 'titleStmt')
 title = SubElement(titleStmt, 'title')
-title.text = projectName
+title.set('xml:id', createID('title'))
+title.text = config.get(
+    'Project', 'title', fallback='untitled letters project')
 editor = SubElement(titleStmt, 'editor')
-editor.text = editorName
+editor.text = config.get('Project', 'editor')
+# publication statement
 publicationStmt = SubElement(fileDesc, 'publicationStmt')
 publisher = SubElement(publicationStmt, 'publisher')
-publisher.text = editorName
+if (config.get('Project', 'publisher')):
+    publisher.text = config.get('Project', 'publisher')
+else:
+    publisher.text = config.get('Project', 'editor')
 idno = SubElement(publicationStmt, 'idno')
 idno.set('type', 'url')
-idno.text = os.path.splitext(os.path.basename(args.filename))[0] + '.xml'
+idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
+    os.path.basename(args.filename))[0] + '.xml')
 date = SubElement(publicationStmt, 'date')
 date.set('when', str(datetime.datetime.now().isoformat()))
 availability = SubElement(publicationStmt, 'availability')
@@ -241,13 +255,15 @@ with open(args.filename, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
     logging.info('Recognized columns: %s', table.fieldnames)
     if not('edition' in table.fieldnames):
-        if edition:
-            createEdition(edition, createID('edition'))
+        edition = ''
+        if config.get('Edition', 'title'):
+            edition = config.get('Edition', 'title')
         else:
             logging.warning('No edition stated. Please set manually.')
-            bibl = SubElement(sourceDesc, 'bibl')
+        createEdition(edition, createID('edition'))
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
+        # entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
         if 'edition' in table.fieldnames:
             edition = letter['edition'].strip()
