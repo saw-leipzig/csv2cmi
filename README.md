@@ -15,16 +15,18 @@ You have to name your columns as follows:
 * IDs of the named person or organization: "senderID" and "addresseeID" (this is essential for *correspSearch*)
 * the date, when the letter has been sent: "senderDate"
 
-You may provide places as additional information:
+You may provide additional information:
 * where a letter has been sent: "senderPlace" (with the appropriate "senderPlaceID" as proper [GeoNames URL](http://www.geonames.org/))
 * where a letter has been received: "addresseePlace" (with the appropriate "addresseePlaceID" as proper [GeoNames URL](http://www.geonames.org/))
+* when a letter has been received: "addresseeDate"
 
 If your letters are printed across different editions, add an "edition" column and put in there the bibliographic records. Numbering of letters should be stated in a additional column named "key". Alternatively you may enter in this column a link to the edited letter on the web.
 If a date is put within brackets it sets @cert to 'medium', for persName and placeName alike @evidence is set.
 
-For sender and addressee IDs from the [GND](http://www.dnb.de/gnd) and the [VIAF](http://www.viaf.org/) are supported. 
+For sender and addressee IDs from the [GND](http://www.dnb.de/gnd) and the [VIAF](http://www.viaf.org/) are supported.
 
-For now only a single date can be set. 
+#### Limitations
+For now only a single date can be set; ISO format (YYYY-MM-DD) has to be used.
 
 *Check, that your table is using UTF8-encoding!*
 
