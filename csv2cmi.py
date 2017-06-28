@@ -17,7 +17,7 @@ import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
-__version__ = '1.2'
+__version__ = '1.3'
 
 # read config file
 config = configparser.ConfigParser()
@@ -87,6 +87,8 @@ def createPerson(namestring):
     if letter[namestring]:
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
             if 'http://' not in str(letter[namestring + 'ID'].strip()):
+                logging.debug('Assigning ID %s to GND', str(
+                    letter[namestring + 'ID'].strip()))
                 authID = 'http://d-nb.info/gnd/' + \
                     str(letter[namestring + 'ID'].strip())
             else:
@@ -185,9 +187,9 @@ def createPlace(placestring):
 
 def createEdition(biblText, biblID):
     # creates a new entry within <sourceDesc>
-    if config.get('Edition', 'type'):
+    if ('Edition' in config) and ('type' in config['Edition']):
         editionType = config.get('Edition', 'type')
-    else:
+    if not editionType:
         editionType = 'print'
     bibl = SubElement(sourceDesc, 'bibl')
     bibl.text = biblText
@@ -207,7 +209,10 @@ def getEditonID(editionTitle):
 
 
 def createID(id_prefix):
-    fullID = id_prefix + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
+    if (id_prefix.strip() == ''):
+        id_prefix = ''.join(random.choice(
+            string.ascii_lowercase + string.digits) for _ in range(8))
+    fullID = id_prefix.strip() + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
         8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
     return fullID
 
@@ -215,7 +220,8 @@ def createID(id_prefix):
 # generating root element
 root = Element('TEI')
 root.set('xmlns', 'http://www.tei-c.org/ns/1.0')
-root.append(Comment('Generated from table of letters with csv2cmi'))
+root.append(
+    Comment('Generated from table of letters with csv2cmi ' + __version__))
 
 # teiHeader
 teiHeader = SubElement(root, 'teiHeader')
@@ -246,6 +252,8 @@ availability = SubElement(publicationStmt, 'availability')
 licence = SubElement(availability, 'licence')
 licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
 licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
+
+# container for bibliographic data
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
 
 # filling in correspondance meta-data
@@ -253,10 +261,13 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 
 with open(args.filename, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
-    logging.info('Recognized columns: %s', table.fieldnames)
+    logging.debug('Recognized columns: %s', table.fieldnames)
+    if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
+        logging.error('No sender/addressee field in table')
+        exit()
     if not('edition' in table.fieldnames):
         edition = ''
-        if config.get('Edition', 'title'):
+        if ('Edition' in config) and config.get('Edition', 'title'):
             edition = config.get('Edition', 'title')
         else:
             logging.warning('No edition stated. Please set manually.')
@@ -281,32 +292,52 @@ with open(args.filename, 'rt') as letterTable:
         # sender info block
         if (letter['sender']) or (('senderPlace' in table.fieldnames) and (letter['senderPlace'])) or (letter['senderDate']):
             action = SubElement(entry, 'correspAction')
+            action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
 
+            # add persName
             createPerson('sender')
+            # add placeName
             if 'senderPlace' in table.fieldnames:
                 createPlace('senderPlace')
-
-        if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
-            senderDate = SubElement(action, 'date')
-            if ('[' in str(letter['senderDate'])) and (']' in str(letter['senderDate'])):
-                letter['senderDate'] = letter['senderDate'][1:-1]
-                senderDate.set('cert', 'medium')
-                logging.info('Added @cert for <date> in line %s',
-                             table.line_num)
-            senderDate.set('when', str(letter['senderDate']))
-        else:
-            logging.warning('senderDate in line %s not set (no ISO)',
-                            table.line_num)
+            # add date
+            if 'senderDate' in table.fieldnames:
+                if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
+                    senderDate = SubElement(action, 'date')
+                    if (str(letter['senderDate'])[1] == '[') and (str(letter['senderDate'])[-1] == ']'):
+                        letter['senderDate'] = letter['senderDate'][1:-1]
+                        senderDate.set('cert', 'medium')
+                        logging.info(
+                            'Added @cert for <date> in line %s', table.line_num)
+                    senderDate.set('when', str(letter['senderDate']))
+                else:
+                    logging.warning(
+                        'senderDate in line %s not set (no ISO)', table.line_num)
 
         # addressee info block
         if letter['addressee'] or 'addresseePlace' in table.fieldnames or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
             action = SubElement(entry, 'correspAction')
+            action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
 
+            # add persName
             createPerson('addressee')
+            # add placeName
             if 'addresseePlace' in table.fieldnames:
                 createPlace('addresseePlace')
+            # add date
+            if 'addresseeDate' in table.fieldnames:
+                if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
+                    addresseeDate = SubElement(action, 'date')
+                    if ('[' in str(letter['addresseeDate'])) and (']' in str(letter['addresseeDate'])):
+                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
+                        senderDate.set('cert', 'medium')
+                        logging.info(
+                            'Added @cert for <date> in line %s', table.line_num)
+                    senderDate.set('when', str(letter['addresseeDate']))
+                else:
+                    logging.warning(
+                        'addresseeDate in line %s not set (no ISO)', table.line_num)
 
 # generate empty body
 text = SubElement(root, 'text')
