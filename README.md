@@ -25,6 +25,8 @@ If a date is put within brackets it sets @cert to 'medium', for persName and pla
 
 For sender and addressee IDs from the [GND](http://www.dnb.de/gnd) and the [VIAF](http://www.viaf.org/) are supported.
 
+For providing essential CMI information like the editor's name or the publisher an [INI file](https://en.wikipedia.org/wiki/INI_file) is needed.
+
 #### Limitations
 For now only a single date can be set; ISO format (YYYY-MM-DD) has to be used.
 
