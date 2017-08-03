@@ -1,15 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--      * cmi2csv *      -->
-<!--         2.0.0         -->
+<!--         2.1.0         -->
 <!--   * programmed by *   -->
 <!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
-  <xsl:output encoding="UTF-8" method="text"/>
+  <xsl:output encoding="UTF-8" indent="no" method="text"/>
   <xsl:strip-space elements="*"/>
   <!-- define csv seperator -->
-  <xsl:variable name="sep" select="','"/>
+  <xsl:param name="sep" select="','"/>
   <xsl:template match="/">
-    <xsl:text>sender,senderID,senderPlace,senderPlaceID,senderDate,addressee,addresseeID,addresseePlace,addresseePlaceID,addresseeDate,edition,key&#10;</xsl:text>
+    <!-- header -->
+    <xsl:text>sender</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>senderID</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>senderPlace</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>senderPlaceID</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>senderDate</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>addressee</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>addresseeID</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>addresseePlace</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>addresseePlaceID</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>addresseeDate</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>edition</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>key</xsl:text>
+    <xsl:value-of select="'&#10;'"/>
     <xsl:apply-templates/>
   </xsl:template>
   <xsl:template match="tei:fileDesc"/>
