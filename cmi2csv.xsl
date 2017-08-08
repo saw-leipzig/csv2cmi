@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--      * cmi2csv *      -->
-<!--         2.1.0         -->
+<!--         2.1.1         -->
 <!--   * programmed by *   -->
 <!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
@@ -10,29 +10,29 @@
   <xsl:param name="sep" select="','"/>
   <xsl:template match="/">
     <!-- header -->
-    <xsl:text>sender</xsl:text>
+    <xsl:text>"sender"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>senderID</xsl:text>
+    <xsl:text>"senderID"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>senderPlace</xsl:text>
+    <xsl:text>"senderPlace"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>senderPlaceID</xsl:text>
+    <xsl:text>"senderPlaceID"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>senderDate</xsl:text>
+    <xsl:text>"senderDate"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>addressee</xsl:text>
+    <xsl:text>"addressee"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>addresseeID</xsl:text>
+    <xsl:text>"addresseeID"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>addresseePlace</xsl:text>
+    <xsl:text>"addresseePlace"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>addresseePlaceID</xsl:text>
+    <xsl:text>"addresseePlaceID"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>addresseeDate</xsl:text>
+    <xsl:text>"addresseeDate"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>edition</xsl:text>
+    <xsl:text>"edition"</xsl:text>
     <xsl:value-of select="$sep"/>
-    <xsl:text>key</xsl:text>
+    <xsl:text>"key"</xsl:text>
     <xsl:value-of select="'&#10;'"/>
     <xsl:apply-templates/>
   </xsl:template>
@@ -76,17 +76,17 @@
   <xsl:template match="tei:correspAction">
     <xsl:value-of select="concat('&quot;',normalize-space(tei:persName),'&quot;')"/>
     <xsl:value-of select="$sep"/>
-    <xsl:value-of select="tei:persName/@ref"/>
+    <xsl:value-of select="concat('&quot;',tei:persName/@ref,'&quot;')"/>
     <xsl:value-of select="$sep"/>
     <xsl:value-of select="concat('&quot;',normalize-space(tei:placeName),'&quot;')"/>
     <xsl:value-of select="$sep"/>
-    <xsl:value-of select="tei:placeName/@ref"/>
+    <xsl:value-of select="concat('&quot;',tei:placeName/@ref,'&quot;')"/>
     <xsl:value-of select="$sep"/>
     <xsl:if test="tei:date/@when">
       <xsl:if test="tei:date/@cert">
         <xsl:text>[</xsl:text>
       </xsl:if>
-      <xsl:value-of select="tei:date/@when"/>
+      <xsl:value-of select="concat('&quot;',tei:date/@when,'&quot;')"/>
       <xsl:if test="tei:date/@cert">
         <xsl:text>]</xsl:text>
       </xsl:if>
