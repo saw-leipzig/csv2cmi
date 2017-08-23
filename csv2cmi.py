@@ -1,6 +1,7 @@
+#!/usr/bin/env python
 # csv2cmi
 #
-# Copyright (c) 2015–2016 Klaus Rettinghaus
+# Copyright (c) 2015-2017 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -17,15 +18,8 @@ import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
 from xml.dom import minidom
 
-__version__ = '1.3'
-
-# read config file
-config = configparser.ConfigParser()
-try:
-    config.read_file(open('csv2cmi.ini'))
-except:
-    logging.error('No configuration file found')
-    exit()
+__license__ = "MIT"
+__version__ = '1.3.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -63,6 +57,14 @@ except:
     logging.error('No internet connection')
     connection = False
 
+# read config file
+config = configparser.ConfigParser()
+try:
+    config.read_file(open('csv2cmi.ini'))
+except:
+    logging.error('No configuration file found')
+    exit()
+
 
 def isodate(datestring):
     try:
@@ -81,6 +83,36 @@ def isodate(datestring):
             return True
     else:
         return True
+
+
+def createFileDesc(config):
+    fileDesc = Element('fileDesc')
+    # title statement
+    titleStmt = SubElement(fileDesc, 'titleStmt')
+    title = SubElement(titleStmt, 'title')
+    title.set('xml:id', createID('title'))
+    title.text = config.get(
+        'Project', 'title', fallback='untitled letters project')
+    editor = SubElement(titleStmt, 'editor')
+    editor.text = config.get('Project', 'editor')
+    # publication statement
+    publicationStmt = SubElement(fileDesc, 'publicationStmt')
+    publisher = SubElement(publicationStmt, 'publisher')
+    if (config.get('Project', 'publisher')):
+        publisher.text = config.get('Project', 'publisher')
+    else:
+        publisher.text = config.get('Project', 'editor')
+    idno = SubElement(publicationStmt, 'idno')
+    idno.set('type', 'URL')
+    idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
+        os.path.basename(args.filename))[0] + '.xml')
+    date = SubElement(publicationStmt, 'date')
+    date.set('when', str(datetime.datetime.now().isoformat()))
+    availability = SubElement(publicationStmt, 'availability')
+    licence = SubElement(availability, 'licence')
+    licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
+    licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
+    return fileDesc
 
 
 def createPerson(namestring):
@@ -221,41 +253,15 @@ def createID(id_prefix):
 root = Element('TEI')
 root.set('xmlns', 'http://www.tei-c.org/ns/1.0')
 root.append(
-    Comment('Generated from table of letters with csv2cmi ' + __version__))
+    Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
 
 # teiHeader
 teiHeader = SubElement(root, 'teiHeader')
-# file description
-fileDesc = SubElement(teiHeader, 'fileDesc')
-# title statement
-titleStmt = SubElement(fileDesc, 'titleStmt')
-title = SubElement(titleStmt, 'title')
-title.set('xml:id', createID('title'))
-title.text = config.get(
-    'Project', 'title', fallback='untitled letters project')
-editor = SubElement(titleStmt, 'editor')
-editor.text = config.get('Project', 'editor')
-# publication statement
-publicationStmt = SubElement(fileDesc, 'publicationStmt')
-publisher = SubElement(publicationStmt, 'publisher')
-if (config.get('Project', 'publisher')):
-    publisher.text = config.get('Project', 'publisher')
-else:
-    publisher.text = config.get('Project', 'editor')
-idno = SubElement(publicationStmt, 'idno')
-idno.set('type', 'url')
-idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
-    os.path.basename(args.filename))[0] + '.xml')
-date = SubElement(publicationStmt, 'date')
-date.set('when', str(datetime.datetime.now().isoformat()))
-availability = SubElement(publicationStmt, 'availability')
-licence = SubElement(availability, 'licence')
-licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
-licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
-
+# create a file description from config file
+fileDesc = createFileDesc(config)
+teiHeader.append(fileDesc)
 # container for bibliographic data
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
-
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
 
