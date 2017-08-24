@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 from xml.dom import minidom
 
 __license__ = "MIT"
-__version__ = '1.3.1'
+__version__ = '1.3.2'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -85,7 +85,14 @@ def isodate(datestring):
         return True
 
 
+def createTextstructure():
+    text = Element('text')
+    body = SubElement(text, 'body')
+    p = SubElement(body, 'p')
+    return text
+
 def createFileDesc(config):
+    # creates a file description from config file
     fileDesc = Element('fileDesc')
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
@@ -217,16 +224,17 @@ def createPlace(placestring):
                 placestring], table.line_num)
 
 
-def createEdition(biblText, biblID):
-    # creates a new entry within <sourceDesc>
+def createEdition(editionTitle, biblID):
+    # creates a new bibliographic entry
     if ('Edition' in config) and ('type' in config['Edition']):
         editionType = config.get('Edition', 'type')
     if not editionType:
         editionType = 'print'
-    bibl = SubElement(sourceDesc, 'bibl')
-    bibl.text = biblText
+    bibl = Element('bibl')
+    bibl.text = editionTitle
     bibl.set('type', editionType)
     bibl.set('xml:id', biblID)
+    return bibl
 
 
 def getEditonID(editionTitle):
@@ -236,7 +244,7 @@ def getEditonID(editionTitle):
             editionID = bibl.get('xml:id')
     if not editionID:
         editionID = createID('edition')
-        createEdition(editionTitle, editionID)
+        sourceDesc.append(createEdition(editionTitle, editionID))
     return editionID
 
 
@@ -261,6 +269,7 @@ teiHeader = SubElement(root, 'teiHeader')
 fileDesc = createFileDesc(config)
 teiHeader.append(fileDesc)
 # container for bibliographic data
+global sourceDesc
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
@@ -277,7 +286,7 @@ with open(args.filename, 'rt') as letterTable:
             edition = config.get('Edition', 'title')
         else:
             logging.warning('No edition stated. Please set manually.')
-        createEdition(edition, createID('edition'))
+        sourceDesc.append(createEdition(edition, createID('edition')))
     for letter in table:
         entry = SubElement(profileDesc, 'correspDesc')
         # entry.set('n', str(table.line_num))
@@ -346,9 +355,7 @@ with open(args.filename, 'rt') as letterTable:
                         'addresseeDate in line %s not set (no ISO)', table.line_num)
 
 # generate empty body
-text = SubElement(root, 'text')
-body = SubElement(text, 'body')
-p = SubElement(body, 'p')
+root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)

@@ -1,1 +1,1 @@
-include *.py *.txt *.xsl
+include *.ini *.py *.txt *.xsl
