@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 from xml.dom import minidom
 
 __license__ = "MIT"
-__version__ = '1.3.2'
+__version__ = '1.3.3'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -91,6 +91,7 @@ def createTextstructure():
     p = SubElement(body, 'p')
     return text
 
+
 def createFileDesc(config):
     # creates a file description from config file
     fileDesc = Element('fileDesc')
@@ -110,7 +111,7 @@ def createFileDesc(config):
     else:
         publisher.text = config.get('Project', 'editor')
     idno = SubElement(publicationStmt, 'idno')
-    idno.set('type', 'URL')
+    idno.set('type', 'url')
     idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
         os.path.basename(args.filename))[0] + '.xml')
     date = SubElement(publicationStmt, 'date')
@@ -226,10 +227,9 @@ def createPlace(placestring):
 
 def createEdition(editionTitle, biblID):
     # creates a new bibliographic entry
+    editionType = 'print'
     if ('Edition' in config) and ('type' in config['Edition']):
         editionType = config.get('Edition', 'type')
-    if not editionType:
-        editionType = 'print'
     bibl = Element('bibl')
     bibl.text = editionTitle
     bibl.set('type', editionType)
