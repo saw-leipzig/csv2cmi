@@ -86,6 +86,7 @@ def isodate(datestring):
 
 
 def createTextstructure():
+    # creates an empty TEI text body
     text = Element('text')
     body = SubElement(text, 'body')
     p = SubElement(body, 'p')
@@ -282,8 +283,8 @@ with open(args.filename, 'rt') as letterTable:
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
         exit()
+    edition = ''
     if not('edition' in table.fieldnames):
-        edition = ''
         if ('Edition' in config) and config.get('Edition', 'title'):
             edition = config.get('Edition', 'title')
         else:
@@ -312,8 +313,9 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
 
-            # add persName
-            action.append(createCorrespondent('sender'))
+            # add persName or orgName
+            if letter['sender']:
+                action.append(createCorrespondent('sender'))
             # add placeName
             if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
                 action.append(createPlaceName('senderPlace'))
@@ -337,8 +339,9 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
 
-            # add persName
-            action.append(createCorrespondent('addressee'))
+            # add persName or orgName
+            if letter['addressee']:
+                action.append(createCorrespondent('addressee'))
             # add placeName
             if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
                 action.append(createPlaceName('addresseePlace'))
