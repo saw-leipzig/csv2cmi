@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 from xml.dom import minidom
 
 __license__ = "MIT"
-__version__ = '1.3.3'
+__version__ = '1.3.4'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -86,6 +86,7 @@ def isodate(datestring):
 
 
 def createTextstructure():
+    # creates an empty TEI text body
     text = Element('text')
     body = SubElement(text, 'body')
     p = SubElement(body, 'p')
@@ -123,7 +124,8 @@ def createFileDesc(config):
     return fileDesc
 
 
-def createPerson(namestring):
+def createCorrespondent(namestring):
+    # creates an element for a correspondent
     if letter[namestring]:
         if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
             if 'http://' not in str(letter[namestring + 'ID'].strip()):
@@ -141,23 +143,21 @@ def createPerson(namestring):
                     except urllib.error.HTTPError:
                         logging.error(
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        persName = SubElement(action, 'persName')
+                        correspondent = Element('persName')
                         authID = ''
                     except urllib.error.URLError as argh:
                         logging.error('Failed to reach VIAF')
-                        persName = SubElement(action, 'persName')
+                        correspondent = Element('persName')
                     else:
                         viafrdf_root = viafrdf.getroot()
-                        rdftype = viafrdf_root.find(
-                            './rdf:Description[2]/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                        if 'Organization' in rdftype:
-                            persName = SubElement(action, 'orgName')
-                        elif 'Person' in rdftype:
-                            persName = SubElement(action, 'persName')
+                        if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
+                            correspondent = Element('orgName')
+                        elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
+                            correspondent = Element('persName')
                         else:
                             logging.warning(
                                 '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
-                            persName = SubElement(action, 'persName')
+                            correspondent = Element('persName')
                             authID = ''
                 elif 'gnd' in authID:
                     try:
@@ -166,19 +166,19 @@ def createPerson(namestring):
                     except urllib.error.HTTPError:
                         logging.error(
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        persName = SubElement(action, 'persName')
+                        correspondent = Element('persName')
                         authID = ''
                     except urllib.error.URLError as argh:
                         logging.error('Failed to reach GND')
-                        persName = SubElement(action, 'persName')
+                        correspondent = Element('persName')
                     else:
                         gndrdf_root = gndrdf.getroot()
                         rdftype = gndrdf_root.find(
                             './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                         if 'Corporate' in rdftype:
-                            persName = SubElement(action, 'orgName')
+                            correspondent = Element('orgName')
                         else:
-                            persName = SubElement(action, 'persName')
+                            correspondent = Element('persName')
                         if 'UndifferentiatedPerson' in rdftype:
                             logging.warning(
                                 '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
@@ -186,50 +186,52 @@ def createPerson(namestring):
                 else:
                     logging.error(
                         'No proper authority record in line %s for %s', table.line_num, namestring)
-                    persName = SubElement(action, 'persName')
+                    correspondent = Element(action, 'persName')
                     authID = ''
             else:
-                persName = SubElement(action, 'persName')
+                correspondent = Element('persName')
             if authID:
-                persName.set('ref', authID)
+                correspondent.set('ref', authID)
         else:
-            persName = SubElement(action, 'persName')
+            correspondent = Element('persName')
         if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
-            persName.set('evidence', 'conjecture')
+            correspondent.set('evidence', 'conjecture')
             letter[namestring] = letter[namestring][1:-1]
             logging.info('Added @evidence for <persName> in line %s',
                          table.line_num)
-        persName.text = str(letter[namestring])
+        correspondent.text = str(letter[namestring])
+        return correspondent
 
 
-def createPlace(placestring):
-    # function for putting the place in <correspAction>
-    if letter[placestring]:
-        placeName = SubElement(action, 'placeName')
-        letter[placestring] = letter[placestring].strip()
-        if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
-            placeName.set('evidence', 'conjecture')
-            letter[placestring] = letter[placestring][1:-1]
-            logging.info('Added @evidence for <placeName> in line %s',
-                         table.line_num)
-        placeName.text = str(letter[placestring])
-        if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
-            letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
-            if 'http://www.geonames.org/' in letter[placestring + 'ID']:
-                placeName.set('ref', str(letter[placestring + 'ID']))
-            else:
-                logging.warning("no standardized %sID in line %s",
-                                placestring, table.line_num)
+def createPlaceName(placestring):
+    # creates a placeName element
+    placeName = Element('placeName')
+    letter[placestring] = letter[placestring].strip()
+    if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
+        placeName.set('evidence', 'conjecture')
+        letter[placestring] = letter[placestring][1:-1]
+        logging.info('Added @evidence for <placeName> in line %s',
+                     table.line_num)
+    placeName.text = str(letter[placestring])
+    if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
+        letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
+        if 'http://www.geonames.org/' in letter[placestring + 'ID']:
+            placeName.set('ref', str(letter[placestring + 'ID']))
         else:
-            logging.warning('ID for %s missing in line %s', letter[
-                placestring], table.line_num)
+            logging.warning("no standardized %sID in line %s",
+                            placestring, table.line_num)
+    else:
+        logging.warning('ID for %s missing in line %s', letter[
+            placestring], table.line_num)
+    return placeName
 
 
 def createEdition(editionTitle, biblID):
     # creates a new bibliographic entry
     editionType = 'print'
     if ('Edition' in config) and ('type' in config['Edition']):
-        editionType = config.get('Edition', 'type')
+        if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
+            editionType = config.get('Edition', 'type')
     bibl = Element('bibl')
     bibl.text = editionTitle
     bibl.set('type', editionType)
@@ -242,9 +244,7 @@ def getEditonID(editionTitle):
     for bibl in sourceDesc.findall('bibl'):
         if editionTitle == bibl.text:
             editionID = bibl.get('xml:id')
-    if not editionID:
-        editionID = createID('edition')
-        sourceDesc.append(createEdition(editionTitle, editionID))
+            break
     return editionID
 
 
@@ -273,6 +273,7 @@ global sourceDesc
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
+global table
 
 with open(args.filename, 'rt') as letterTable:
     table = csv.DictReader(letterTable)
@@ -280,8 +281,8 @@ with open(args.filename, 'rt') as letterTable:
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
         exit()
+    edition = ''
     if not('edition' in table.fieldnames):
-        edition = ''
         if ('Edition' in config) and config.get('Edition', 'title'):
             edition = config.get('Edition', 'title')
         else:
@@ -291,10 +292,14 @@ with open(args.filename, 'rt') as letterTable:
         entry = SubElement(profileDesc, 'correspDesc')
         # entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if 'edition' in table.fieldnames:
+        if ('edition' in table.fieldnames) and letter['edition']:
             edition = letter['edition'].strip()
+            editionID = getEditonID(edition)
+            if not editionID:
+                editionID = createID('edition')
+                sourceDesc.append(createEdition(edition, editionID))
         if edition:
-            entry.set('source', '#' + getEditonID(edition))
+            entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
                 logging.error("Key without edition in line %s", table.line_num)
@@ -310,16 +315,17 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
 
-            # add persName
-            createPerson('sender')
+            # add persName or orgName
+            if letter['sender']:
+                action.append(createCorrespondent('sender'))
             # add placeName
-            if 'senderPlace' in table.fieldnames:
-                createPlace('senderPlace')
+            if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
+                action.append(createPlaceName('senderPlace'))
             # add date
             if 'senderDate' in table.fieldnames:
                 if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
                     senderDate = SubElement(action, 'date')
-                    if (str(letter['senderDate'])[1] == '[') and (str(letter['senderDate'])[-1] == ']'):
+                    if (str(letter['senderDate'])[0] == '[') and (str(letter['senderDate'])[-1] == ']'):
                         letter['senderDate'] = letter['senderDate'][1:-1]
                         senderDate.set('cert', 'medium')
                         logging.info(
@@ -335,16 +341,17 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
 
-            # add persName
-            createPerson('addressee')
+            # add persName or orgName
+            if letter['addressee']:
+                action.append(createCorrespondent('addressee'))
             # add placeName
-            if 'addresseePlace' in table.fieldnames:
-                createPlace('addresseePlace')
+            if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
+                action.append(createPlaceName('addresseePlace'))
             # add date
             if 'addresseeDate' in table.fieldnames:
                 if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
                     addresseeDate = SubElement(action, 'date')
-                    if ('[' in str(letter['addresseeDate'])) and (']' in str(letter['addresseeDate'])):
+                    if (str(letter['addresseeDate'])[0] == '[') and (str(letter['addresseeDate'])[-1] == ']'):
                         letter['addresseeDate'] = letter['addresseeDate'][1:-1]
                         senderDate.set('cert', 'medium')
                         logging.info(
