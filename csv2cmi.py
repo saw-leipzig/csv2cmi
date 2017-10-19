@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 from xml.dom import minidom
 
 __license__ = "MIT"
-__version__ = '1.3.3'
+__version__ = '1.3.4'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -244,9 +244,7 @@ def getEditonID(editionTitle):
     for bibl in sourceDesc.findall('bibl'):
         if editionTitle == bibl.text:
             editionID = bibl.get('xml:id')
-    if not editionID:
-        editionID = createID('edition')
-        sourceDesc.append(createEdition(editionTitle, editionID))
+            break
     return editionID
 
 
@@ -294,10 +292,14 @@ with open(args.filename, 'rt') as letterTable:
         entry = SubElement(profileDesc, 'correspDesc')
         # entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if 'edition' in table.fieldnames:
+        if ('edition' in table.fieldnames) and letter['edition']:
             edition = letter['edition'].strip()
+            editionID = getEditonID(edition)
+            if not editionID:
+                editionID = createID('edition')
+                sourceDesc.append(createEdition(edition, editionID))
         if edition:
-            entry.set('source', '#' + getEditonID(edition))
+            entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
                 logging.error("Key without edition in line %s", table.line_num)
@@ -323,7 +325,7 @@ with open(args.filename, 'rt') as letterTable:
             if 'senderDate' in table.fieldnames:
                 if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
                     senderDate = SubElement(action, 'date')
-                    if (str(letter['senderDate'])[1] == '[') and (str(letter['senderDate'])[-1] == ']'):
+                    if (str(letter['senderDate'])[0] == '[') and (str(letter['senderDate'])[-1] == ']'):
                         letter['senderDate'] = letter['senderDate'][1:-1]
                         senderDate.set('cert', 'medium')
                         logging.info(
@@ -349,7 +351,7 @@ with open(args.filename, 'rt') as letterTable:
             if 'addresseeDate' in table.fieldnames:
                 if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
                     addresseeDate = SubElement(action, 'date')
-                    if ('[' in str(letter['addresseeDate'])) and (']' in str(letter['addresseeDate'])):
+                    if (str(letter['addresseeDate'])[0] == '[') and (str(letter['addresseeDate'])[-1] == ']'):
                         letter['addresseeDate'] = letter['addresseeDate'][1:-1]
                         senderDate.set('cert', 'medium')
                         logging.info(
