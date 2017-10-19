@@ -325,9 +325,9 @@ with open(args.filename, 'rt') as letterTable:
             if 'senderDate' in table.fieldnames:
                 if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
                     senderDate = SubElement(action, 'date')
-                    if (str(letter['senderDate'])[0] == '[') and (str(letter['senderDate'])[-1] == ']'):
-                        letter['senderDate'] = letter['senderDate'][1:-1]
+                    if letter['senderDate'].startswith('[') and letter['senderDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
+                        letter['senderDate'] = letter['senderDate'][1:-1]
                         logging.info(
                             'Added @cert for <date> in line %s', table.line_num)
                     senderDate.set('when', str(letter['senderDate']))
@@ -351,9 +351,9 @@ with open(args.filename, 'rt') as letterTable:
             if 'addresseeDate' in table.fieldnames:
                 if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
                     addresseeDate = SubElement(action, 'date')
-                    if (str(letter['addresseeDate'])[0] == '[') and (str(letter['addresseeDate'])[-1] == ']'):
-                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
+                    if letter['addresseeDate'].startswith('[') and letter['addresseeDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
+                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
                         logging.info(
                             'Added @cert for <date> in line %s', table.line_num)
                     senderDate.set('when', str(letter['addresseeDate']))
