@@ -256,6 +256,7 @@ def createID(id_prefix):
         8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
     return fullID
 
+
 # building cmi
 # generating root element
 root = Element('TEI')
