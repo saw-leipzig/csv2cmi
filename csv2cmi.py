@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, tostring, Elemen
 from xml.dom import minidom
 
 __license__ = "MIT"
-__version__ = '1.3.4'
+__version__ = '1.4.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -32,6 +32,8 @@ rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
 parser = argparse.ArgumentParser(
     description='convert tables of letters to CMI')
 parser.add_argument('filename', help='input file (.csv)')
+parser.add_argument('-a', '--all',
+                    help='include unedited letters', action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--version', action='version',
@@ -290,15 +292,17 @@ with open(args.filename, 'rt') as letterTable:
             logging.warning('No edition stated. Please set manually.')
         sourceDesc.append(createEdition(edition, createID('edition')))
     for letter in table:
+        if ('edition' in table.fieldnames):
+            edition = letter['edition'].strip()
+            editionID = getEditonID(edition)
+            if not(edition or args.all):
+                continue
+            if edition and not editionID:
+                editionID = createID('edition')
+                sourceDesc.append(createEdition(edition, editionID))
         entry = SubElement(profileDesc, 'correspDesc')
         # entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if ('edition' in table.fieldnames) and letter['edition']:
-            edition = letter['edition'].strip()
-            editionID = getEditonID(edition)
-            if not editionID:
-                editionID = createID('edition')
-                sourceDesc.append(createEdition(edition, editionID))
         if edition:
             entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
