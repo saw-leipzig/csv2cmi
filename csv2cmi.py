@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2017 Klaus Rettinghaus
+# Copyright (c) 2015-2018 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -15,8 +15,7 @@ import os
 import random
 import string
 import urllib.request
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
-from xml.dom import minidom
+from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
 __version__ = '1.4.0'
@@ -91,7 +90,7 @@ def createTextstructure():
     # creates an empty TEI text body
     text = Element('text')
     body = SubElement(text, 'body')
-    p = SubElement(body, 'p')
+    SubElement(body, 'p')
     return text
 
 
