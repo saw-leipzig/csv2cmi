@@ -46,7 +46,7 @@ if args.verbose:
 # simple test for file
 try:
     open(args.filename, 'rt').close()
-except:
+except FileNotFoundError:
     logging.error('File not found')
     exit()
 
@@ -146,7 +146,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach VIAF')
                         correspondent = Element('persName')
                     else:
@@ -169,7 +169,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach GND')
                         correspondent = Element('persName')
                     else:
