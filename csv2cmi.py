@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2017 Klaus Rettinghaus
+# Copyright (c) 2015-2018 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -15,11 +15,10 @@ import os
 import random
 import string
 import urllib.request
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
-from xml.dom import minidom
+from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.3.4'
+__version__ = '1.4.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -32,6 +31,8 @@ rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
 parser = argparse.ArgumentParser(
     description='convert tables of letters to CMI')
 parser.add_argument('filename', help='input file (.csv)')
+parser.add_argument('-a', '--all',
+                    help='include unedited letters', action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--version', action='version',
@@ -45,7 +46,7 @@ if args.verbose:
 # simple test for file
 try:
     open(args.filename, 'rt').close()
-except:
+except FileNotFoundError:
     logging.error('File not found')
     exit()
 
@@ -89,7 +90,7 @@ def createTextstructure():
     # creates an empty TEI text body
     text = Element('text')
     body = SubElement(text, 'body')
-    p = SubElement(body, 'p')
+    SubElement(body, 'p')
     return text
 
 
@@ -145,7 +146,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach VIAF')
                         correspondent = Element('persName')
                     else:
@@ -168,7 +169,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach GND')
                         correspondent = Element('persName')
                     else:
@@ -256,6 +257,7 @@ def createID(id_prefix):
         8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
     return fullID
 
+
 # building cmi
 # generating root element
 root = Element('TEI')
@@ -289,15 +291,17 @@ with open(args.filename, 'rt') as letterTable:
             logging.warning('No edition stated. Please set manually.')
         sourceDesc.append(createEdition(edition, createID('edition')))
     for letter in table:
+        if ('edition' in table.fieldnames):
+            edition = letter['edition'].strip()
+            editionID = getEditonID(edition)
+            if not(edition or args.all):
+                continue
+            if edition and not editionID:
+                editionID = createID('edition')
+                sourceDesc.append(createEdition(edition, editionID))
         entry = SubElement(profileDesc, 'correspDesc')
         # entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if ('edition' in table.fieldnames) and letter['edition']:
-            edition = letter['edition'].strip()
-            editionID = getEditonID(edition)
-            if not editionID:
-                editionID = createID('edition')
-                sourceDesc.append(createEdition(edition, editionID))
         if edition:
             entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
@@ -325,9 +329,9 @@ with open(args.filename, 'rt') as letterTable:
             if 'senderDate' in table.fieldnames:
                 if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
                     senderDate = SubElement(action, 'date')
-                    if (str(letter['senderDate'])[0] == '[') and (str(letter['senderDate'])[-1] == ']'):
-                        letter['senderDate'] = letter['senderDate'][1:-1]
+                    if letter['senderDate'].startswith('[') and letter['senderDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
+                        letter['senderDate'] = letter['senderDate'][1:-1]
                         logging.info(
                             'Added @cert for <date> in line %s', table.line_num)
                     senderDate.set('when', str(letter['senderDate']))
@@ -351,9 +355,9 @@ with open(args.filename, 'rt') as letterTable:
             if 'addresseeDate' in table.fieldnames:
                 if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
                     addresseeDate = SubElement(action, 'date')
-                    if (str(letter['addresseeDate'])[0] == '[') and (str(letter['addresseeDate'])[-1] == ']'):
-                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
+                    if letter['addresseeDate'].startswith('[') and letter['addresseeDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
+                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
                         logging.info(
                             'Added @cert for <date> in line %s', table.line_num)
                     senderDate.set('when', str(letter['addresseeDate']))

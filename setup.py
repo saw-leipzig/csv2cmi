@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from distutils.core import setup
 
@@ -8,7 +8,6 @@ filename = package_name + '.py'
 
 def get_version():
     import ast
-
     with open(filename) as input_file:
         for line in input_file:
             if line.startswith('__version__'):
@@ -26,10 +25,10 @@ def get_long_description():
 setup(
     name=package_name,
     version=get_version(),
-    author='rettinghaus',
-    description='convert a table of letters into CMI format',
-    url='https://github.com/saw-leipzig/csv2cmi',
+    description='converts a table of letters into CMI format',
     long_description=get_long_description(),
+    author='Klaus Rettinghaus',
+    url='https://github.com/saw-leipzig/csv2cmi',
     py_modules=[package_name],
     license='License :: OSI Approved :: MIT License',
 )
