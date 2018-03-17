@@ -54,7 +54,7 @@ except FileNotFoundError:
 try:
     urllib.request.urlopen('http://193.175.100.220', timeout=1)
     connection = True
-except:
+except urllib.error.URLError:
     logging.error('No internet connection')
     connection = False
 
