@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2017 Klaus Rettinghaus
+# Copyright (c) 2015-2018 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -15,8 +15,7 @@ import os
 import random
 import string
 import urllib.request
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring, ElementTree
-from xml.dom import minidom
+from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
 __version__ = '1.4.0'
@@ -47,7 +46,7 @@ if args.verbose:
 # simple test for file
 try:
     open(args.filename, 'rt').close()
-except:
+except FileNotFoundError:
     logging.error('File not found')
     exit()
 
@@ -55,7 +54,7 @@ except:
 try:
     urllib.request.urlopen('http://193.175.100.220', timeout=1)
     connection = True
-except:
+except urllib.error.URLError:
     logging.error('No internet connection')
     connection = False
 
@@ -91,7 +90,7 @@ def createTextstructure():
     # creates an empty TEI text body
     text = Element('text')
     body = SubElement(text, 'body')
-    p = SubElement(body, 'p')
+    SubElement(body, 'p')
     return text
 
 
@@ -147,7 +146,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach VIAF')
                         correspondent = Element('persName')
                     else:
@@ -170,7 +169,7 @@ def createCorrespondent(namestring):
                             'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
                         authID = ''
-                    except urllib.error.URLError as argh:
+                    except urllib.error.URLError:
                         logging.error('Failed to reach GND')
                         correspondent = Element('persName')
                     else:
