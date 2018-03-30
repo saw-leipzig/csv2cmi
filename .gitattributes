@@ -1,0 +1,5 @@
+.gitattributes export-ignore
+.gitignore export-ignore
+*.csv export-ignore
+*.xml export-ignore
+example export-ignore
