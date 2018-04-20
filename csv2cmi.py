@@ -18,7 +18,7 @@ import urllib.request
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -33,6 +33,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument('filename', help='input file (.csv)')
 parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
+parser.add_argument('--line-numbers',
+                    help='add line numbers', action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--version', action='version',
@@ -300,7 +302,8 @@ with open(args.filename, 'rt') as letterTable:
                 editionID = createID('edition')
                 sourceDesc.append(createEdition(edition, editionID))
         entry = SubElement(profileDesc, 'correspDesc')
-        # entry.set('n', str(table.line_num))
+        if (args.line_numbers):
+            entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
         if edition:
             entry.set('source', '#' + editionID)
