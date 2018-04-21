@@ -53,12 +53,7 @@ except FileNotFoundError:
     exit()
 
 # check internet connection via DNB
-try:
-    urllib.request.urlopen('http://193.175.100.220', timeout=1)
-    connection = True
-except urllib.error.URLError:
-    logging.error('No internet connection')
-    connection = False
+checkConnectivity()
 
 # read config file
 config = configparser.ConfigParser()
@@ -86,6 +81,15 @@ def isodate(datestring):
             return True
     else:
         return True
+
+
+def checkConnectivity(self):
+    try:
+        urllib.request.urlopen('http://193.175.100.220', timeout=1)
+        connection = True
+    except urllib.error.URLError:
+        logging.error('No internet connection')
+        connection = False
 
 
 def createTextstructure():
