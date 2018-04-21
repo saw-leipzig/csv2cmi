@@ -45,24 +45,6 @@ args = parser.parse_args()
 if args.verbose:
     logs.setLevel('INFO')
 
-# simple test for file
-try:
-    open(args.filename, 'rt').close()
-except FileNotFoundError:
-    logging.error('File not found')
-    exit()
-
-# check internet connection via DNB
-checkConnectivity()
-
-# read config file
-config = configparser.ConfigParser()
-try:
-    config.read_file(open('csv2cmi.ini'))
-except:
-    logging.error('No configuration file found')
-    exit()
-
 
 def isodate(datestring):
     try:
@@ -83,13 +65,13 @@ def isodate(datestring):
         return True
 
 
-def checkConnectivity(self):
+def checkConnectivity():
     try:
         urllib.request.urlopen('http://193.175.100.220', timeout=1)
-        connection = True
+        return True
     except urllib.error.URLError:
         logging.error('No internet connection')
-        connection = False
+        return False
 
 
 def createTextstructure():
@@ -262,6 +244,25 @@ def createID(id_prefix):
     fullID = id_prefix.strip() + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
         8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
     return fullID
+
+
+# simple test for file
+try:
+    open(args.filename, 'rt').close()
+except FileNotFoundError:
+    logging.error('File not found')
+    exit()
+
+# check internet connection via DNB
+connection = checkConnectivity()
+
+# read config file
+config = configparser.ConfigParser()
+try:
+    config.read_file(open('csv2cmi.ini'))
+except:
+    logging.error('No configuration file found')
+    exit()
 
 
 # building cmi
