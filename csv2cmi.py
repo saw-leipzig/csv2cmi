@@ -8,17 +8,17 @@
 # needs Python3
 import argparse
 import configparser
-import csv
-import datetime
 import logging
 import os
 import random
 import string
 import urllib.request
+from csv import DictReader
+from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -33,6 +33,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument('filename', help='input file (.csv)')
 parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
+parser.add_argument('--line-numbers',
+                    help='add line numbers', action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--version', action='version',
@@ -43,39 +45,16 @@ args = parser.parse_args()
 if args.verbose:
     logs.setLevel('INFO')
 
-# simple test for file
-try:
-    open(args.filename, 'rt').close()
-except FileNotFoundError:
-    logging.error('File not found')
-    exit()
-
-# check internet connection via DNB
-try:
-    urllib.request.urlopen('http://193.175.100.220', timeout=1)
-    connection = True
-except urllib.error.URLError:
-    logging.error('No internet connection')
-    connection = False
-
-# read config file
-config = configparser.ConfigParser()
-try:
-    config.read_file(open('csv2cmi.ini'))
-except:
-    logging.error('No configuration file found')
-    exit()
-
 
 def isodate(datestring):
     try:
-        datetime.datetime.strptime(datestring, '%Y-%m-%d')
-    except:
+        datetime.strptime(datestring, '%Y-%m-%d')
+    except ValueError:
         try:
-            datetime.datetime.strptime(datestring, '%Y-%m')
-        except:
+            datetime.strptime(datestring, '%Y-%m')
+        except ValueError:
             try:
-                datetime.datetime.strptime(datestring, '%Y')
+                datetime.strptime(datestring, '%Y')
             except ValueError:
                 return False
             else:
@@ -84,6 +63,15 @@ def isodate(datestring):
             return True
     else:
         return True
+
+
+def checkConnectivity():
+    try:
+        urllib.request.urlopen('http://193.175.100.220', timeout=1)
+        return True
+    except urllib.error.URLError:
+        logging.error('No internet connection')
+        return False
 
 
 def createTextstructure():
@@ -114,10 +102,9 @@ def createFileDesc(config):
         publisher.text = config.get('Project', 'editor')
     idno = SubElement(publicationStmt, 'idno')
     idno.set('type', 'url')
-    idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
-        os.path.basename(args.filename))[0] + '.xml')
+    idno.text = config.get('Project', 'fileURL')
     date = SubElement(publicationStmt, 'date')
-    date.set('when', str(datetime.datetime.now().isoformat()))
+    date.set('when', str(datetime.now().isoformat()))
     availability = SubElement(publicationStmt, 'availability')
     licence = SubElement(availability, 'licence')
     licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
@@ -258,6 +245,27 @@ def createID(id_prefix):
     return fullID
 
 
+# simple test for file
+try:
+    open(args.filename, 'rt').close()
+except FileNotFoundError:
+    logging.error('File not found')
+    exit()
+
+# check internet connection via DNB
+connection = checkConnectivity()
+
+# read config file
+config = configparser.ConfigParser()
+# set default values
+config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
+    os.path.basename(args.filename))[0] + '.xml'}
+try:
+    config.read_file(open('csv2cmi.ini'))
+except IOError:
+    logging.error('No configuration file found')
+
+
 # building cmi
 # generating root element
 root = Element('TEI')
@@ -278,16 +286,16 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 global table
 
 with open(args.filename, 'rt') as letterTable:
-    table = csv.DictReader(letterTable)
+    table = DictReader(letterTable)
     logging.debug('Recognized columns: %s', table.fieldnames)
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
         exit()
     edition = ''
     if not('edition' in table.fieldnames):
-        if ('Edition' in config) and config.get('Edition', 'title'):
+        try:
             edition = config.get('Edition', 'title')
-        else:
+        except configparser.Error:
             logging.warning('No edition stated. Please set manually.')
         sourceDesc.append(createEdition(edition, createID('edition')))
     for letter in table:
@@ -300,7 +308,8 @@ with open(args.filename, 'rt') as letterTable:
                 editionID = createID('edition')
                 sourceDesc.append(createEdition(edition, editionID))
         entry = SubElement(profileDesc, 'correspDesc')
-        # entry.set('n', str(table.line_num))
+        if (args.line_numbers):
+            entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
         if edition:
             entry.set('source', '#' + editionID)
