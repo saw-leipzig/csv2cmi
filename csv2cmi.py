@@ -261,7 +261,7 @@ config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
     os.path.basename(args.filename))[0] + '.xml'}
 try:
     config.read_file(open('csv2cmi.ini'))
-except:
+except IOError:
     logging.error('No configuration file found')
 
 
