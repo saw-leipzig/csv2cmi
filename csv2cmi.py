@@ -49,10 +49,10 @@ if args.verbose:
 def isodate(datestring):
     try:
         datetime.datetime.strptime(datestring, '%Y-%m-%d')
-    except:
+    except ValueError:
         try:
             datetime.datetime.strptime(datestring, '%Y-%m')
-        except:
+        except ValueError:
             try:
                 datetime.datetime.strptime(datestring, '%Y')
             except ValueError:
