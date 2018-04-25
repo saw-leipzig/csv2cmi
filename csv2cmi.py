@@ -102,8 +102,7 @@ def createFileDesc(config):
         publisher.text = config.get('Project', 'editor')
     idno = SubElement(publicationStmt, 'idno')
     idno.set('type', 'url')
-    idno.text = config.get('Project', 'fileURL', fallback=os.path.splitext(
-        os.path.basename(args.filename))[0] + '.xml')
+    idno.text = config.get('Project', 'fileURL')
     date = SubElement(publicationStmt, 'date')
     date.set('when', str(datetime.datetime.now().isoformat()))
     availability = SubElement(publicationStmt, 'availability')
@@ -258,11 +257,12 @@ connection = checkConnectivity()
 
 # read config file
 config = configparser.ConfigParser()
+config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
+    os.path.basename(args.filename))[0] + '.xml'}
 try:
     config.read_file(open('csv2cmi.ini'))
 except:
     logging.error('No configuration file found')
-    exit()
 
 
 # building cmi
@@ -292,9 +292,9 @@ with open(args.filename, 'rt') as letterTable:
         exit()
     edition = ''
     if not('edition' in table.fieldnames):
-        if ('Edition' in config) and config.get('Edition', 'title'):
+        try:
             edition = config.get('Edition', 'title')
-        else:
+        except configparser.Error:
             logging.warning('No edition stated. Please set manually.')
         sourceDesc.append(createEdition(edition, createID('edition')))
     for letter in table:
