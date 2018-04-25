@@ -8,13 +8,13 @@
 # needs Python3
 import argparse
 import configparser
-import csv
-import datetime
 import logging
 import os
 import random
 import string
 import urllib.request
+from csv import DictReader
+from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
@@ -48,13 +48,13 @@ if args.verbose:
 
 def isodate(datestring):
     try:
-        datetime.datetime.strptime(datestring, '%Y-%m-%d')
+        datetime.strptime(datestring, '%Y-%m-%d')
     except ValueError:
         try:
-            datetime.datetime.strptime(datestring, '%Y-%m')
+            datetime.strptime(datestring, '%Y-%m')
         except ValueError:
             try:
-                datetime.datetime.strptime(datestring, '%Y')
+                datetime.strptime(datestring, '%Y')
             except ValueError:
                 return False
             else:
@@ -104,7 +104,7 @@ def createFileDesc(config):
     idno.set('type', 'url')
     idno.text = config.get('Project', 'fileURL')
     date = SubElement(publicationStmt, 'date')
-    date.set('when', str(datetime.datetime.now().isoformat()))
+    date.set('when', str(datetime.now().isoformat()))
     availability = SubElement(publicationStmt, 'availability')
     licence = SubElement(availability, 'licence')
     licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
@@ -257,6 +257,7 @@ connection = checkConnectivity()
 
 # read config file
 config = configparser.ConfigParser()
+# set default values
 config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
     os.path.basename(args.filename))[0] + '.xml'}
 try:
@@ -285,7 +286,7 @@ profileDesc = SubElement(teiHeader, 'profileDesc')
 global table
 
 with open(args.filename, 'rt') as letterTable:
-    table = csv.DictReader(letterTable)
+    table = DictReader(letterTable)
     logging.debug('Recognized columns: %s', table.fieldnames)
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
