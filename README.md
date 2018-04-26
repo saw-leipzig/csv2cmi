@@ -22,7 +22,8 @@ You may provide additional information:
 
 If your letters are printed across different editions, add an "edition" column and put in there the bibliographic records. Numbering of letters should be stated in a additional column named "key". Alternatively you may enter in this column a link to the edited letter on the web.
 If a date is put within brackets it sets `@cert` to `"medium"`, for `<persName>`, `<orgName>`, and `<placeName>`  alike `@evidence` is set.  
-By default only edited letters (i.e. letters with a given edition) are transferred to CMI output. If you want to convert your complete catalogue, use the `-a` option.
+By default only edited letters (i.e. letters with a given edition) are transferred to CMI output. If you want to convert your complete catalogue, use the `-a` option.  
+With the `--line-numbers` option activated, CSV2CMI will store the line number of each letter in the `n` attribute of `<correspDesc>`.
 
 For sender and addressee IDs from the [GND](http://www.dnb.de/gnd) and the [VIAF](http://www.viaf.org/) are supported.
 
