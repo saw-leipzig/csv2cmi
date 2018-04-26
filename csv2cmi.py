@@ -46,23 +46,20 @@ if args.verbose:
     logs.setLevel('INFO')
 
 
-def isodate(datestring):
+def checkIsodate(datestring):
     try:
         datetime.strptime(datestring, '%Y-%m-%d')
+        return True
     except ValueError:
         try:
             datetime.strptime(datestring, '%Y-%m')
+            return True
         except ValueError:
             try:
                 datetime.strptime(datestring, '%Y')
-            except ValueError:
-                return False
-            else:
                 return True
-        else:
-            return True
-    else:
-        return True
+            except ValueError:
+                return True
 
 
 def checkConnectivity():
@@ -336,7 +333,7 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName('senderPlace'))
             # add date
             if 'senderDate' in table.fieldnames:
-                if isodate(letter['senderDate']) or isodate(letter['senderDate'][1:-1]):
+                if checkIsodate(letter['senderDate']) or checkIsodate(letter['senderDate'][1:-1]):
                     senderDate = SubElement(action, 'date')
                     if letter['senderDate'].startswith('[') and letter['senderDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
@@ -362,7 +359,7 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName('addresseePlace'))
             # add date
             if 'addresseeDate' in table.fieldnames:
-                if isodate(letter['addresseeDate']) or isodate(letter['addresseeDate'][1:-1]):
+                if checkIsodate(letter['addresseeDate']) or checkIsodate(letter['addresseeDate'][1:-1]):
                     addresseeDate = SubElement(action, 'date')
                     if letter['addresseeDate'].startswith('[') and letter['addresseeDate'].endswith(']'):
                         senderDate.set('cert', 'medium')
