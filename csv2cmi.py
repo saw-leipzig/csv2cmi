@@ -59,7 +59,7 @@ def checkIsodate(datestring):
                 datetime.strptime(datestring, '%Y')
                 return True
             except ValueError:
-                return True
+                return False
 
 
 def checkConnectivity():
