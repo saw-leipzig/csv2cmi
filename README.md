@@ -3,7 +3,7 @@
 ## About
 
 CSV2CMI is a little program to transform a table of letters (given as .csv) into the [CMI format](https://github.com/TEI-Correspondence-SIG/CMIF).
-The CMI format is the underlying data format for the web service *[correspSearch](http://correspsearch.bbaw.de/)* which facilitates searching across diverse distributed letter repositories.
+The CMI format is the underlying data format for the web service *[correspSearch](https://correspsearch.net)* which facilitates searching across diverse distributed letter repositories.
 
 It is mainly intended for printed (print only) editions and catalogues of letters.
 
