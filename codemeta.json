@@ -1,0 +1,19 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "identifier": "CSV2CMI",
+  "name": "CSV2CMI",
+  "description": "converts a table of letters into CMI format",
+  "softwareVersion": "1.5.0",
+  "license": "OSI Approved :: MIT License"
+  "programmingLanguage": "Python :: 3"
+  "maintainer": "https://orcid.org/0000-0003-1898-2543"
+  "datePublished": "2015-12-04",
+  "codeRepository": "https://github.com/saw-leipzig/csv2cmi"
+  "author": [{
+    "@id": "https://orcid.org/0000-0003-1898-2543"
+    "@type": "Person",
+    "givenName": "Klaus",
+    "familyName": "Rettinghaus",
+  }],
+}
