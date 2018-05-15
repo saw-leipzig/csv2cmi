@@ -280,9 +280,9 @@ global sourceDesc
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
-global table
 
 with open(args.filename, 'rt') as letterTable:
+    global table
     table = DictReader(letterTable)
     logging.debug('Recognized columns: %s', table.fieldnames)
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
