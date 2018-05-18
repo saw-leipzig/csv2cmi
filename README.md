@@ -1,4 +1,6 @@
 # CSV2CMI
+[![DOI](https://zenodo.org/badge/44825994.svg)](https://zenodo.org/badge/latestdoi/44825994)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## About
 
