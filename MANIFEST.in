@@ -1,1 +1,1 @@
-include *.ini *.py *.txt *.xsl
+include *.ini *.md *.py *.txt *.xsl codemeta.json

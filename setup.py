@@ -28,6 +28,7 @@ setup(
     description='converts a table of letters into CMI format',
     long_description=get_long_description(),
     author='Klaus Rettinghaus',
+    author_email='rettinghaus@bach-leipzig.de',
     url='https://github.com/saw-leipzig/csv2cmi',
     py_modules=[package_name],
     license='License :: OSI Approved :: MIT License',
