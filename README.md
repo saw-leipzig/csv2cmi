@@ -1,4 +1,7 @@
 # CSV2CMI
+[![DOI](https://zenodo.org/badge/44825994.svg)](https://zenodo.org/badge/latestdoi/44825994)
+![GitHub release](https://img.shields.io/github/release/saw-leipzig/csv2cmi.svg)
+![license](https://img.shields.io/github/license/saw-leipzig/csv2cmi.svg)
 
 ## About
 
