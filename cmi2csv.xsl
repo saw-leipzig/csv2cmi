@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--      * cmi2csv *      -->
-<!--         2.1.1         -->
+<!--         2.2.0         -->
 <!--   * programmed by *   -->
 <!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
@@ -33,6 +33,8 @@
     <xsl:text>"edition"</xsl:text>
     <xsl:value-of select="$sep"/>
     <xsl:text>"key"</xsl:text>
+    <xsl:value-of select="$sep"/>
+    <xsl:text>"notes"</xsl:text>
     <xsl:value-of select="'&#10;'"/>
     <xsl:apply-templates/>
   </xsl:template>
@@ -71,7 +73,37 @@
         <xsl:value-of select="@ref"/>
       </xsl:when>
     </xsl:choose>
+    <xsl:value-of select="$sep"/>
+    <xsl:apply-templates select="tei:note"/>
     <xsl:value-of select="'&#10;'"/>
+  </xsl:template>
+  <xsl:template match="tei:date">
+    <xsl:value-of select="'&quot;'"/>
+    <xsl:choose>
+      <xsl:when test="@when">
+        <xsl:value-of select="@when"/>
+        <xsl:if test="@cert or @evidence">
+          <xsl:text>?</xsl:text>
+        </xsl:if>
+      </xsl:when>
+      <xsl:when test="@from or @to">
+        <xsl:choose>
+          <xsl:when test="@cert or @evidence">
+            <xsl:value-of select="concat(@from,'?/',@to,'?')"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="concat(@from,'/',@to)"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise/>
+    </xsl:choose>
+    <xsl:value-of select="'&quot;'"/>
+  </xsl:template>
+  <xsl:template match="tei:note">
+    <xsl:value-of select="'&quot;'"/>
+    <xsl:value-of select="text()"/>
+    <xsl:value-of select="'&quot;'"/>
   </xsl:template>
   <xsl:template match="tei:correspAction">
     <xsl:value-of select="concat('&quot;',normalize-space(tei:persName),'&quot;')"/>
@@ -82,14 +114,6 @@
     <xsl:value-of select="$sep"/>
     <xsl:value-of select="concat('&quot;',tei:placeName/@ref,'&quot;')"/>
     <xsl:value-of select="$sep"/>
-    <xsl:if test="tei:date/@when">
-      <xsl:if test="tei:date/@cert">
-        <xsl:text>[</xsl:text>
-      </xsl:if>
-      <xsl:value-of select="concat('&quot;',tei:date/@when,'&quot;')"/>
-      <xsl:if test="tei:date/@cert">
-        <xsl:text>]</xsl:text>
-      </xsl:if>
-    </xsl:if>
+    <xsl:apply-templates select="tei:date[1]"/>
   </xsl:template>
 </xsl:stylesheet>
