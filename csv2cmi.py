@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.5.0'
+__version__ = '1.5.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -320,7 +320,7 @@ with open(args.filename, 'rt') as letterTable:
                     entry.set('key', str(letter['key']).strip())
 
         # sender info block
-        if (letter['sender']) or (('senderPlace' in table.fieldnames) and (letter['senderPlace'])) or (letter['senderDate']):
+        if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
             action = SubElement(entry, 'correspAction')
             action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
@@ -344,9 +344,11 @@ with open(args.filename, 'rt') as letterTable:
                 else:
                     logging.warning(
                         'senderDate in line %s not set (no ISO)', table.line_num)
+        else:
+            logging.info('no information on sender in line %s', table.line_num)
 
         # addressee info block
-        if letter['addressee'] or 'addresseePlace' in table.fieldnames or (('addresseeDate') in table.fieldnames and (letter['addresseeDate'])):
+        if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
             action = SubElement(entry, 'correspAction')
             action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
@@ -370,6 +372,8 @@ with open(args.filename, 'rt') as letterTable:
                 else:
                     logging.warning(
                         'addresseeDate in line %s not set (no ISO)', table.line_num)
+        else:
+            logging.info('no information on addressee in line %s', table.line_num)
 
 # generate empty body
 root.append(createTextstructure())
