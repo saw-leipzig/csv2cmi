@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.5.1'
+__version__ = '1.5.2'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -304,7 +304,7 @@ with open(args.filename, 'rt') as letterTable:
             if edition and not editionID:
                 editionID = createID('edition')
                 sourceDesc.append(createEdition(edition, editionID))
-        entry = SubElement(profileDesc, 'correspDesc')
+        entry = Element('correspDesc')
         if (args.line_numbers):
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
@@ -373,7 +373,10 @@ with open(args.filename, 'rt') as letterTable:
                     logging.warning(
                         'addresseeDate in line %s not set (no ISO)', table.line_num)
         else:
-            logging.info('no information on addressee in line %s', table.line_num)
+            logging.info('no information on addressee in line %s',
+                         table.line_num)
+        if entry.find('*'):
+            profileDesc.append(entry)
 
 # generate empty body
 root.append(createTextstructure())
