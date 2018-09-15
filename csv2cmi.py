@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.5.2'
+__version__ = '1.6.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -167,6 +167,30 @@ def createCorrespondent(namestring):
                         if 'UndifferentiatedPerson' in rdftype:
                             logging.warning(
                                 '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
+                            authID = ''
+                elif 'loc' in authID:
+                    logging.error('LOC erkannt!')
+                    try:
+                        locrdf = ElementTree(
+                            file=urllib.request.urlopen(authID + '.rdf'))
+                    except urllib.error.HTTPError:
+                        logging.error(
+                            'Authority file not found for %sID in line %s', namestring, table.line_num)
+                        correspondent = Element('persName')
+                        authID = ''
+                    except urllib.error.URLError:
+                        logging.error('Failed to reach LOC')
+                        correspondent = Element('persName')
+                    else:
+                        locrdf_root = locrdf.getroot()
+                        if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
+                            correspondent = Element('orgName')
+                        elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
+                            correspondent = Element('persName')
+                        else:
+                            logging.warning(
+                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                            correspondent = Element('persName')
                             authID = ''
                 else:
                     logging.error(
