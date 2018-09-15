@@ -169,7 +169,6 @@ def createCorrespondent(namestring):
                                 '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
                             authID = ''
                 elif 'loc' in authID:
-                    logging.error('LOC erkannt!')
                     try:
                         locrdf = ElementTree(
                             file=urllib.request.urlopen(authID + '.rdf'))
@@ -329,7 +328,7 @@ with open(args.filename, 'rt') as letterTable:
                 editionID = createID('edition')
                 sourceDesc.append(createEdition(edition, editionID))
         entry = Element('correspDesc')
-        if (args.line_numbers):
+        if args.line_numbers:
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
         if edition:
