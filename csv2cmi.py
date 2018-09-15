@@ -213,6 +213,19 @@ def createCorrespondent(namestring):
         return correspondent
 
 
+def createDate(dateString):
+    normalized_date = dateString.translate(
+        dateString.maketrans('', '', '[]()?~'))
+    if checkIsodate(normalized_date):
+        date = Element('date')
+        if normalized_date != dateString:
+            date.set('cert', 'medium')
+            logging.info(
+                'Added @cert for <date> in line %s', table.line_num)
+        date.set('when', str(normalized_date))
+        return date
+
+
 def createPlaceName(placestring):
     # creates a placeName element
     placeName = Element('placeName')
@@ -357,18 +370,12 @@ with open(args.filename, 'rt') as letterTable:
             if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
                 action.append(createPlaceName('senderPlace'))
             # add date
-            if 'senderDate' in table.fieldnames:
-                if checkIsodate(letter['senderDate']) or checkIsodate(letter['senderDate'][1:-1]):
-                    senderDate = SubElement(action, 'date')
-                    if letter['senderDate'].startswith('[') and letter['senderDate'].endswith(']'):
-                        senderDate.set('cert', 'medium')
-                        letter['senderDate'] = letter['senderDate'][1:-1]
-                        logging.info(
-                            'Added @cert for <date> in line %s', table.line_num)
-                    senderDate.set('when', str(letter['senderDate']))
-                else:
+            if 'senderDate' in table.fieldnames and letter['senderDate']:
+                try:
+                    action.append(createDate(letter['senderDate']))
+                except TypeError:
                     logging.warning(
-                        'senderDate in line %s not set (no ISO)', table.line_num)
+                        'Could not parse senderDate in line %s', table.line_num)
         else:
             logging.info('no information on sender in line %s', table.line_num)
 
@@ -385,18 +392,12 @@ with open(args.filename, 'rt') as letterTable:
             if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
                 action.append(createPlaceName('addresseePlace'))
             # add date
-            if 'addresseeDate' in table.fieldnames:
-                if checkIsodate(letter['addresseeDate']) or checkIsodate(letter['addresseeDate'][1:-1]):
-                    addresseeDate = SubElement(action, 'date')
-                    if letter['addresseeDate'].startswith('[') and letter['addresseeDate'].endswith(']'):
-                        senderDate.set('cert', 'medium')
-                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
-                        logging.info(
-                            'Added @cert for <date> in line %s', table.line_num)
-                    senderDate.set('when', str(letter['addresseeDate']))
-                else:
+            if 'addresseeDate' in table.fieldnames and letter['addresseeDate']:
+                try:
+                    action.append(createDate(letter['addresseeDate']))
+                except TypeError:
                     logging.warning(
-                        'addresseeDate in line %s not set (no ISO)', table.line_num)
+                        'Could not parse addresseeDate in line %s', table.line_num)
         else:
             logging.info('no information on addressee in line %s',
                          table.line_num)
