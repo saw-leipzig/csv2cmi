@@ -33,10 +33,12 @@ parser = argparse.ArgumentParser(
 parser.add_argument('filename', help='input file (.csv)')
 parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
-parser.add_argument('--line-numbers',
-                    help='add line numbers', action='store_true')
+parser.add_argument('-n', '--notes', help='transfer notes',
+                    action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
+parser.add_argument('--line-numbers',
+                    help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
 args = parser.parse_args()
@@ -398,6 +400,11 @@ with open(args.filename, 'rt') as letterTable:
         else:
             logging.info('no information on addressee in line %s',
                          table.line_num)
+        if args.notes:
+            if ('note' in table.fieldnames) and letter['note']:
+                note = SubElement(entry, 'note')
+                note.set('xml:id', createID('note'))
+                note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
 
