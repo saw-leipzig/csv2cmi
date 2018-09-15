@@ -16,6 +16,7 @@ import urllib.request
 from csv import DictReader
 from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
+import edtf
 
 __license__ = "MIT"
 __version__ = '1.5.2'
@@ -44,22 +45,6 @@ args = parser.parse_args()
 # set verbosity
 if args.verbose:
     logs.setLevel('INFO')
-
-
-def checkIsodate(datestring):
-    try:
-        datetime.strptime(datestring, '%Y-%m-%d')
-        return True
-    except ValueError:
-        try:
-            datetime.strptime(datestring, '%Y-%m')
-            return True
-        except ValueError:
-            try:
-                datetime.strptime(datestring, '%Y')
-                return True
-            except ValueError:
-                return False
 
 
 def checkConnectivity():
@@ -333,17 +318,24 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName('senderPlace'))
             # add date
             if 'senderDate' in table.fieldnames:
-                if checkIsodate(letter['senderDate']) or checkIsodate(letter['senderDate'][1:-1]):
+                letter['senderDate'] = letter['senderDate'].translate(
+                    letter['senderDate'].maketrans('', '', '[]()'))
+                print(letter['senderDate'])
+                try:
+                    date = edtf.parse_edtf(letter['senderDate'])
                     senderDate = SubElement(action, 'date')
-                    if letter['senderDate'].startswith('[') and letter['senderDate'].endswith(']'):
-                        senderDate.set('cert', 'medium')
-                        letter['senderDate'] = letter['senderDate'][1:-1]
-                        logging.info(
-                            'Added @cert for <date> in line %s', table.line_num)
-                    senderDate.set('when', str(letter['senderDate']))
-                else:
+                except:
                     logging.warning(
-                        'senderDate in line %s not set (no ISO)', table.line_num)
+                        'senderDate in line %s could not be parsed', table.line_num)
+                if 'Interval' in type(date).__name__:
+                    senderDate.set('from', date.lower.isoformat())
+                    senderDate.set('to', date.upper.isoformat())
+                else:
+                    senderDate.set('when', date.isoformat())
+                if ('?' in letter['senderDate']) or ('~' in letter['senderDate']):
+                    senderDate.set('cert', 'medium')
+                    logging.info(
+                        'Added @cert for <date> in line %s', table.line_num)
         else:
             logging.info('no information on sender in line %s', table.line_num)
 
@@ -361,20 +353,30 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName('addresseePlace'))
             # add date
             if 'addresseeDate' in table.fieldnames:
-                if checkIsodate(letter['addresseeDate']) or checkIsodate(letter['addresseeDate'][1:-1]):
-                    addresseeDate = SubElement(action, 'date')
-                    if letter['addresseeDate'].startswith('[') and letter['addresseeDate'].endswith(']'):
-                        senderDate.set('cert', 'medium')
-                        letter['addresseeDate'] = letter['addresseeDate'][1:-1]
-                        logging.info(
-                            'Added @cert for <date> in line %s', table.line_num)
-                    senderDate.set('when', str(letter['addresseeDate']))
-                else:
+                letter['addresseeDate'] = letter['addresseeDate'].translate(
+                    letter['addresseeDate'].maketrans('', '', '[]()'))
+                print(letter['addresseeDate'])
+                try:
+                    date = edtf.parse_edtf(letter['addresseeDate'])
+                    senderDate = SubElement(action, 'date')
+                except:
                     logging.warning(
-                        'addresseeDate in line %s not set (no ISO)', table.line_num)
+                        'addresseeDate in line %s could not be parsed', table.line_num)
+                if 'Interval' in type(date).__name__:
+                    senderDate.set('from', date.lower.isoformat())
+                    senderDate.set('to', date.upper.isoformat())
+                else:
+                    senderDate.set('when', date.isoformat())
+                if ('?' in letter['addresseeDate']) or ('~' in letter['addresseeDate']):
+                    senderDate.set('cert', 'medium')
+                    logging.info(
+                        'Added @cert for <date> in line %s', table.line_num)
         else:
             logging.info('no information on addressee in line %s',
                          table.line_num)
+        if ('note' in table.fieldnames) and letter['note']:
+            note = SubElement(entry, 'note')
+            note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
 
