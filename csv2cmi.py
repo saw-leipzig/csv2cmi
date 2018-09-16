@@ -241,7 +241,7 @@ def createPlaceName(placestring):
         if 'http://www.geonames.org/' in letter[placestring + 'ID']:
             placeName.set('ref', str(letter[placestring + 'ID']))
         else:
-            logging.warning("no standardized %sID in line %s",
+            logging.warning("No standardized %sID in line %s",
                             placestring, table.line_num)
     else:
         logging.warning('ID for %s missing in line %s', letter[
@@ -377,7 +377,7 @@ with open(args.filename, 'rt') as letterTable:
                     logging.warning(
                         'Could not parse senderDate in line %s', table.line_num)
         else:
-            logging.info('no information on sender in line %s', table.line_num)
+            logging.info('No information on sender in line %s', table.line_num)
 
         # addressee info block
         if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
@@ -399,7 +399,7 @@ with open(args.filename, 'rt') as letterTable:
                     logging.warning(
                         'Could not parse addresseeDate in line %s', table.line_num)
         else:
-            logging.info('no information on addressee in line %s',
+            logging.info('No information on addressee in line %s',
                          table.line_num)
         if args.notes:
             if ('note' in table.fieldnames) and letter['note']:
