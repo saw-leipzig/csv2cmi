@@ -24,19 +24,17 @@ You may provide additional information:
 * when a letter has been received: "addresseeDate"
 
 If your letters are printed across different editions, add an "edition" column and put in there the bibliographic records. Numbering of letters should be stated in a additional column named "key". Alternatively you may enter in this column a link to the edited letter on the web.
-If a date is put within brackets it sets `@cert` to `"medium"`, for `<persName>`, `<orgName>`, and `<placeName>`  alike `@evidence` is set.  
+Dates have to be entered in ISO format. Limited support for [EDTF](https://www.loc.gov/standards/datetime/pre-submission.html) is implemented to enter uncertain / approximate dates and intervals.  
 By default only edited letters (i.e. letters with a given edition) are transferred to CMI output. If you want to convert your complete catalogue, use the `-a` option.  
-With the `--line-numbers` option activated, CSV2CMI will store the line number of each letter in the `n` attribute of `<correspDesc>`.
+The `-n` option allows control whether notes (from a "note" column) will be transferred to the XML.  
+And with the `--line-numbers` option activated, CSV2CMI will store the line number of each letter in the `n` attribute of `<correspDesc>`.
 
-For sender and addressee IDs from the [GND](http://www.dnb.de/gnd) and the [VIAF](http://www.viaf.org/) are supported.
+For sender and addressee IDs from the [GND](http://www.dnb.de/gnd), the [LOC](https://authorities.loc.gov/) and the [VIAF](https://www.viaf.org/) are supported.
 
 For providing essential CMI information like the editor's name or the publisher an [INI file](https://en.wikipedia.org/wiki/INI_file) is needed.
 
 The output is a minified XML file.
 
-
-#### Limitations
-For now only a single date can be set; ISO format (YYYY-MM-DD) has to be used.
 
 *Check, that your table is using UTF8-encoding!*
 
