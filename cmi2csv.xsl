@@ -96,6 +96,17 @@
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
+      <xsl:when test="@notBefore or @notAfter">
+        <xsl:text>[</xsl:text>
+        <xsl:if test="@notBefore">
+          <xsl:value-of select="@notBefore"/>
+        </xsl:if>
+        <xsl:text>..</xsl:text>
+        <xsl:if test="@notAfter">
+          <xsl:value-of select="@notAfter"/>
+        </xsl:if>
+        <xsl:text>]</xsl:text>
+      </xsl:when>
       <xsl:otherwise/>
     </xsl:choose>
     <xsl:value-of select="'&quot;'"/>
