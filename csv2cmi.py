@@ -48,7 +48,7 @@ if args.verbose:
     logs.setLevel('INFO')
 
 
-def checkIsodate(datestring):
+def checkDatableW3C(datestring):
     try:
         datetime.strptime(datestring, '%Y-%m-%d')
         return True
@@ -61,7 +61,19 @@ def checkIsodate(datestring):
                 datetime.strptime(datestring, '%Y')
                 return True
             except ValueError:
-                return False
+                try:
+                    datetime.strptime(datestring, '--%m-%d')
+                    return True
+                except ValueError:
+                    try:
+                        datetime.strptime(datestring, '--%m')
+                        return True
+                    except ValueError:
+                        try:
+                            datetime.strptime(datestring, '---%d')
+                            return True
+                        except ValueError:
+                            return False
 
 
 def checkConnectivity():
@@ -223,11 +235,11 @@ def createDate(dateString):
             'Added @cert for <date> in line %s', table.line_num)
     date_list = normalized_date.split('/')
     if len(date_list) == 2:
-        if checkIsodate(date_list[0]):
+        if checkDatableW3C(date_list[0]):
             date.set('from', str(date_list[0]))
-        if checkIsodate(date_list[1]):
+        if checkDatableW3C(date_list[1]):
             date.set('to', str(date_list[1]))
-    elif checkIsodate(normalized_date):
+    elif checkDatableW3C(normalized_date):
         date.set('when', str(normalized_date))
     else:
         return None
