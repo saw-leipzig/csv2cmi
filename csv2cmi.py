@@ -206,17 +206,12 @@ def createDate(dateString):
         date.set('cert', 'medium')
         logging.info(
             'Added @cert for <date> in line %s', table.line_num)
-    date_list = normalized_date.split('/')
-    if len(date_list) == 2:
-        if checkIsodate(date_list[0]):
-            date.set('from', str(date_list[0]))
-        if checkIsodate(date_list[1]):
-            date.set('to', str(date_list[1]))
-    elif checkIsodate(normalized_date):
-        date.set('when', str(normalized_date))
-    else:
-        return None
-    return date
+    try:
+        date = edtf.parse_edtf(normalized_date)
+        return date
+    except:
+        logging.warning(
+            'date in line %s could not be parsed', table.line_num)
 
 
 def createPlaceName(placestring):
