@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 import edtf
 
 __license__ = "MIT"
-__version__ = '1.5.2'
+__version__ = '1.6.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -34,10 +34,12 @@ parser = argparse.ArgumentParser(
 parser.add_argument('filename', help='input file (.csv)')
 parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
-parser.add_argument('--line-numbers',
-                    help='add line numbers', action='store_true')
+parser.add_argument('-n', '--notes', help='transfer notes',
+                    action='store_true')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
+parser.add_argument('--line-numbers',
+                    help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
 args = parser.parse_args()
@@ -153,6 +155,29 @@ def createCorrespondent(namestring):
                             logging.warning(
                                 '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
                             authID = ''
+                elif 'loc' in authID:
+                    try:
+                        locrdf = ElementTree(
+                            file=urllib.request.urlopen(authID + '.rdf'))
+                    except urllib.error.HTTPError:
+                        logging.error(
+                            'Authority file not found for %sID in line %s', namestring, table.line_num)
+                        correspondent = Element('persName')
+                        authID = ''
+                    except urllib.error.URLError:
+                        logging.error('Failed to reach LOC')
+                        correspondent = Element('persName')
+                    else:
+                        locrdf_root = locrdf.getroot()
+                        if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
+                            correspondent = Element('orgName')
+                        elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
+                            correspondent = Element('persName')
+                        else:
+                            logging.warning(
+                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                            correspondent = Element('persName')
+                            authID = ''
                 else:
                     logging.error(
                         'No proper authority record in line %s for %s', table.line_num, namestring)
@@ -173,6 +198,27 @@ def createCorrespondent(namestring):
         return correspondent
 
 
+def createDate(dateString):
+    date = Element('date')
+    normalized_date = dateString.translate(
+        dateString.maketrans('', '', '[]()?~'))
+    if normalized_date != dateString:
+        date.set('cert', 'medium')
+        logging.info(
+            'Added @cert for <date> in line %s', table.line_num)
+    date_list = normalized_date.split('/')
+    if len(date_list) == 2:
+        if checkIsodate(date_list[0]):
+            date.set('from', str(date_list[0]))
+        if checkIsodate(date_list[1]):
+            date.set('to', str(date_list[1]))
+    elif checkIsodate(normalized_date):
+        date.set('when', str(normalized_date))
+    else:
+        return None
+    return date
+
+
 def createPlaceName(placestring):
     # creates a placeName element
     placeName = Element('placeName')
@@ -188,7 +234,7 @@ def createPlaceName(placestring):
         if 'http://www.geonames.org/' in letter[placestring + 'ID']:
             placeName.set('ref', str(letter[placestring + 'ID']))
         else:
-            logging.warning("no standardized %sID in line %s",
+            logging.warning("No standardized %sID in line %s",
                             placestring, table.line_num)
     else:
         logging.warning('ID for %s missing in line %s', letter[
@@ -290,7 +336,7 @@ with open(args.filename, 'rt') as letterTable:
                 editionID = createID('edition')
                 sourceDesc.append(createEdition(edition, editionID))
         entry = Element('correspDesc')
-        if (args.line_numbers):
+        if args.line_numbers:
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
         if edition:
@@ -337,7 +383,7 @@ with open(args.filename, 'rt') as letterTable:
                     logging.info(
                         'Added @cert for <date> in line %s', table.line_num)
         else:
-            logging.info('no information on sender in line %s', table.line_num)
+            logging.info('No information on sender in line %s', table.line_num)
 
         # addressee info block
         if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
@@ -372,11 +418,13 @@ with open(args.filename, 'rt') as letterTable:
                     logging.info(
                         'Added @cert for <date> in line %s', table.line_num)
         else:
-            logging.info('no information on addressee in line %s',
+            logging.info('No information on addressee in line %s',
                          table.line_num)
-        if ('note' in table.fieldnames) and letter['note']:
-            note = SubElement(entry, 'note')
-            note.text = str(letter['note'])
+        if args.notes:
+            if ('note' in table.fieldnames) and letter['note']:
+                note = SubElement(entry, 'note')
+                note.set('xml:id', createID('note'))
+                note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
 
