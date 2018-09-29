@@ -48,7 +48,7 @@ if args.verbose:
     logs.setLevel('INFO')
 
 
-def checkDatableW3C(datestring):
+def checkIsodate(datestring):
     try:
         datetime.strptime(datestring, '%Y-%m-%d')
         return True
@@ -61,19 +61,27 @@ def checkDatableW3C(datestring):
                 datetime.strptime(datestring, '%Y')
                 return True
             except ValueError:
+                return False
+
+
+def checkDatableW3C(datestring):
+    try:
+        checkIsodate(datestring)
+        return True
+    except ValueError:
+        try:
+            datetime.strptime(datestring, '--%m-%d')
+            return True
+        except ValueError:
+            try:
+                datetime.strptime(datestring, '--%m')
+                return True
+            except ValueError:
                 try:
-                    datetime.strptime(datestring, '--%m-%d')
+                    datetime.strptime(datestring, '---%d')
                     return True
                 except ValueError:
-                    try:
-                        datetime.strptime(datestring, '--%m')
-                        return True
-                    except ValueError:
-                        try:
-                            datetime.strptime(datestring, '---%d')
-                            return True
-                        except ValueError:
-                            return False
+                    return False
 
 
 def checkConnectivity():
