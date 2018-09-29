@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')

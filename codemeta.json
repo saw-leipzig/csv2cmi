@@ -4,7 +4,7 @@
   "identifier": "CSV2CMI",
   "name": "CSV2CMI",
   "description": "converts a table of letters into CMI format",
-  "softwareVersion": "1.6.0",
+  "softwareVersion": "1.6.1",
   "license": "OSI Approved :: MIT License",
   "programmingLanguage": "Python :: 3",
   "maintainer": "https://orcid.org/0000-0003-1898-2543",
@@ -15,6 +15,7 @@
     "@type": "Person",
     "givenName": "Klaus",
     "familyName": "Rettinghaus",
+    "name": "Rettinghaus, Klaus",
     "email": "rettinghaus@bach-leipzig.de"
   }]
 }
