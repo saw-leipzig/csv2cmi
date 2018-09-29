@@ -228,7 +228,7 @@ def createCorrespondent(namestring):
 def createDate(dateString):
     date = Element('date')
     normalized_date = dateString.translate(
-        dateString.maketrans('', '', '[]()?~'))
+        dateString.maketrans('', '', '[]()?~%'))
     if normalized_date != dateString:
         date.set('cert', 'medium')
         logging.info(
