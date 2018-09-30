@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -62,6 +62,26 @@ def checkIsodate(datestring):
                 return True
             except ValueError:
                 return False
+
+
+def checkDatableW3C(datestring):
+    try:
+        checkIsodate(datestring)
+        return True
+    except ValueError:
+        try:
+            datetime.strptime(datestring, '--%m-%d')
+            return True
+        except ValueError:
+            try:
+                datetime.strptime(datestring, '--%m')
+                return True
+            except ValueError:
+                try:
+                    datetime.strptime(datestring, '---%d')
+                    return True
+                except ValueError:
+                    return False
 
 
 def checkConnectivity():
@@ -216,18 +236,18 @@ def createCorrespondent(namestring):
 def createDate(dateString):
     date = Element('date')
     normalized_date = dateString.translate(
-        dateString.maketrans('', '', '[]()?~'))
+        dateString.maketrans('', '', '[]()?~%'))
     if normalized_date != dateString:
         date.set('cert', 'medium')
         logging.info(
             'Added @cert for <date> in line %s', table.line_num)
     date_list = normalized_date.split('/')
     if len(date_list) == 2:
-        if checkIsodate(date_list[0]):
+        if checkDatableW3C(date_list[0]):
             date.set('from', str(date_list[0]))
-        if checkIsodate(date_list[1]):
+        if checkDatableW3C(date_list[1]):
             date.set('to', str(date_list[1]))
-    elif checkIsodate(normalized_date):
+    elif checkDatableW3C(normalized_date):
         date.set('when', str(normalized_date))
     else:
         return None
