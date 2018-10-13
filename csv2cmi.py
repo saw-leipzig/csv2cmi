@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -227,7 +227,7 @@ def createCorrespondent(namestring):
         if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
             correspondent.set('evidence', 'conjecture')
             letter[namestring] = letter[namestring][1:-1]
-            logging.info('Added @evidence for <persName> in line %s',
+            logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                          table.line_num)
         correspondent.text = str(letter[namestring])
         return correspondent
@@ -235,12 +235,17 @@ def createCorrespondent(namestring):
 
 def createDate(dateString):
     date = Element('date')
+    if dateString.startswith('[') and dateString.endswith(']'):
+        if '..' in dateString or ',' in dateString:
+            logging.warning('EDTF One of a set not supported yet')
+        else:
+            logging.warning(
+                'Bracketed uncertain dates are deprecated, please switch to EDTF')
     normalized_date = dateString.translate(
         dateString.maketrans('', '', '[]()?~%'))
     if normalized_date != dateString:
         date.set('cert', 'medium')
-        logging.info(
-            'Added @cert for <date> in line %s', table.line_num)
+        logging.info('Added @cert to <date> from line %s', table.line_num)
     date_list = normalized_date.split('/')
     if len(date_list) == 2:
         if checkDatableW3C(date_list[0]):
@@ -261,7 +266,7 @@ def createPlaceName(placestring):
     if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
         placeName.set('evidence', 'conjecture')
         letter[placestring] = letter[placestring][1:-1]
-        logging.info('Added @evidence for <placeName> in line %s',
+        logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
     placeName.text = str(letter[placestring])
     if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
@@ -269,7 +274,7 @@ def createPlaceName(placestring):
         if 'http://www.geonames.org/' in letter[placestring + 'ID']:
             placeName.set('ref', str(letter[placestring + 'ID']))
         else:
-            logging.warning("No standardized %sID in line %s",
+            logging.warning('No standardized %sID in line %s',
                             placestring, table.line_num)
     else:
         logging.warning('ID for %s missing in line %s', letter[
@@ -378,7 +383,7 @@ with open(args.filename, 'rt') as letterTable:
             entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
-                logging.error("Key without edition in line %s", table.line_num)
+                logging.error('Key without edition in line %s', table.line_num)
             else:
                 if 'http://' in str(letter['key']):
                     entry.set('ref', str(letter['key']).strip())
