@@ -23,21 +23,18 @@ You may provide additional information:
 * where a letter has been received: "addresseePlace" (with the appropriate "addresseePlaceID" as proper [GeoNames URL](http://www.geonames.org/))
 * when a letter has been received: "addresseeDate"
 
-If your letters are printed across different editions, add an "edition" column and put in there the bibliographic records. Numbering of letters should be stated in a additional column named "key". Alternatively you may enter in this column a link to the edited letter on the web.
-Dates have to be entered in ISO format. Limited support for [EDTF](https://www.loc.gov/standards/datetime/pre-submission.html) is implemented to enter uncertain / approximate dates and intervals.  
-By default only edited letters (i.e. letters with a given edition) are transferred to CMI output. If you want to convert your complete catalogue, use the `-a` option.  
-The `-n` option allows control whether notes (from a "note" column) will be transferred to the XML.  
-And with the `--line-numbers` option activated, CSV2CMI will store the line number of each letter in the `n` attribute of `<correspDesc>`.
+Furthermore an "edition" column for a bibliographic record, a "key" column for the corresponding number of the edited letter, and even a "note" column can be added.
 
-For sender and addressee IDs from the [GND](http://www.dnb.de/gnd), the [LOC](https://authorities.loc.gov/) and the [VIAF](https://www.viaf.org/) are supported.
+Dates have to be entered in ISO format. Limited support for [EDTF](https://www.loc.gov/standards/datetime/pre-submission.html) is implemented to enter uncertain / approximate dates and intervals.  
 
 For providing essential CMI information like the editor's name or the publisher an [INI file](https://en.wikipedia.org/wiki/INI_file) is needed.
 
-The output is a minified XML file.
-
-
 *Check, that your table is using UTF8-encoding!*
+
+For options and further information check the [wiki](https://github.com/saw-leipzig/csv2cmi/wiki).
 
 ## License
 
 This program is available under [The MIT License (MIT)](https://opensource.org/licenses/MIT)
+
+__If you use this software, please cite it!__
