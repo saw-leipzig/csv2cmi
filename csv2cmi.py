@@ -192,7 +192,7 @@ def createCorrespondent(namestring):
         if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
             correspondent.set('evidence', 'conjecture')
             letter[namestring] = letter[namestring][1:-1]
-            logging.info('Added @evidence for <persName> in line %s',
+            logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                          table.line_num)
         correspondent.text = str(letter[namestring])
         return correspondent
@@ -221,7 +221,7 @@ def createPlaceName(placestring):
     if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
         placeName.set('evidence', 'conjecture')
         letter[placestring] = letter[placestring][1:-1]
-        logging.info('Added @evidence for <placeName> in line %s',
+        logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
     placeName.text = str(letter[placestring])
     if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
@@ -229,7 +229,7 @@ def createPlaceName(placestring):
         if 'http://www.geonames.org/' in letter[placestring + 'ID']:
             placeName.set('ref', str(letter[placestring + 'ID']))
         else:
-            logging.warning("No standardized %sID in line %s",
+            logging.warning('No standardized %sID in line %s',
                             placestring, table.line_num)
     else:
         logging.warning('ID for %s missing in line %s', letter[
@@ -338,7 +338,7 @@ with open(args.filename, 'rt') as letterTable:
             entry.set('source', '#' + editionID)
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
-                logging.error("Key without edition in line %s", table.line_num)
+                logging.error('Key without edition in line %s', table.line_num)
             else:
                 if 'http://' in str(letter['key']):
                     entry.set('ref', str(letter['key']).strip())
