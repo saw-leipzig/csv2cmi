@@ -41,11 +41,17 @@ parser.add_argument('--line-numbers',
                     help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
+parser.add_argument('--delimiter', help='delimiter for different values within cell')
 args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
     logs.setLevel('INFO')
+
+# set delimiter
+delimiter = ""
+if args.delimiter:
+    delimiter = args.delimiter
 
 
 def checkIsodate(datestring):
@@ -134,103 +140,110 @@ def createFileDesc(config):
 def createCorrespondent(namestring):
     # creates an element for a correspondent
     if letter[namestring]:
-        if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
-            if 'http://' not in str(letter[namestring + 'ID'].strip()):
-                logging.debug('Assigning ID %s to GND', str(
-                    letter[namestring + 'ID'].strip()))
-                authID = 'http://d-nb.info/gnd/' + \
-                    str(letter[namestring + 'ID'].strip())
-            else:
-                authID = str(letter[namestring + 'ID'].strip())
-            if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
-                if 'viaf' in authID:
-                    try:
-                        viafrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '/rdf.xml'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach VIAF')
-                        correspondent = Element('persName')
+        # this is probably not the best place for checking if there's a delimiter since it will be called for each row -
+        # so this status is only for testing if the basic idea works
+
+        #if delimiter is not "":
+        #   letter[namestring] = letter[namestring].split(delimiter)
+
+        #   for name in letter[namestring]:
+                if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
+                    if 'http://' not in str(letter[namestring + 'ID'].strip()):
+                        logging.debug('Assigning ID %s to GND', str(
+                            letter[namestring + 'ID'].strip()))
+                        authID = 'http://d-nb.info/gnd/' + \
+                            str(letter[namestring + 'ID'].strip())
                     else:
-                        viafrdf_root = viafrdf.getroot()
-                        if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
-                            correspondent = Element('orgName')
-                        elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
-                            correspondent = Element('persName')
+                        authID = str(letter[namestring + 'ID'].strip())
+                    if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
+                        if 'viaf' in authID:
+                            try:
+                                viafrdf = ElementTree(
+                                    file=urllib.request.urlopen(authID + '/rdf.xml'))
+                            except urllib.error.HTTPError:
+                                logging.error(
+                                    'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                correspondent = Element('persName')
+                                authID = ''
+                            except urllib.error.URLError:
+                                logging.error('Failed to reach VIAF')
+                                correspondent = Element('persName')
+                            else:
+                                viafrdf_root = viafrdf.getroot()
+                                if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
+                                    correspondent = Element('orgName')
+                                elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
+                                    correspondent = Element('persName')
+                                else:
+                                    logging.warning(
+                                        '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                    correspondent = Element('persName')
+                                    authID = ''
+                        elif 'gnd' in authID:
+                            try:
+                                gndrdf = ElementTree(
+                                    file=urllib.request.urlopen(authID + '/about/rdf'))
+                            except urllib.error.HTTPError:
+                                logging.error(
+                                    'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                correspondent = Element('persName')
+                                authID = ''
+                            except urllib.error.URLError:
+                                logging.error('Failed to reach GND')
+                                correspondent = Element('persName')
+                            else:
+                                gndrdf_root = gndrdf.getroot()
+                                rdftype = gndrdf_root.find(
+                                    './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                                if 'Corporate' in rdftype:
+                                    correspondent = Element('orgName')
+                                else:
+                                    correspondent = Element('persName')
+                                if 'UndifferentiatedPerson' in rdftype:
+                                    logging.warning(
+                                        '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
+                                    authID = ''
+                        elif 'loc' in authID:
+                            try:
+                                locrdf = ElementTree(
+                                    file=urllib.request.urlopen(authID + '.rdf'))
+                            except urllib.error.HTTPError:
+                                logging.error(
+                                    'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                correspondent = Element('persName')
+                                authID = ''
+                            except urllib.error.URLError:
+                                logging.error('Failed to reach LOC')
+                                correspondent = Element('persName')
+                            else:
+                                locrdf_root = locrdf.getroot()
+                                if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
+                                    correspondent = Element('orgName')
+                                elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
+                                    correspondent = Element('persName')
+                                else:
+                                    logging.warning(
+                                        '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                    correspondent = Element('persName')
+                                    authID = ''
                         else:
-                            logging.warning(
-                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
-                            correspondent = Element('persName')
+                            logging.error(
+                                'No proper authority record in line %s for %s', table.line_num, namestring)
+                            correspondent = Element(action, 'persName')
                             authID = ''
-                elif 'gnd' in authID:
-                    try:
-                        gndrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '/about/rdf'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach GND')
-                        correspondent = Element('persName')
                     else:
-                        gndrdf_root = gndrdf.getroot()
-                        rdftype = gndrdf_root.find(
-                            './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                        if 'Corporate' in rdftype:
-                            correspondent = Element('orgName')
-                        else:
-                            correspondent = Element('persName')
-                        if 'UndifferentiatedPerson' in rdftype:
-                            logging.warning(
-                                '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
-                            authID = ''
-                elif 'loc' in authID:
-                    try:
-                        locrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '.rdf'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
                         correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach LOC')
-                        correspondent = Element('persName')
-                    else:
-                        locrdf_root = locrdf.getroot()
-                        if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
-                            correspondent = Element('orgName')
-                        elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
-                            correspondent = Element('persName')
-                        else:
-                            logging.warning(
-                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
-                            correspondent = Element('persName')
-                            authID = ''
+                    if authID:
+                        correspondent.set('ref', authID)
                 else:
-                    logging.error(
-                        'No proper authority record in line %s for %s', table.line_num, namestring)
-                    correspondent = Element(action, 'persName')
-                    authID = ''
-            else:
-                correspondent = Element('persName')
-            if authID:
-                correspondent.set('ref', authID)
-        else:
-            correspondent = Element('persName')
-        if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
-            correspondent.set('evidence', 'conjecture')
-            letter[namestring] = letter[namestring][1:-1]
-            logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
-                         table.line_num)
-        correspondent.text = str(letter[namestring])
-        return correspondent
+                    correspondent = Element('persName')
+                if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
+                    correspondent.set('evidence', 'conjecture')
+                    letter[namestring] = letter[namestring][1:-1]
+                    logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
+                                 table.line_num)
+                correspondent.text = str(letter[namestring])
+                return correspondent
 
 
 def createDate(dateString):
