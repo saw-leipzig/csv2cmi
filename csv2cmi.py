@@ -51,9 +51,10 @@ else:
     logs.setLevel('INFO')
 
 # set delimiter
-delimiter = None
 if args.delimiter:
     delimiter = args.delimiter
+else:
+    delimiter = None
 
 
 def checkIsodate(datestring):
@@ -142,7 +143,8 @@ def createFileDesc(config):
 def createCorrespondent(namestring):
     if letter[namestring]:
         correspondents = []
-        # turn values into a list (with or without delimiter)
+        # turning the cells of correspondent names and their IDs into lists since it's essential
+        # to be able to call each by their index in case of various correspondents within the same cell
         if delimiter:
             person = letter[namestring].split(delimiter)
             personID = letter[namestring + "ID"].split(delimiter)
@@ -153,6 +155,7 @@ def createCorrespondent(namestring):
             personID = [''.join(personID)]
 
         for index, pers in enumerate(person):
+            # assigning authority file IDs to their correspondents if provided
             if (namestring + 'ID' in table.fieldnames) and (index < len(personID)):
                 if 'http://' not in str(personID[index].strip()):
                     logging.debug('Assigning ID %s to GND', str(
