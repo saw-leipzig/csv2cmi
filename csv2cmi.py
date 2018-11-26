@@ -46,6 +46,8 @@ args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
+    logs.setLevel('DEBUG')
+else:
     logs.setLevel('INFO')
 
 # set delimiter
@@ -138,24 +140,17 @@ def createFileDesc(config):
 
 
 def createCorrespondent(namestring):
-    # creates a list of elements for correspondents
     if letter[namestring]:
         correspondents = []
-        # turn values into a list (with or without limiter)
+        # turn values into a list (with or without delimiter)
         if delimiter:
-           person = letter[namestring].split(delimiter)
-           try:
-               personID = letter[namestring + "ID"].split(delimiter)
-           except Exception:
-               pass
+            person = letter[namestring].split(delimiter)
+            personID = letter[namestring + "ID"].split(delimiter)
         else:
             person = letter[namestring].split()
             person = [' '.join(person)]
-            try:
-                personID = letter[namestring + "ID"].split()
-                personID = [''.join(person)]
-            except Exception:
-                pass
+            personID = letter[namestring + "ID"].split()
+            personID = [''.join(personID)]
 
         for index, pers in enumerate(person):
             if (namestring + 'ID' in table.fieldnames) and (index < len(personID)):
@@ -202,6 +197,8 @@ def createCorrespondent(namestring):
                         except urllib.error.URLError:
                             logging.error('Failed to reach GND')
                             correspondent = Element('persName')
+                        except UnicodeEncodeError:
+                            print(authID)
                         else:
                             gndrdf_root = gndrdf.getroot()
                             rdftype = gndrdf_root.find(
@@ -417,7 +414,6 @@ with open(args.filename, 'rt') as letterTable:
                     entry.set('key', str(letter['key']).strip())
 
         # sender info block
-
         if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
             action = SubElement(entry, 'correspAction')
             action.set('xml:id', createID('sender'))
