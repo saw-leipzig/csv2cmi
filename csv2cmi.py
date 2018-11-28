@@ -52,7 +52,12 @@ else:
 
 # set delimiter
 if args.delimiter:
-    delimiter = args.delimiter
+    if len(args.delimiter) == 1:
+        delimiter = args.delimiter
+    else:
+        logging.error('Delimiter has to be a single character')
+        exit()
+
 else:
     delimiter = None
 
@@ -143,27 +148,28 @@ def createFileDesc(config):
 def createCorrespondent(namestring):
     if letter[namestring]:
         correspondents = []
-        # turning the cells of correspondent names and their IDs into lists since it's essential
-        # to be able to call each by their index in case of various correspondents within the same cell
+        # Turning the cells of correspondent names and their IDs into lists since cells
+        # can contain various correspondents split by a delimiter.
+        # In that case it is essential to be able to call each by their index.
         if delimiter:
-            person = letter[namestring].split(delimiter)
-            personID = letter[namestring + "ID"].split(delimiter)
+            persons = letter[namestring].split(delimiter)
+            personIDs = letter[namestring + "ID"].split(delimiter)
         else:
-            person = letter[namestring].split()
-            person = [' '.join(person)]
-            personID = letter[namestring + "ID"].split()
-            personID = [''.join(personID)]
+            persons = []
+            persons.append(letter[namestring])
+            personIDs = []
+            personIDs.append(letter[namestring + "ID"])
 
-        for index, pers in enumerate(person):
+        for index, person in enumerate(persons):
             # assigning authority file IDs to their correspondents if provided
-            if (namestring + 'ID' in table.fieldnames) and (index < len(personID)):
-                if 'http://' not in str(personID[index].strip()):
+            if (namestring + 'ID' in table.fieldnames) and (index < len(personIDs)):
+                if 'http://' not in str(personIDs[index].strip()):
                     logging.debug('Assigning ID %s to GND', str(
-                        personID[index].strip()))
+                        personIDs[index].strip()))
                     authID = 'http://d-nb.info/gnd/' + \
-                        str(personID[index].strip())
+                        str(personIDs[index].strip())
                 else:
-                    authID = str(personID[index].strip())
+                    authID = str(personIDs[index].strip())
                 if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
                     if 'viaf' in authID:
                         try:
@@ -248,12 +254,12 @@ def createCorrespondent(namestring):
                     correspondent.set('ref', authID)
             else:
                 correspondent = Element('persName')
-            if pers.startswith('[') and pers.endswith(']'):
+            if person.startswith('[') and person.endswith(']'):
                 correspondent.set('evidence', 'conjecture')
-                pers = pers[1:-1]
+                person = person[1:-1]
                 logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                              table.line_num)
-            correspondent.text = str(pers)
+            correspondent.text = str(person)
             correspondents.append(correspondent)
 
     return(correspondents)
@@ -264,6 +270,7 @@ def createDate(dateString):
     if dateString.startswith('[') and dateString.endswith(']'):
         if '..' in dateString or ',' in dateString:
             logging.warning('EDTF One of a set not supported yet')
+            
         else:
             logging.warning(
                 'Bracketed uncertain dates are deprecated, please switch to EDTF')
