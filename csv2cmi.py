@@ -41,7 +41,7 @@ parser.add_argument('--line-numbers',
                     help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
-parser.add_argument('--delimiter', help='delimiter for different values within cell')
+parser.add_argument('--extra-delimiter', help='delimiter for different values within cell')
 args = parser.parse_args()
 
 # set verbosity
@@ -51,9 +51,9 @@ else:
     logs.setLevel('INFO')
 
 # set delimiter
-if args.delimiter:
-    if len(args.delimiter) == 1:
-        delimiter = args.delimiter
+if args.extra_delimiter:
+    if len(args.extra_delimiter) == 1:
+        delimiter = args.extra_delimiter
     else:
         logging.error('Delimiter has to be a single character')
         exit()
@@ -270,7 +270,7 @@ def createDate(dateString):
     if dateString.startswith('[') and dateString.endswith(']'):
         if '..' in dateString or ',' in dateString:
             logging.warning('EDTF One of a set not supported yet')
-            
+
         else:
             logging.warning(
                 'Bracketed uncertain dates are deprecated, please switch to EDTF')
