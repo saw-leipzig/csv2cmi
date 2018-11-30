@@ -41,11 +41,23 @@ parser.add_argument('--line-numbers',
                     help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
+parser.add_argument('--extra-delimiter', help='delimiter for different values within cell')
 args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
     logs.setLevel('INFO')
+
+# set delimiter
+if args.extra_delimiter:
+    if len(args.extra_delimiter) == 1:
+        delimiter = args.extra_delimiter
+    else:
+        logging.error('Delimiter has to be a single character')
+        exit()
+
+else:
+    delimiter = None
 
 
 def checkIsodate(datestring):
@@ -132,105 +144,123 @@ def createFileDesc(config):
 
 
 def createCorrespondent(namestring):
-    # creates an element for a correspondent
     if letter[namestring]:
-        if (namestring + 'ID' in table.fieldnames) and (letter[namestring + 'ID']):
-            if 'http://' not in str(letter[namestring + 'ID'].strip()):
-                logging.debug('Assigning ID %s to GND', str(
-                    letter[namestring + 'ID'].strip()))
-                authID = 'http://d-nb.info/gnd/' + \
-                    str(letter[namestring + 'ID'].strip())
-            else:
-                authID = str(letter[namestring + 'ID'].strip())
-            if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
-                if 'viaf' in authID:
-                    try:
-                        viafrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '/rdf.xml'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach VIAF')
-                        correspondent = Element('persName')
-                    else:
-                        viafrdf_root = viafrdf.getroot()
-                        if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
-                            correspondent = Element('orgName')
-                        elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
-                            correspondent = Element('persName')
-                        else:
-                            logging.warning(
-                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
-                            correspondent = Element('persName')
-                            authID = ''
-                elif 'gnd' in authID:
-                    try:
-                        gndrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '/about/rdf'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach GND')
-                        correspondent = Element('persName')
-                    else:
-                        gndrdf_root = gndrdf.getroot()
-                        rdftype = gndrdf_root.find(
-                            './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                        if 'Corporate' in rdftype:
-                            correspondent = Element('orgName')
-                        else:
-                            correspondent = Element('persName')
-                        if 'UndifferentiatedPerson' in rdftype:
-                            logging.warning(
-                                '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
-                            authID = ''
-                elif 'loc' in authID:
-                    try:
-                        locrdf = ElementTree(
-                            file=urllib.request.urlopen(authID + '.rdf'))
-                    except urllib.error.HTTPError:
-                        logging.error(
-                            'Authority file not found for %sID in line %s', namestring, table.line_num)
-                        correspondent = Element('persName')
-                        authID = ''
-                    except urllib.error.URLError:
-                        logging.error('Failed to reach LOC')
-                        correspondent = Element('persName')
-                    else:
-                        locrdf_root = locrdf.getroot()
-                        if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
-                            correspondent = Element('orgName')
-                        elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
-                            correspondent = Element('persName')
-                        else:
-                            logging.warning(
-                                '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
-                            correspondent = Element('persName')
-                            authID = ''
+        correspondents = []
+        # Turning the cells of correspondent names and their IDs into lists since cells
+        # can contain various correspondents split by a delimiter.
+        # In that case it is essential to be able to call each by their index.
+        if delimiter:
+            persons = letter[namestring].split(delimiter)
+            personIDs = letter[namestring + "ID"].split(delimiter)
+        else:
+            persons = []
+            persons.append(letter[namestring])
+            personIDs = []
+            personIDs.append(letter[namestring + "ID"])
+
+        for index, person in enumerate(persons):
+            # assigning authority file IDs to their correspondents if provided
+            if (namestring + 'ID' in table.fieldnames) and (index < len(personIDs)):
+                if 'http://' not in str(personIDs[index].strip()):
+                    logging.debug('Assigning ID %s to GND', str(
+                        personIDs[index].strip()))
+                    authID = 'http://d-nb.info/gnd/' + \
+                        str(personIDs[index].strip())
                 else:
-                    logging.error(
-                        'No proper authority record in line %s for %s', table.line_num, namestring)
-                    correspondent = Element(action, 'persName')
-                    authID = ''
+                    authID = str(personIDs[index].strip())
+                if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
+                    if 'viaf' in authID:
+                        try:
+                            viafrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '/rdf.xml'))
+                        except urllib.error.HTTPError:
+                            logging.error(
+                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                            correspondent = Element('persName')
+                            authID = ''
+                        except urllib.error.URLError:
+                            logging.error('Failed to reach VIAF')
+                            correspondent = Element('persName')
+                        else:
+                            viafrdf_root = viafrdf.getroot()
+                            if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
+                                correspondent = Element('orgName')
+                            elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
+                                correspondent = Element('persName')
+                            else:
+                                logging.warning(
+                                    '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                correspondent = Element('persName')
+                                authID = ''
+                    elif 'gnd' in authID:
+                        try:
+                            gndrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '/about/rdf'))
+                        except urllib.error.HTTPError:
+                            logging.error(
+                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                            correspondent = Element('persName')
+                            authID = ''
+                        except urllib.error.URLError:
+                            logging.error('Failed to reach GND')
+                            correspondent = Element('persName')
+                        except UnicodeEncodeError:
+                            print(authID)
+                        else:
+                            gndrdf_root = gndrdf.getroot()
+                            rdftype = gndrdf_root.find(
+                                './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                            if 'Corporate' in rdftype:
+                                correspondent = Element('orgName')
+                            else:
+                                correspondent = Element('persName')
+                            if 'UndifferentiatedPerson' in rdftype:
+                                logging.warning(
+                                    '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
+                                authID = ''
+                    elif 'loc' in authID:
+                        try:
+                            locrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '.rdf'))
+                        except urllib.error.HTTPError:
+                            logging.error(
+                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                            correspondent = Element('persName')
+                            authID = ''
+                        except urllib.error.URLError:
+                            logging.error('Failed to reach LOC')
+                            correspondent = Element('persName')
+                        else:
+                            locrdf_root = locrdf.getroot()
+                            if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
+                                correspondent = Element('orgName')
+                            elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
+                                correspondent = Element('persName')
+                            else:
+                                logging.warning(
+                                    '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                correspondent = Element('persName')
+                                authID = ''
+                    else:
+                        logging.error(
+                            'No proper authority record in line %s for %s', table.line_num, namestring)
+                        correspondent = Element(action, 'persName')
+                        authID = ''
+                else:
+                    correspondent = Element('persName')
+                if authID:
+                    correspondent.set('ref', authID)
             else:
                 correspondent = Element('persName')
-            if authID:
-                correspondent.set('ref', authID)
-        else:
-            correspondent = Element('persName')
-        if letter[namestring].startswith('[') and letter[namestring].endswith(']'):
-            correspondent.set('evidence', 'conjecture')
-            letter[namestring] = letter[namestring][1:-1]
-            logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
-                         table.line_num)
-        correspondent.text = str(letter[namestring])
-        return correspondent
+            if person.startswith('[') and person.endswith(']'):
+                correspondent.set('evidence', 'conjecture')
+                person = person[1:-1]
+                logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
+                             table.line_num)
+            correspondent.text = str(person)
+            correspondents.append(correspondent)
+
+    return(correspondents)
 
 
 def createDate(dateString):
@@ -238,6 +268,7 @@ def createDate(dateString):
     if dateString.startswith('[') and dateString.endswith(']'):
         if '..' in dateString or ',' in dateString:
             logging.warning('EDTF One of a set not supported yet')
+
         else:
             logging.warning(
                 'Bracketed uncertain dates are deprecated, please switch to EDTF')
@@ -398,7 +429,9 @@ with open(args.filename, 'rt') as letterTable:
 
             # add persName or orgName
             if letter['sender']:
-                action.append(createCorrespondent('sender'))
+                correspondents = createCorrespondent('sender')
+                for sender in correspondents:
+                    action.append(sender)
             # add placeName
             if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
                 action.append(createPlaceName('senderPlace'))
@@ -420,7 +453,9 @@ with open(args.filename, 'rt') as letterTable:
 
             # add persName or orgName
             if letter['addressee']:
-                action.append(createCorrespondent('addressee'))
+                correspondents = createCorrespondent('addressee')
+                for addressee in correspondents:
+                    action.append(addressee)
             # add placeName
             if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
                 action.append(createPlaceName('addresseePlace'))
