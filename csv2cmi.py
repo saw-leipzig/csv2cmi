@@ -46,8 +46,6 @@ args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
-    logs.setLevel('DEBUG')
-else:
     logs.setLevel('INFO')
 
 # set delimiter
