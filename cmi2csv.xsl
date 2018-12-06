@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--      * cmi2csv *      -->
-<!--         2.2.2         -->
+<!--         2.3.0         -->
 <!--   * programmed by *   -->
 <!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
@@ -117,9 +117,23 @@
     <xsl:value-of select="'&quot;'"/>
   </xsl:template>
   <xsl:template match="tei:correspAction">
-    <xsl:value-of select="concat('&quot;',normalize-space(tei:persName),'&quot;')"/>
+    <xsl:value-of select="'&quot;'"/>
+    <xsl:for-each select="tei:persName">
+      <xsl:if test="position() != 1">
+        <xsl:text>;</xsl:text>
+      </xsl:if>
+      <xsl:value-of select="normalize-space(.)"/>
+    </xsl:for-each>
+    <xsl:value-of select="'&quot;'"/>
     <xsl:value-of select="$dlm"/>
-    <xsl:value-of select="concat('&quot;',tei:persName/@ref,'&quot;')"/>
+    <xsl:value-of select="'&quot;'"/>
+    <xsl:for-each select="tei:persName">
+      <xsl:if test="position() != 1">
+        <xsl:text>;</xsl:text>
+      </xsl:if>
+      <xsl:value-of select="@ref"/>
+    </xsl:for-each>
+    <xsl:value-of select="'&quot;'"/>
     <xsl:value-of select="$dlm"/>
     <xsl:value-of select="concat('&quot;',normalize-space(tei:placeName),'&quot;')"/>
     <xsl:value-of select="$dlm"/>
