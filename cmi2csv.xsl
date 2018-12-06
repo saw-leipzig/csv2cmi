@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--      * cmi2csv *      -->
-<!--         2.2.1         -->
+<!--         2.2.2         -->
 <!--   * programmed by *   -->
 <!-- * Klaus Rettinghaus * -->
 <xsl:stylesheet xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" exclude-result-prefixes="tei">
   <xsl:output encoding="UTF-8" indent="no" method="text"/>
   <xsl:strip-space elements="*"/>
   <!-- define csv seperator -->
-  <xsl:param name="sep" select="','"/>
+  <xsl:param name="dlm" select="','"/>
   <xsl:template match="/">
     <!-- header -->
     <xsl:text>"sender"</xsl:text>
