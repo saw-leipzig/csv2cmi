@@ -51,13 +51,13 @@ if args.verbose:
 # set delimiter
 if args.extra_delimiter:
     if len(args.extra_delimiter) == 1:
-        delimiter = args.extra_delimiter
+        subdlm = args.extra_delimiter
     else:
         logging.error('Delimiter has to be a single character')
         exit()
 
 else:
-    delimiter = None
+    subdlm = None
 
 
 def checkIsodate(datestring):
@@ -147,11 +147,11 @@ def createCorrespondent(namestring):
     if letter[namestring]:
         correspondents = []
         # Turning the cells of correspondent names and their IDs into lists since cells
-        # can contain various correspondents split by a delimiter.
+        # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
-        if delimiter:
-            persons = letter[namestring].split(delimiter)
-            personIDs = letter[namestring + "ID"].split(delimiter)
+        if subdlm:
+            persons = letter[namestring].split(subdlm)
+            personIDs = letter[namestring + "ID"].split(subdlm)
         else:
             persons = []
             persons.append(letter[namestring])
