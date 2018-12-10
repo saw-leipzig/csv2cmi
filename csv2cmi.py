@@ -41,7 +41,8 @@ parser.add_argument('--line-numbers',
                     help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
-parser.add_argument('--extra-delimiter', help='delimiter for different values within cell')
+parser.add_argument('--extra-delimiter',
+                    help='delimiter for different values within one cell')
 args = parser.parse_args()
 
 # set verbosity
