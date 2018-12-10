@@ -256,15 +256,16 @@ def createCorrespondent(namestring):
                 if authID:
                     correspondent.set('ref', authID)
             else:
+                logging.debug('ID for "%s" missing in line %s',
+                              person, table.line_num)
                 correspondent = Element('persName')
             if person.startswith('[') and person.endswith(']'):
                 correspondent.set('evidence', 'conjecture')
                 person = person[1:-1]
                 logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                              table.line_num)
-            correspondent.text = str(person)
+            correspondent.text = person
             correspondents.append(correspondent)
-
     return(correspondents)
 
 
@@ -273,7 +274,6 @@ def createDate(dateString):
     if dateString.startswith('[') and dateString.endswith(']'):
         if '..' in dateString or ',' in dateString:
             logging.warning('EDTF One of a set not supported yet')
-
         else:
             logging.warning(
                 'Bracketed uncertain dates are deprecated, please switch to EDTF')
@@ -313,7 +313,7 @@ def createPlaceName(placestring):
             logging.warning('No standardized %sID in line %s',
                             placestring, table.line_num)
     else:
-        logging.warning('ID for %s missing in line %s', letter[
+        logging.debug('ID for "%s" missing in line %s', letter[
             placestring], table.line_num)
     return placeName
 
