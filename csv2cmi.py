@@ -155,13 +155,14 @@ def createCorrespondent(namestring):
             personIDs = letter[namestring + "ID"].split(subdlm)
         else:
             persons = []
-            persons.append(letter[namestring])
+            persons.append(letter[namestring].strip())
             personIDs = []
             personIDs.append(letter[namestring + "ID"])
 
         for index, person in enumerate(persons):
+            person = str(person).strip()
             # assigning authority file IDs to their correspondents if provided
-            if (namestring + 'ID' in table.fieldnames) and (index < len(personIDs)):
+            if personIDs[index] and (index < len(personIDs)):
                 if 'http://' not in str(personIDs[index].strip()):
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
