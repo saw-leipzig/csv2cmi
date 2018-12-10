@@ -213,8 +213,12 @@ def createCorrespondent(namestring):
                                 './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
+                            elif 'DifferentiatedPerson' in rdftype:
+                                correspondent = Element('persName')
                             else:
                                 correspondent = Element('persName')
+                                logging.error(
+                                    '%sID in line %s has wrong rdf:type', namestring, table.line_num)
                             if 'UndifferentiatedPerson' in rdftype:
                                 logging.warning(
                                     '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
