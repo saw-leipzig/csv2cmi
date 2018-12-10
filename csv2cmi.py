@@ -41,7 +41,8 @@ parser.add_argument('--line-numbers',
                     help='add line numbers', action='store_true')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
-parser.add_argument('--extra-delimiter', help='delimiter for different values within cell')
+parser.add_argument('--extra-delimiter',
+                    help='delimiter for different values within one cell')
 args = parser.parse_args()
 
 # set verbosity
@@ -51,13 +52,13 @@ if args.verbose:
 # set delimiter
 if args.extra_delimiter:
     if len(args.extra_delimiter) == 1:
-        delimiter = args.extra_delimiter
+        subdlm = args.extra_delimiter
     else:
         logging.error('Delimiter has to be a single character')
         exit()
 
 else:
-    delimiter = None
+    subdlm = None
 
 
 def checkIsodate(datestring):
@@ -147,20 +148,21 @@ def createCorrespondent(namestring):
     if letter[namestring]:
         correspondents = []
         # Turning the cells of correspondent names and their IDs into lists since cells
-        # can contain various correspondents split by a delimiter.
+        # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
-        if delimiter:
-            persons = letter[namestring].split(delimiter)
-            personIDs = letter[namestring + "ID"].split(delimiter)
+        if subdlm:
+            persons = letter[namestring].split(subdlm)
+            personIDs = letter[namestring + "ID"].split(subdlm)
         else:
             persons = []
-            persons.append(letter[namestring])
+            persons.append(letter[namestring].strip())
             personIDs = []
             personIDs.append(letter[namestring + "ID"])
 
         for index, person in enumerate(persons):
+            person = str(person).strip()
             # assigning authority file IDs to their correspondents if provided
-            if (namestring + 'ID' in table.fieldnames) and (index < len(personIDs)):
+            if personIDs[index] and (index < len(personIDs)):
                 if 'http://' not in str(personIDs[index].strip()):
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
@@ -212,8 +214,12 @@ def createCorrespondent(namestring):
                                 './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
+                            elif 'DifferentiatedPerson' in rdftype:
+                                correspondent = Element('persName')
                             else:
                                 correspondent = Element('persName')
+                                logging.error(
+                                    '%sID in line %s has wrong rdf:type', namestring, table.line_num)
                             if 'UndifferentiatedPerson' in rdftype:
                                 logging.warning(
                                     '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
@@ -251,15 +257,16 @@ def createCorrespondent(namestring):
                 if authID:
                     correspondent.set('ref', authID)
             else:
+                logging.debug('ID for "%s" missing in line %s',
+                              person, table.line_num)
                 correspondent = Element('persName')
             if person.startswith('[') and person.endswith(']'):
                 correspondent.set('evidence', 'conjecture')
                 person = person[1:-1]
                 logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                              table.line_num)
-            correspondent.text = str(person)
+            correspondent.text = person
             correspondents.append(correspondent)
-
     return(correspondents)
 
 
@@ -268,7 +275,6 @@ def createDate(dateString):
     if dateString.startswith('[') and dateString.endswith(']'):
         if '..' in dateString or ',' in dateString:
             logging.warning('EDTF One of a set not supported yet')
-
         else:
             logging.warning(
                 'Bracketed uncertain dates are deprecated, please switch to EDTF')
@@ -308,7 +314,7 @@ def createPlaceName(placestring):
             logging.warning('No standardized %sID in line %s',
                             placestring, table.line_num)
     else:
-        logging.warning('ID for %s missing in line %s', letter[
+        logging.debug('ID for "%s" missing in line %s', letter[
             placestring], table.line_num)
     return placeName
 
