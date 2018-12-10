@@ -120,7 +120,7 @@
     <xsl:value-of select="'&quot;'"/>
     <xsl:for-each select="tei:persName">
       <xsl:if test="position() != 1">
-        <xsl:text>;</xsl:text>
+        <xsl:text>; </xsl:text>
       </xsl:if>
       <xsl:value-of select="normalize-space(.)"/>
     </xsl:for-each>
