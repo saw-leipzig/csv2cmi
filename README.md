@@ -25,9 +25,9 @@ You may provide additional information:
 
 Furthermore an "edition" column for a bibliographic record, a "key" column for the corresponding number of the edited letter, and even a "note" column can be added.
 
-Various senders or addressees of a letter have to be written in the same cell with a separator that is specified with the `"--extra-delimiter"`-option (senderID/addresseeID have to follow the same order).
+Various senders or addressees of a letter have to be written in the same cell with a separator that is specified with the `"--extra-delimiter"`-option (IDs have to follow the same order respectively).
 
-Dates have to be entered in ISO format. Limited support for [EDTF](https://www.loc.gov/standards/datetime/pre-submission.html) is implemented to enter uncertain / approximate dates and intervals.  
+Dates have to be entered in ISO format. Support for [EDTF](https://www.loc.gov/standards/datetime/edtf.html) is implemented to parse uncertain / approximate dates, intervals and sets.  
 
 For providing essential CMI information like the editor's name or the publisher an [INI file](https://en.wikipedia.org/wiki/INI_file) is needed.
 
