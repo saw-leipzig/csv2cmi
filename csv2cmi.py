@@ -271,10 +271,12 @@ def createCorrespondent(namestring):
 
 def createDate(dateString):
     date = Element('date')
+    # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
     if checkDatableW3C(normalizedDate):
         date.set('when', str(normalizedDate))
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
+        # one of set
         dateList = normalizedDate[1:-1].split(",")
         dateFirst = dateList[0].split(".")[0]
         dateLast = (dateList[-1].split("."))[-1]
@@ -284,6 +286,7 @@ def createDate(dateString):
             if dateLast and checkDatableW3C(dateLast):
                 date.set('notAfter', str(dateLast))
     else:
+        # time interval
         dateList = normalizedDate.split('/')
         if len(dateList) == 2 and (dateList[0] or dateList[1]):
             if dateList[0] and checkDatableW3C(dateList[0]):
