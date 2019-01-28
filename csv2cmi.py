@@ -78,10 +78,9 @@ def checkIsodate(datestring):
 
 
 def checkDatableW3C(datestring):
-    try:
-        checkIsodate(datestring)
+    if checkIsodate(datestring):
         return True
-    except ValueError:
+    else:
         try:
             datetime.strptime(datestring, '--%m-%d')
             return True
