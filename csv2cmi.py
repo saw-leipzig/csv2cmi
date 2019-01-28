@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '1.6.2'
+__version__ = '2.0.0-alpha'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -78,10 +78,9 @@ def checkIsodate(datestring):
 
 
 def checkDatableW3C(datestring):
-    try:
-        checkIsodate(datestring)
+    if checkIsodate(datestring):
         return True
-    except ValueError:
+    else:
         try:
             datetime.strptime(datestring, '--%m-%d')
             return True
@@ -272,28 +271,33 @@ def createCorrespondent(namestring):
 
 def createDate(dateString):
     date = Element('date')
-    if dateString.startswith('[') and dateString.endswith(']'):
-        if '..' in dateString or ',' in dateString:
-            logging.warning('EDTF One of a set not supported yet')
-        else:
-            logging.warning(
-                'Bracketed uncertain dates are deprecated, please switch to EDTF')
-    normalized_date = dateString.translate(
-        dateString.maketrans('', '', '[]()?~%'))
-    if normalized_date != dateString:
-        date.set('cert', 'medium')
-        logging.info('Added @cert to <date> from line %s', table.line_num)
-    date_list = normalized_date.split('/')
-    if len(date_list) == 2:
-        if checkDatableW3C(date_list[0]):
-            date.set('from', str(date_list[0]))
-        if checkDatableW3C(date_list[1]):
-            date.set('to', str(date_list[1]))
-    elif checkDatableW3C(normalized_date):
-        date.set('when', str(normalized_date))
+    normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
+    if checkDatableW3C(normalizedDate):
+        date.set('when', str(normalizedDate))
+    elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
+        dateList = normalizedDate[1:-1].split(",")
+        dateFirst = dateList[0].split(".")[0]
+        dateLast = (dateList[-1].split("."))[-1]
+        if dateFirst or dateLast:
+            if dateFirst and checkDatableW3C(dateFirst):
+                date.set('notBefore', str(dateFirst))
+            if dateLast and checkDatableW3C(dateLast):
+                date.set('notAfter', str(dateLast))
+    else:
+        dateList = normalizedDate.split('/')
+        if len(dateList) == 2 and (dateList[0] or dateList[1]):
+            if dateList[0] and checkDatableW3C(dateList[0]):
+                date.set('from', str(dateList[0]))
+            if dateList[1] and checkDatableW3C(dateList[1]):
+                date.set('to', str(dateList[1]))
+    if date.attrib:
+        if normalizedDate != dateString:
+            date.set('cert', 'medium')
+            logging.info(
+                'Added @cert to <date> from line %s', table.line_num)
+        return date
     else:
         return None
-    return date
 
 
 def createPlaceName(placestring):
