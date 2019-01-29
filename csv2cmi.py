@@ -278,20 +278,21 @@ def createDate(dateString):
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
         # one of set
         dateList = normalizedDate[1:-1].split(",")
-        dateFirst = dateList[0].split(".")[0]
-        dateLast = (dateList[-1].split("."))[-1]
-        if dateFirst or dateLast:
-            if dateFirst and checkDatableW3C(dateFirst):
-                date.set('notBefore', str(dateFirst))
-            if dateLast and checkDatableW3C(dateLast):
-                date.set('notAfter', str(dateLast))
+        if len(dateList) > 1:
+            dateFirst = dateList[0].split(".")[0]
+            dateLast = dateList[-1].split(".")[-1]
+            if dateFirst or dateLast:
+                if checkDatableW3C(dateFirst):
+                    date.set('notBefore', str(dateFirst))
+                if checkDatableW3C(dateLast):
+                    date.set('notAfter', str(dateLast))
     else:
         # time interval
         dateList = normalizedDate.split('/')
         if len(dateList) == 2 and (dateList[0] or dateList[1]):
-            if dateList[0] and checkDatableW3C(dateList[0]):
+            if checkDatableW3C(dateList[0]):
                 date.set('from', str(dateList[0]))
-            if dateList[1] and checkDatableW3C(dateList[1]):
+            if checkDatableW3C(dateList[1]):
                 date.set('to', str(dateList[1]))
     if date.attrib:
         if normalizedDate != dateString:
