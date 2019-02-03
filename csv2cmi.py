@@ -42,14 +42,14 @@ parser.add_argument('--line-numbers',
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
 parser.add_argument('--extra-delimiter',
-                    help='delimiter for different values within one cell')
+                    help='delimiter for different values within cells')
 args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
     logs.setLevel('INFO')
 
-# set delimiter
+# set extra delimiter
 if args.extra_delimiter:
     if len(args.extra_delimiter) == 1:
         subdlm = args.extra_delimiter
@@ -61,36 +61,36 @@ else:
     subdlm = None
 
 
-def checkIsodate(datestring):
+def checkIsodate(dateString):
     try:
-        datetime.strptime(datestring, '%Y-%m-%d')
+        datetime.strptime(dateString, '%Y-%m-%d')
         return True
     except ValueError:
         try:
-            datetime.strptime(datestring, '%Y-%m')
+            datetime.strptime(dateString, '%Y-%m')
             return True
         except ValueError:
             try:
-                datetime.strptime(datestring, '%Y')
+                datetime.strptime(dateString, '%Y')
                 return True
             except ValueError:
                 return False
 
 
-def checkDatableW3C(datestring):
-    if checkIsodate(datestring):
+def checkDatableW3C(dateString):
+    if checkIsodate(dateString):
         return True
     else:
         try:
-            datetime.strptime(datestring, '--%m-%d')
+            datetime.strptime(dateString, '--%m-%d')
             return True
         except ValueError:
             try:
-                datetime.strptime(datestring, '--%m')
+                datetime.strptime(dateString, '--%m')
                 return True
             except ValueError:
                 try:
-                    datetime.strptime(datestring, '---%d')
+                    datetime.strptime(dateString, '---%d')
                     return True
                 except ValueError:
                     return False
@@ -106,7 +106,7 @@ def checkConnectivity():
 
 
 def createTextstructure():
-    # creates an empty TEI text body
+    """Create an empty TEI text body."""
     text = Element('text')
     body = SubElement(text, 'body')
     SubElement(body, 'p')
@@ -114,7 +114,7 @@ def createTextstructure():
 
 
 def createFileDesc(config):
-    # creates a file description from config file
+    """Create a TEI file description from config file."""
     fileDesc = Element('fileDesc')
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
@@ -270,6 +270,7 @@ def createCorrespondent(namestring):
 
 
 def createDate(dateString):
+    """Convert an extended ISO date into a proper TEI element."""
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
@@ -278,14 +279,13 @@ def createDate(dateString):
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
         # one of set
         dateList = normalizedDate[1:-1].split(",")
-        if len(dateList) > 1:
-            dateFirst = dateList[0].split(".")[0]
-            dateLast = dateList[-1].split(".")[-1]
-            if dateFirst or dateLast:
-                if checkDatableW3C(dateFirst):
-                    date.set('notBefore', str(dateFirst))
-                if checkDatableW3C(dateLast):
-                    date.set('notAfter', str(dateLast))
+        dateFirst = dateList[0].split(".")[0]
+        dateLast = dateList[-1].split(".")[-1]
+        if dateFirst or dateLast:
+            if checkDatableW3C(dateFirst):
+                date.set('notBefore', str(dateFirst))
+            if checkDatableW3C(dateLast):
+                date.set('notAfter', str(dateLast))
     else:
         # time interval
         dateList = normalizedDate.split('/')
@@ -304,38 +304,34 @@ def createDate(dateString):
         return None
 
 
-def createPlaceName(placestring):
-    # creates a placeName element
+def createPlaceName(placeString):
+    """Create a placeName element."""
     placeName = Element('placeName')
-    letter[placestring] = letter[placestring].strip()
-    if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
+    letter[placeString] = letter[placeString].strip()
+    if letter[placeString].startswith('[') and letter[placeString].endswith(']'):
         placeName.set('evidence', 'conjecture')
-        letter[placestring] = letter[placestring][1:-1]
+        letter[placeString] = letter[placeString][1:-1]
         logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
-    placeName.text = str(letter[placestring])
-    if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
-        letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
-        if 'http://www.geonames.org/' in letter[placestring + 'ID']:
-            placeName.set('ref', str(letter[placestring + 'ID']))
+    placeName.text = str(letter[placeString])
+    if (placeString + 'ID' in table.fieldnames) and (letter[placeString + 'ID']):
+        letter[placeString + 'ID'] = letter[placeString + 'ID'].strip()
+        if 'www.geonames.org' in letter[placeString + 'ID']:
+            placeName.set('ref', str(letter[placeString + 'ID']))
         else:
             logging.warning('No standardized %sID in line %s',
-                            placestring, table.line_num)
+                            placeString, table.line_num)
     else:
         logging.debug('ID for "%s" missing in line %s', letter[
-            placestring], table.line_num)
+            placeString], table.line_num)
     return placeName
 
 
-def createEdition(editionTitle, biblID):
-    # creates a new bibliographic entry
-    editionType = 'print'
-    if ('Edition' in config) and ('type' in config['Edition']):
-        if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
-            editionType = config.get('Edition', 'type')
+def createEdition(biblText, biblType, biblID):
+    """Create a new bibliographic entry."""
     bibl = Element('bibl')
-    bibl.text = editionTitle
-    bibl.set('type', editionType)
+    bibl.text = biblText
+    bibl.set('type', biblType)
     bibl.set('xml:id', biblID)
     return bibl
 
@@ -378,6 +374,11 @@ try:
 except IOError:
     logging.error('No configuration file found')
 
+# set type of edition
+editionType = 'print'
+if ('Edition' in config) and ('type' in config['Edition']):
+    if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
+        editionType = config.get('Edition', 'type')
 
 # building cmi
 # generating root element
@@ -410,7 +411,7 @@ with open(args.filename, 'rt') as letterTable:
             edition = config.get('Edition', 'title')
         except configparser.Error:
             logging.warning('No edition stated. Please set manually.')
-        sourceDesc.append(createEdition(edition, createID('edition')))
+        sourceDesc.append(createEdition(edition, editionType, createID('edition')))
     for letter in table:
         if ('edition' in table.fieldnames):
             edition = letter['edition'].strip()
@@ -419,7 +420,7 @@ with open(args.filename, 'rt') as letterTable:
                 continue
             if edition and not editionID:
                 editionID = createID('edition')
-                sourceDesc.append(createEdition(edition, editionID))
+                sourceDesc.append(createEdition(edition, editionType, editionID))
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
