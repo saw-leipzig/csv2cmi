@@ -326,15 +326,11 @@ def createPlaceName(placestring):
     return placeName
 
 
-def createEdition(editionTitle, biblID):
-    # creates a new bibliographic entry
-    editionType = 'print'
-    if ('Edition' in config) and ('type' in config['Edition']):
-        if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
-            editionType = config.get('Edition', 'type')
+def createEdition(biblText, biblType, biblID):
+    """Create a new bibliographic entry."""
     bibl = Element('bibl')
-    bibl.text = editionTitle
-    bibl.set('type', editionType)
+    bibl.text = biblText
+    bibl.set('type', biblType)
     bibl.set('xml:id', biblID)
     return bibl
 
@@ -377,6 +373,11 @@ try:
 except IOError:
     logging.error('No configuration file found')
 
+# set type of edition
+editionType = 'print'
+if ('Edition' in config) and ('type' in config['Edition']):
+    if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
+        editionType = config.get('Edition', 'type')
 
 # building cmi
 # generating root element
@@ -409,7 +410,7 @@ with open(args.filename, 'rt') as letterTable:
             edition = config.get('Edition', 'title')
         except configparser.Error:
             logging.warning('No edition stated. Please set manually.')
-        sourceDesc.append(createEdition(edition, createID('edition')))
+        sourceDesc.append(createEdition(edition, editionType, createID('edition')))
     for letter in table:
         if ('edition' in table.fieldnames):
             edition = letter['edition'].strip()
@@ -418,7 +419,7 @@ with open(args.filename, 'rt') as letterTable:
                 continue
             if edition and not editionID:
                 editionID = createID('edition')
-                sourceDesc.append(createEdition(edition, editionID))
+                sourceDesc.append(createEdition(edition, editionType, editionID))
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
