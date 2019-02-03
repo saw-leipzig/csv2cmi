@@ -106,7 +106,7 @@ def checkConnectivity():
 
 
 def createTextstructure():
-    # creates an empty TEI text body
+    """Create an empty TEI text body."""
     text = Element('text')
     body = SubElement(text, 'body')
     SubElement(body, 'p')
@@ -114,7 +114,7 @@ def createTextstructure():
 
 
 def createFileDesc(config):
-    # creates a file description from config file
+    """Create a TEI file description from config file."""
     fileDesc = Element('fileDesc')
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
@@ -270,6 +270,7 @@ def createCorrespondent(namestring):
 
 
 def createDate(dateString):
+    """Convert an extended ISO date into a proper TEI element."""
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
