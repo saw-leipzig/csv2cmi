@@ -42,14 +42,14 @@ parser.add_argument('--line-numbers',
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
 parser.add_argument('--extra-delimiter',
-                    help='delimiter for different values within one cell')
+                    help='delimiter for different values within cells')
 args = parser.parse_args()
 
 # set verbosity
 if args.verbose:
     logs.setLevel('INFO')
 
-# set delimiter
+# set extra delimiter
 if args.extra_delimiter:
     if len(args.extra_delimiter) == 1:
         subdlm = args.extra_delimiter
