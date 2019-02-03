@@ -61,36 +61,36 @@ else:
     subdlm = None
 
 
-def checkIsodate(datestring):
+def checkIsodate(dateString):
     try:
-        datetime.strptime(datestring, '%Y-%m-%d')
+        datetime.strptime(dateString, '%Y-%m-%d')
         return True
     except ValueError:
         try:
-            datetime.strptime(datestring, '%Y-%m')
+            datetime.strptime(dateString, '%Y-%m')
             return True
         except ValueError:
             try:
-                datetime.strptime(datestring, '%Y')
+                datetime.strptime(dateString, '%Y')
                 return True
             except ValueError:
                 return False
 
 
-def checkDatableW3C(datestring):
-    if checkIsodate(datestring):
+def checkDatableW3C(dateString):
+    if checkIsodate(dateString):
         return True
     else:
         try:
-            datetime.strptime(datestring, '--%m-%d')
+            datetime.strptime(dateString, '--%m-%d')
             return True
         except ValueError:
             try:
-                datetime.strptime(datestring, '--%m')
+                datetime.strptime(dateString, '--%m')
                 return True
             except ValueError:
                 try:
-                    datetime.strptime(datestring, '---%d')
+                    datetime.strptime(dateString, '---%d')
                     return True
                 except ValueError:
                     return False
@@ -303,26 +303,26 @@ def createDate(dateString):
         return None
 
 
-def createPlaceName(placestring):
-    # creates a placeName element
+def createPlaceName(placeString):
+    """Create a placeName element."""
     placeName = Element('placeName')
-    letter[placestring] = letter[placestring].strip()
-    if letter[placestring].startswith('[') and letter[placestring].endswith(']'):
+    letter[placeString] = letter[placeString].strip()
+    if letter[placeString].startswith('[') and letter[placeString].endswith(']'):
         placeName.set('evidence', 'conjecture')
-        letter[placestring] = letter[placestring][1:-1]
+        letter[placeString] = letter[placeString][1:-1]
         logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
-    placeName.text = str(letter[placestring])
-    if (placestring + 'ID' in table.fieldnames) and (letter[placestring + 'ID']):
-        letter[placestring + 'ID'] = letter[placestring + 'ID'].strip()
-        if 'http://www.geonames.org/' in letter[placestring + 'ID']:
-            placeName.set('ref', str(letter[placestring + 'ID']))
+    placeName.text = str(letter[placeString])
+    if (placeString + 'ID' in table.fieldnames) and (letter[placeString + 'ID']):
+        letter[placeString + 'ID'] = letter[placeString + 'ID'].strip()
+        if 'www.geonames.org' in letter[placeString + 'ID']:
+            placeName.set('ref', str(letter[placeString + 'ID']))
         else:
             logging.warning('No standardized %sID in line %s',
-                            placestring, table.line_num)
+                            placeString, table.line_num)
     else:
         logging.debug('ID for "%s" missing in line %s', letter[
-            placestring], table.line_num)
+            placeString], table.line_num)
     return placeName
 
 
