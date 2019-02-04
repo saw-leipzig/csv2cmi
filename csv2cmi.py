@@ -62,6 +62,7 @@ else:
 
 
 def checkIsodate(dateString):
+    """Check if a string is from datatype teidata.temporal.iso."""
     try:
         datetime.strptime(dateString, '%Y-%m-%d')
         return True
@@ -78,6 +79,7 @@ def checkIsodate(dateString):
 
 
 def checkDatableW3C(dateString):
+    """Check if a string is from datatype teidata.temporal.w3c."""
     if checkIsodate(dateString):
         return True
     else:
