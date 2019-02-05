@@ -80,9 +80,13 @@ def checkIsodate(dateString):
 
 def checkDatableW3C(dateString):
     """Check if a string is from datatype teidata.temporal.w3c."""
+    # handle negative dates
+    if len(dateString) > 4 and dateString.startswith('-') and dateString[1].isdigit():
+        dateString = dateString[1:]
     if checkIsodate(dateString):
         return True
     else:
+        # handle dates without year
         try:
             datetime.strptime(dateString, '--%m-%d')
             return True
