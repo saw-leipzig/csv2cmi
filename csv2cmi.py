@@ -413,7 +413,8 @@ with open(args.filename, 'rt') as letterTable:
             edition = config.get('Edition', 'title')
         except configparser.Error:
             logging.warning('No edition stated. Please set manually.')
-        sourceDesc.append(createEdition(edition, editionType, createID('edition')))
+        sourceDesc.append(createEdition(
+            edition, editionType, createID('edition')))
     for letter in table:
         if ('edition' in table.fieldnames):
             edition = letter['edition'].strip()
@@ -422,7 +423,8 @@ with open(args.filename, 'rt') as letterTable:
                 continue
             if edition and not editionID:
                 editionID = createID('edition')
-                sourceDesc.append(createEdition(edition, editionType, editionID))
+                sourceDesc.append(createEdition(
+                    edition, editionType, editionID))
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
