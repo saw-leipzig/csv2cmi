@@ -184,7 +184,8 @@ def createCorrespondent(nameString):
                 elif connection:
                     if 'viaf' in authID:
                         try:
-                            viafrdf = ElementTree(file=urllib.request.urlopen(authID + '/rdf.xml', timeout=1))
+                            viafrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '/rdf.xml'))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
@@ -201,7 +202,8 @@ def createCorrespondent(nameString):
                                     '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                     elif 'gnd' in authID:
                         try:
-                            gndrdf = ElementTree(file=urllib.request.urlopen(authID + '/about/rdf', timeout=1))
+                            gndrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '/about/rdf'))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
@@ -211,20 +213,24 @@ def createCorrespondent(nameString):
                             print(authID)
                         else:
                             gndrdf_root = gndrdf.getroot()
-                            rdftype = gndrdf_root.find('.//rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                            rdftype = gndrdf_root.find(
+                                './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
-                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype  or 'Legendary' in rdftype:
+                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype or 'Legendary' in rdftype:
                                 correspondent = Element('persName')
                             else:
                                 correspondent = Element('name')
                                 if 'UndifferentiatedPerson' in rdftype:
-                                    logging.warning('%sID in line %s links to undifferentiated Person', nameString, table.line_num)
+                                    logging.warning(
+                                        '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
                                 else:
-                                    logging.error('%sID in line %s has wrong rdf:type', nameString, table.line_num)
+                                    logging.error(
+                                        '%sID in line %s has wrong rdf:type', nameString, table.line_num)
                     elif 'loc' in authID:
                         try:
-                            locrdf = ElementTree(file=urllib.request.urlopen(authID + '.rdf', timeout=1))
+                            locrdf = ElementTree(
+                                file=urllib.request.urlopen(authID + '.rdf'))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
