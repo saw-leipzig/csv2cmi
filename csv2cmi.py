@@ -149,20 +149,20 @@ def createFileDesc(config):
     return fileDesc
 
 
-def createCorrespondent(namestring):
-    if letter[namestring]:
+def createCorrespondent(nameString):
+    if letter[nameString]:
         correspondents = []
         # Turning the cells of correspondent names and their IDs into lists since cells
         # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
         if subdlm:
-            persons = letter[namestring].split(subdlm)
-            personIDs = letter[namestring + "ID"].split(subdlm)
+            persons = letter[nameString].split(subdlm)
+            personIDs = letter[nameString + "ID"].split(subdlm)
         else:
             persons = []
-            persons.append(letter[namestring].strip())
+            persons.append(letter[nameString].strip())
             personIDs = []
-            personIDs.append(letter[namestring + "ID"])
+            personIDs.append(letter[nameString + "ID"])
 
         for index, person in enumerate(persons):
             person = str(person).strip()
@@ -182,7 +182,7 @@ def createCorrespondent(namestring):
                                 file=urllib.request.urlopen(authID + '/rdf.xml'))
                         except urllib.error.HTTPError:
                             logging.error(
-                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                'Authority file not found for %sID in line %s', nameString, table.line_num)
                             correspondent = Element('name')
                             authID = ''
                         except urllib.error.URLError:
@@ -196,7 +196,7 @@ def createCorrespondent(namestring):
                                 correspondent = Element('persName')
                             else:
                                 logging.warning(
-                                    '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                    '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                                 correspondent = Element('name')
                                 authID = ''
                     elif 'gnd' in authID:
@@ -205,7 +205,7 @@ def createCorrespondent(namestring):
                                 file=urllib.request.urlopen(authID + '/about/rdf'))
                         except urllib.error.HTTPError:
                             logging.error(
-                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                'Authority file not found for %sID in line %s', nameString, table.line_num)
                             correspondent = Element('name')
                             authID = ''
                         except urllib.error.URLError:
@@ -224,10 +224,10 @@ def createCorrespondent(namestring):
                             else:
                                 correspondent = Element('name')
                                 logging.error(
-                                    '%sID in line %s has wrong rdf:type', namestring, table.line_num)
+                                    '%sID in line %s has wrong rdf:type', nameString, table.line_num)
                                 if 'UndifferentiatedPerson' in rdftype:
                                     logging.warning(
-                                        '%sID in line %s links to undifferentiated Person', namestring, table.line_num)
+                                        '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
                                     authID = ''
                     elif 'loc' in authID:
                         try:
@@ -235,7 +235,7 @@ def createCorrespondent(namestring):
                                 file=urllib.request.urlopen(authID + '.rdf'))
                         except urllib.error.HTTPError:
                             logging.error(
-                                'Authority file not found for %sID in line %s', namestring, table.line_num)
+                                'Authority file not found for %sID in line %s', nameString, table.line_num)
                             correspondent = Element('name')
                             authID = ''
                         except urllib.error.URLError:
@@ -249,12 +249,12 @@ def createCorrespondent(namestring):
                                 correspondent = Element('persName')
                             else:
                                 logging.warning(
-                                    '%sID in line %s links to unprocessable authority file', namestring, table.line_num)
+                                    '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                                 correspondent = Element('name')
                                 authID = ''
                     else:
                         logging.error(
-                            'No proper authority record in line %s for %s', table.line_num, namestring)
+                            'No proper authority record in line %s for %s', table.line_num, nameString)
                         correspondent = Element(action, 'name')
                         authID = ''
                 else:
