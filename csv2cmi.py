@@ -166,28 +166,30 @@ def createCorrespondent(nameString):
 
         for index, person in enumerate(persons):
             person = str(person).strip()
+            correspondent = Element('name')
             # assigning authority file IDs to their correspondents if provided
             if personIDs[index] and (index < len(personIDs)):
-                if 'http://' not in str(personIDs[index].strip()):
+                # by default complete GND-IDNs to full URI
+                if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index])[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
                     authID = 'http://d-nb.info/gnd/' + \
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
-                if connection and (profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]') == None):
+                if profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
+                    correspondent = Element('persName')
+                elif profileDesc.find('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                    correspondent = Element('orgName')
+                elif connection:
                     if 'viaf' in authID:
                         try:
-                            viafrdf = ElementTree(
-                                file=urllib.request.urlopen(authID + '/rdf.xml'))
+                            viafrdf = ElementTree(file=urllib.request.urlopen(authID + '/rdf.xml', timeout=1))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                            correspondent = Element('name')
-                            authID = ''
                         except urllib.error.URLError:
                             logging.error('Failed to reach VIAF')
-                            correspondent = Element('name')
                         else:
                             viafrdf_root = viafrdf.getroot()
                             if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
@@ -197,50 +199,37 @@ def createCorrespondent(nameString):
                             else:
                                 logging.warning(
                                     '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
-                                correspondent = Element('name')
-                                authID = ''
                     elif 'gnd' in authID:
                         try:
-                            gndrdf = ElementTree(
-                                file=urllib.request.urlopen(authID + '/about/rdf'))
+                            gndrdf = ElementTree(file=urllib.request.urlopen(authID + '/about/rdf', timeout=1))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                            correspondent = Element('name')
-                            authID = ''
                         except urllib.error.URLError:
                             logging.error('Failed to reach GND')
-                            correspondent = Element('name')
                         except UnicodeEncodeError:
                             print(authID)
                         else:
                             gndrdf_root = gndrdf.getroot()
-                            rdftype = gndrdf_root.find(
-                                './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                            rdftype = gndrdf_root.find('.//rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
-                            elif 'DifferentiatedPerson' in rdftype:
+                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype  or 'Legendary' in rdftype:
                                 correspondent = Element('persName')
                             else:
                                 correspondent = Element('name')
-                                logging.error(
-                                    '%sID in line %s has wrong rdf:type', nameString, table.line_num)
                                 if 'UndifferentiatedPerson' in rdftype:
-                                    logging.warning(
-                                        '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
-                                    authID = ''
+                                    logging.warning('%sID in line %s links to undifferentiated Person', nameString, table.line_num)
+                                else:
+                                    logging.error('%sID in line %s has wrong rdf:type', nameString, table.line_num)
                     elif 'loc' in authID:
                         try:
-                            locrdf = ElementTree(
-                                file=urllib.request.urlopen(authID + '.rdf'))
+                            locrdf = ElementTree(file=urllib.request.urlopen(authID + '.rdf', timeout=1))
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                            correspondent = Element('name')
-                            authID = ''
                         except urllib.error.URLError:
                             logging.error('Failed to reach LOC')
-                            correspondent = Element('name')
                         else:
                             locrdf_root = locrdf.getroot()
                             if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
@@ -250,21 +239,14 @@ def createCorrespondent(nameString):
                             else:
                                 logging.warning(
                                     '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
-                                correspondent = Element('name')
-                                authID = ''
                     else:
                         logging.error(
                             'No proper authority record in line %s for %s', table.line_num, nameString)
-                        correspondent = Element(action, 'name')
-                        authID = ''
-                else:
-                    correspondent = Element('name')
-                if authID:
+                if authID and correspondent.tag != "name":
                     correspondent.set('ref', authID)
             else:
                 logging.debug('ID for "%s" missing in line %s',
                               person, table.line_num)
-                correspondent = Element('persName')
             if person.startswith('[') and person.endswith(']'):
                 correspondent.set('evidence', 'conjecture')
                 person = person[1:-1]
