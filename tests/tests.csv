@@ -1,0 +1,4 @@
+sender,senderID,senderPlace,senderPlaceID,senderDate,addressee,addresseeID,addresseePlace,addresseePlaceID,edition,key,note
+Donald Trump,http://id.loc.gov/authorities/names/n85387872,Washington,http://www.geonames.org/4140963,2016-04-01,Donald Duck,http://id.loc.gov/authorities/names/no2016036349,Entenhausen,http://d-nb.info/gnd/4203723-2,Letters of Love an Ludicrousness,,LOC with wrong addresseePlaceID
+Πλάτων,http://d-nb.info/gnd/118594893,Athens,http://www.geonames.org/264371,[..-0350],Imperium Romanum,http://d-nb.info/gnd/1115828762,Rom,http://www.geonames.org/3169070/rome.html,Complete edition of never written letters,89274,EDTF one of a set with negative year; wrong rdf:type in addressee
+Πλάτων,http://viaf.org/viaf/108159964,Athens,http://www.geonames.org/264371,"{-400,-390,-370}",𐎧𐏁𐏂,http://viaf.org/viaf/293793834,Hañgmatana,,Complete edition of never written letters,10342,missing entry in GeoNames; countries can‘t be addressed with VIAF
