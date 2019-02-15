@@ -298,26 +298,26 @@ def createDate(dateString):
         return None
 
 
-def createPlaceName(placeString):
+def createPlaceName(placeNameText, placeNameRef):
     """Create a placeName element."""
     placeName = Element('placeName')
-    letter[placeString] = letter[placeString].strip()
-    if letter[placeString].startswith('[') and letter[placeString].endswith(']'):
+    placeNameText = placeNameText.strip()
+    if placeNameText.startswith('[') and placeNameText.endswith(']'):
         placeName.set('evidence', 'conjecture')
-        letter[placeString] = letter[placeString][1:-1]
+        placeNameText = placeNameText[1:-1]
         logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
-    placeName.text = str(letter[placeString])
-    if (placeString + 'ID' in table.fieldnames) and (letter[placeString + 'ID']):
-        letter[placeString + 'ID'] = letter[placeString + 'ID'].strip()
-        if 'www.geonames.org' in letter[placeString + 'ID']:
-            placeName.set('ref', str(letter[placeString + 'ID']))
+    placeName.text = str(placeNameText)
+    if placeNameRef:
+        placeNameRef = placeNameRef.strip()
+        if 'www.geonames.org' in placeNameRef:
+            placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('No standardized %sID in line %s',
-                            placeString, table.line_num)
+            logging.warning('No standardized ID for "%s" in line %s',
+                            placeNameText, table.line_num)
     else:
-        logging.debug('ID for "%s" missing in line %s', letter[
-            placeString], table.line_num)
+        logging.debug('ID for "%s" missing in line %s',
+                      placeNameText, table.line_num)
     return placeName
 
 
@@ -444,8 +444,12 @@ with open(args.filename, 'rt') as letterTable:
                 for sender in correspondents:
                     action.append(sender)
             # add placeName
-            if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
-                action.append(createPlaceName('senderPlace'))
+            if 'senderPlace' in table.fieldnames and letter['senderPlace']:
+                try:
+                    placeID = letter['senderPlaceID']
+                except KeyError:
+                    placeID = ''
+                action.append(createPlaceName(letter['senderPlace'], placeID))
             # add date
             try:
                 action.append(createDate(letter['senderDate']))
@@ -469,8 +473,13 @@ with open(args.filename, 'rt') as letterTable:
                 for addressee in correspondents:
                     action.append(addressee)
             # add placeName
-            if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
-                action.append(createPlaceName('addresseePlace'))
+            if 'addresseePlace' in table.fieldnames and letter['addresseePlace']:
+                try:
+                    placeID = letter['senderPlaceID']
+                except KeyError:
+                    placeID = ''
+                action.append(createPlaceName(
+                    letter['addresseePlace'], placeID))
             # add date
             try:
                 action.append(createDate(letter['addresseeDate']))
