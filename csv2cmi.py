@@ -453,7 +453,7 @@ with open(args.filename, 'rt') as letterTable:
                 pass
             except TypeError:
                 logging.warning(
-                        'Could not parse senderDate in line %s', table.line_num)
+                    'Could not parse senderDate in line %s', table.line_num)
         else:
             logging.info('No information on sender in line %s', table.line_num)
 
@@ -478,7 +478,7 @@ with open(args.filename, 'rt') as letterTable:
                 pass
             except TypeError:
                 logging.warning(
-                'Could not parse addresseeDate in line %s', table.line_num)
+                    'Could not parse addresseeDate in line %s', table.line_num)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
