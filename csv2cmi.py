@@ -447,11 +447,12 @@ with open(args.filename, 'rt') as letterTable:
             if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
                 action.append(createPlaceName('senderPlace'))
             # add date
-            if 'senderDate' in table.fieldnames and letter['senderDate']:
-                try:
-                    action.append(createDate(letter['senderDate']))
-                except TypeError:
-                    logging.warning(
+            try:
+                action.append(createDate(letter['senderDate']))
+            except KeyError:
+                pass
+            except TypeError:
+                logging.warning(
                         'Could not parse senderDate in line %s', table.line_num)
         else:
             logging.info('No information on sender in line %s', table.line_num)
@@ -471,12 +472,13 @@ with open(args.filename, 'rt') as letterTable:
             if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
                 action.append(createPlaceName('addresseePlace'))
             # add date
-            if 'addresseeDate' in table.fieldnames and letter['addresseeDate']:
-                try:
-                    action.append(createDate(letter['addresseeDate']))
-                except TypeError:
-                    logging.warning(
-                        'Could not parse addresseeDate in line %s', table.line_num)
+            try:
+                action.append(createDate(letter['addresseeDate']))
+            except KeyError:
+                pass
+            except TypeError:
+                logging.warning(
+                'Could not parse addresseeDate in line %s', table.line_num)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
