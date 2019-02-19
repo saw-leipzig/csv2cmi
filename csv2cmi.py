@@ -265,6 +265,8 @@ def createCorrespondent(nameString):
 
 def createDate(dateString):
     """Convert an extended ISO date into a proper TEI element."""
+    if not(dateString):
+        return None
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
@@ -295,7 +297,7 @@ def createDate(dateString):
                 'Added @cert to <date> from line %s', table.line_num)
         return date
     else:
-        return None
+        raise ValueError('unable to parse \'%s\' as TEI date' % dateString)
 
 
 def createPlaceName(placeNameText, placeNameRef):
