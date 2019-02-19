@@ -159,16 +159,13 @@ def createCorrespondent(nameString):
             persons = letter[nameString].split(subdlm)
             personIDs = letter[nameString + "ID"].split(subdlm)
         else:
-            persons = []
-            persons.append(letter[nameString].strip())
-            personIDs = []
-            personIDs.append(letter[nameString + "ID"])
-
+            persons = [letter[nameString].strip()]
+            personIDs = [letter[nameString + "ID"]]
         for index, person in enumerate(persons):
             person = str(person).strip()
             correspondent = Element('name')
             # assigning authority file IDs to their correspondents if provided
-            if personIDs[index] and (index < len(personIDs)):
+            if (index < len(personIDs)) and personIDs[index]:
                 # by default complete GND-IDNs to full URI
                 if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index])[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
