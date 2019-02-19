@@ -455,9 +455,9 @@ with open(args.filename, 'rt') as letterTable:
             # add date
             try:
                 action.append(createDate(letter['senderDate']))
-            except KeyError:
+            except (KeyError, TypeError):
                 pass
-            except TypeError:
+            except ValueError:
                 logging.warning(
                     'Could not parse senderDate in line %s', table.line_num)
         else:
@@ -485,9 +485,9 @@ with open(args.filename, 'rt') as letterTable:
             # add date
             try:
                 action.append(createDate(letter['addresseeDate']))
-            except KeyError:
+            except (KeyError, TypeError):
                 pass
-            except TypeError:
+            except ValueError:
                 logging.warning(
                     'Could not parse addresseeDate in line %s', table.line_num)
         else:
