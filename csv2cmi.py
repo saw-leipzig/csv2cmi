@@ -317,9 +317,6 @@ def createPlaceName(placeNameText, placeNameRef):
         else:
             logging.warning('No standardized ID for "%s" in line %s',
                             placeNameText, table.line_num)
-    else:
-        logging.debug('ID for "%s" missing in line %s',
-                      placeNameText, table.line_num)
     return placeName
 
 
@@ -451,6 +448,8 @@ with open(args.filename, 'rt') as letterTable:
                     placeID = letter['senderPlaceID']
                 except KeyError:
                     placeID = ''
+                    logging.debug('ID for "%s" missing in line %s',
+                                  letter['senderPlace'], table.line_num)
                 action.append(createPlaceName(letter['senderPlace'], placeID))
             # add date
             try:
@@ -477,9 +476,11 @@ with open(args.filename, 'rt') as letterTable:
             # add placeName
             if 'addresseePlace' in table.fieldnames and letter['addresseePlace']:
                 try:
-                    placeID = letter['senderPlaceID']
+                    placeID = letter['addresseePlaceID']
                 except KeyError:
                     placeID = ''
+                    logging.debug('ID for "%s" missing in line %s',
+                                  letter['addresseePlace'], table.line_num)
                 action.append(createPlaceName(
                     letter['addresseePlace'], placeID))
             # add date
