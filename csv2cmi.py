@@ -18,7 +18,7 @@ from datetime import datetime
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.0-alpha'
+__version__ = '2.0.0-beta'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -159,16 +159,13 @@ def createCorrespondent(nameString):
             persons = letter[nameString].split(subdlm)
             personIDs = letter[nameString + "ID"].split(subdlm)
         else:
-            persons = []
-            persons.append(letter[nameString].strip())
-            personIDs = []
-            personIDs.append(letter[nameString + "ID"])
-
+            persons = [letter[nameString].strip()]
+            personIDs = [letter[nameString + "ID"]]
         for index, person in enumerate(persons):
             person = str(person).strip()
             correspondent = Element('name')
             # assigning authority file IDs to their correspondents if provided
-            if personIDs[index] and (index < len(personIDs)):
+            if (index < len(personIDs)) and personIDs[index]:
                 # by default complete GND-IDNs to full URI
                 if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index])[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
@@ -177,9 +174,9 @@ def createCorrespondent(nameString):
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
-                if profileDesc.find('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
+                if profileDesc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
                     correspondent = Element('persName')
-                elif profileDesc.find('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                elif profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
                     correspondent = Element('orgName')
                 elif connection:
                     if 'viaf' in authID:
@@ -265,6 +262,8 @@ def createCorrespondent(nameString):
 
 def createDate(dateString):
     """Convert an extended ISO date into a proper TEI element."""
+    if not(dateString):
+        return None
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
@@ -295,29 +294,26 @@ def createDate(dateString):
                 'Added @cert to <date> from line %s', table.line_num)
         return date
     else:
-        return None
+        raise ValueError('unable to parse \'%s\' as TEI date' % dateString)
 
 
-def createPlaceName(placeString):
+def createPlaceName(placeNameText, placeNameRef):
     """Create a placeName element."""
     placeName = Element('placeName')
-    letter[placeString] = letter[placeString].strip()
-    if letter[placeString].startswith('[') and letter[placeString].endswith(']'):
+    placeNameText = placeNameText.strip()
+    if placeNameText.startswith('[') and placeNameText.endswith(']'):
         placeName.set('evidence', 'conjecture')
-        letter[placeString] = letter[placeString][1:-1]
+        placeNameText = placeNameText[1:-1]
         logging.info('Added @evidence to <placeName> from line %s',
                      table.line_num)
-    placeName.text = str(letter[placeString])
-    if (placeString + 'ID' in table.fieldnames) and (letter[placeString + 'ID']):
-        letter[placeString + 'ID'] = letter[placeString + 'ID'].strip()
-        if 'www.geonames.org' in letter[placeString + 'ID']:
-            placeName.set('ref', str(letter[placeString + 'ID']))
+    placeName.text = str(placeNameText)
+    if placeNameRef:
+        placeNameRef = placeNameRef.strip()
+        if 'www.geonames.org' in placeNameRef:
+            placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('No standardized %sID in line %s',
-                            placeString, table.line_num)
-    else:
-        logging.debug('ID for "%s" missing in line %s', letter[
-            placeString], table.line_num)
+            logging.warning('No standardized ID for "%s" in line %s',
+                            placeNameText, table.line_num)
     return placeName
 
 
@@ -444,15 +440,22 @@ with open(args.filename, 'rt') as letterTable:
                 for sender in correspondents:
                     action.append(sender)
             # add placeName
-            if ('senderPlace' in table.fieldnames) and letter['senderPlace']:
-                action.append(createPlaceName('senderPlace'))
-            # add date
-            if 'senderDate' in table.fieldnames and letter['senderDate']:
+            if 'senderPlace' in table.fieldnames and letter['senderPlace']:
                 try:
-                    action.append(createDate(letter['senderDate']))
-                except TypeError:
-                    logging.warning(
-                        'Could not parse senderDate in line %s', table.line_num)
+                    placeID = letter['senderPlaceID']
+                except KeyError:
+                    placeID = ''
+                    logging.debug('ID for "%s" missing in line %s',
+                                  letter['senderPlace'], table.line_num)
+                action.append(createPlaceName(letter['senderPlace'], placeID))
+            # add date
+            try:
+                action.append(createDate(letter['senderDate']))
+            except (KeyError, TypeError):
+                pass
+            except ValueError:
+                logging.warning(
+                    'Could not parse senderDate in line %s', table.line_num)
         else:
             logging.info('No information on sender in line %s', table.line_num)
 
@@ -468,15 +471,23 @@ with open(args.filename, 'rt') as letterTable:
                 for addressee in correspondents:
                     action.append(addressee)
             # add placeName
-            if ('addresseePlace' in table.fieldnames) and letter['addresseePlace']:
-                action.append(createPlaceName('addresseePlace'))
-            # add date
-            if 'addresseeDate' in table.fieldnames and letter['addresseeDate']:
+            if 'addresseePlace' in table.fieldnames and letter['addresseePlace']:
                 try:
-                    action.append(createDate(letter['addresseeDate']))
-                except TypeError:
-                    logging.warning(
-                        'Could not parse addresseeDate in line %s', table.line_num)
+                    placeID = letter['addresseePlaceID']
+                except KeyError:
+                    placeID = ''
+                    logging.debug('ID for "%s" missing in line %s',
+                                  letter['addresseePlace'], table.line_num)
+                action.append(createPlaceName(
+                    letter['addresseePlace'], placeID))
+            # add date
+            try:
+                action.append(createDate(letter['addresseeDate']))
+            except (KeyError, TypeError):
+                pass
+            except ValueError:
+                logging.warning(
+                    'Could not parse addresseeDate in line %s', table.line_num)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
