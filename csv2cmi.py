@@ -133,7 +133,7 @@ def createFileDesc(config):
     # publication statement
     publicationStmt = SubElement(fileDesc, 'publicationStmt')
     if config.get('Project', 'publisher'):
-        publishers = config.get('Project', 'publisher').split('\n')
+        publishers = config.get('Project', 'publisher').splitlines()
         for entity in publishers:
             SubElement(publicationStmt, 'publisher').text = entity
     else:
