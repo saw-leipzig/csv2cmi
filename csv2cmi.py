@@ -132,16 +132,16 @@ def createFileDesc(config):
     editor.text = config.get('Project', 'editor')
     # publication statement
     publicationStmt = SubElement(fileDesc, 'publicationStmt')
-    publisher = SubElement(publicationStmt, 'publisher')
-    if (config.get('Project', 'publisher')):
-        publisher.text = config.get('Project', 'publisher')
+    if config.get('Project', 'publisher'):
+        publishers = config.get('Project', 'publisher').split('\n')
+        for entity in publishers:
+            SubElement(publicationStmt, 'publisher').text = entity
     else:
-        publisher.text = config.get('Project', 'editor')
+        SubElement(publicationStmt, 'publisher').text = config.get('Project', 'editor')
     idno = SubElement(publicationStmt, 'idno')
     idno.set('type', 'url')
     idno.text = config.get('Project', 'fileURL')
-    date = SubElement(publicationStmt, 'date')
-    date.set('when', str(datetime.now().isoformat()))
+    SubElement(publicationStmt, 'date').set('when', str(datetime.now().isoformat()))
     availability = SubElement(publicationStmt, 'availability')
     licence = SubElement(availability, 'licence')
     licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
