@@ -398,30 +398,46 @@ with open(args.filename, 'rt') as letterTable:
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
         exit()
-    edition = ''
+    editions = []
+    editionIDs = []
     if not('edition' in table.fieldnames):
         try:
             edition = config.get('Edition', 'title')
         except configparser.Error:
+            edition = ""
             logging.warning('No edition stated. Please set manually.')
+        editionID = createID('edition')
         sourceDesc.append(createEdition(
-            edition, editionType, createID('edition')))
+            edition, editionType, editionID))
+        editions.append(edition)
+        editionIDs.append(editionID)
     for letter in table:
         if ('edition' in table.fieldnames):
-            edition = letter['edition'].strip()
-            editionID = getEditonID(edition)
-            if not(edition or args.all):
-                continue
-            if edition and not editionID:
-                editionID = createID('edition')
-                sourceDesc.append(createEdition(
-                    edition, editionType, editionID))
+            editions = []
+            editionIDs = []
+            if subdlm:
+                edition_values = letter['edition'].split(subdlm)
+            else:
+                edition_values = [letter['edition']]
+            for edition in edition_values:
+                edition = edition.strip()
+                editionID = getEditonID(edition)
+                if not(edition or args.all):
+                    continue
+                if edition and not editionID:
+                    editionID = createID('edition')
+                    sourceDesc.append(createEdition(
+                        edition, editionType, editionID))
+                editions.append(edition)
+                editionIDs.append(editionID)
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if edition:
-            entry.set('source', '#' + editionID)
+        if len(editionIDs):
+            # multiple entries needs te be seperated by whitespace
+            # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
+            entry.set('source', '#' + ' #'.join(editionIDs))
         if 'key' in table.fieldnames and letter['key']:
             if not(edition):
                 logging.error('Key without edition in line %s', table.line_num)
