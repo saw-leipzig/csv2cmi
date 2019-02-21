@@ -24,8 +24,9 @@ __version__ = '2.0.0-beta'
 logging.basicConfig(format='%(levelname)s: %(message)s')
 logs = logging.getLogger()
 
-# define RDF namespace
-rdf = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
+# define namespaces
+ns = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+      'tei': 'http://www.tei-c.org/ns/1.0'}
 
 # define arguments
 parser = argparse.ArgumentParser(
@@ -192,9 +193,9 @@ def createCorrespondent(nameString):
                             logging.error('Failed to reach VIAF')
                         else:
                             viafrdf_root = viafrdf.getroot()
-                            if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', rdf) is not None:
+                            if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', ns) is not None:
                                 correspondent = Element('orgName')
-                            elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', rdf) is not None:
+                            elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', ns) is not None:
                                 correspondent = Element('persName')
                             else:
                                 logging.warning(
@@ -213,7 +214,7 @@ def createCorrespondent(nameString):
                         else:
                             gndrdf_root = gndrdf.getroot()
                             rdftype = gndrdf_root.find(
-                                './/rdf:type', rdf).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                                './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
                             elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype or 'Legendary' in rdftype:
@@ -237,9 +238,9 @@ def createCorrespondent(nameString):
                             logging.error('Failed to reach LOC')
                         else:
                             locrdf_root = locrdf.getroot()
-                            if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', rdf) is not None:
+                            if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', ns) is not None:
                                 correspondent = Element('orgName')
-                            elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', rdf) is not None:
+                            elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', ns) is not None:
                                 correspondent = Element('persName')
                             else:
                                 logging.warning(
@@ -375,7 +376,7 @@ if ('Edition' in config) and ('type' in config['Edition']):
 # building cmi
 # generating root element
 root = Element('TEI')
-root.set('xmlns', 'http://www.tei-c.org/ns/1.0')
+root.set('xmlns', ns.get('tei'))
 root.append(
     Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
 
