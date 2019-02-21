@@ -386,13 +386,13 @@ teiHeader = SubElement(root, 'teiHeader')
 fileDesc = createFileDesc(config)
 teiHeader.append(fileDesc)
 # container for bibliographic data
-global sourceDesc
+# global sourceDesc
 sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
 
 with open(args.filename, 'rt') as letterTable:
-    global table
+    # global table
     table = DictReader(letterTable)
     logging.debug('Recognized columns: %s', table.fieldnames)
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
