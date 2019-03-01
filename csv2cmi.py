@@ -213,6 +213,9 @@ def createCorrespondent(nameString):
                             print(authID)
                         else:
                             gndrdf_root = gndrdf.getroot()
+                            latestID = gndrdf_root[0].get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
+                            if authID != latestID:
+                                logging.info('%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
