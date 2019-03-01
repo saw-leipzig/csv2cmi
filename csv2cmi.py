@@ -416,8 +416,8 @@ with open(args.filename, 'rt') as letterTable:
         editionIDs.append(editionID)
     for letter in table:
         if ('edition' in table.fieldnames):
-            editions = []
-            editionIDs = []
+            del editions[:]
+            del editionIDs[:]
             if subdlm:
                 edition_values = letter['edition'].split(subdlm)
             else:
