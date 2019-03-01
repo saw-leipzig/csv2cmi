@@ -129,17 +129,21 @@ def createFileDesc(config):
     title.set('xml:id', createID('title'))
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
-    editor = SubElement(titleStmt, 'editor')
-    editor.text = config.get('Project', 'editor')
+    editors = ['']
+    editors = config.get('Project', 'editor').splitlines()
+    for entity in editors:
+        SubElement(titleStmt, 'editor').text = entity
+    if len(titleStmt.getchildren()) == 1:
+        logging.warning('Editor missing')
+        SubElement(titleStmt, 'editor')
     # publication statement
     publicationStmt = SubElement(fileDesc, 'publicationStmt')
-    if config.get('Project', 'publisher'):
-        publishers = config.get('Project', 'publisher').splitlines()
-        for entity in publishers:
-            SubElement(publicationStmt, 'publisher').text = entity
-    else:
-        SubElement(publicationStmt, 'publisher').text = config.get(
-            'Project', 'editor')
+    publishers = config.get('Project', 'publisher').splitlines()
+    for entity in publishers:
+        SubElement(publicationStmt, 'publisher').text = entity
+    if not(publicationStmt.getchildren()):
+        for editor in titleStmt.findall('editor'):
+            SubElement(publicationStmt, 'publisher').text = editor.text
     idno = SubElement(publicationStmt, 'idno')
     idno.set('type', 'url')
     idno.text = config.get('Project', 'fileURL')
