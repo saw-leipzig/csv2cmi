@@ -440,7 +440,7 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
 
-            # add persName or orgName
+            # add name of sender
             if letter['sender']:
                 correspondents = createCorrespondent('sender')
                 for sender in correspondents:
@@ -471,7 +471,7 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
 
-            # add persName or orgName
+            # add name of addressee
             if letter['addressee']:
                 correspondents = createCorrespondent('addressee')
                 for addressee in correspondents:
