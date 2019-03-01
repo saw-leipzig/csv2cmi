@@ -213,6 +213,9 @@ def createCorrespondent(nameString):
                             print(authID)
                         else:
                             gndrdf_root = gndrdf.getroot()
+                            latestID = gndrdf_root[0].get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
+                            if authID != latestID:
+                                logging.info('%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
@@ -413,8 +416,8 @@ with open(args.filename, 'rt') as letterTable:
         editionIDs.append(editionID)
     for letter in table:
         if ('edition' in table.fieldnames):
-            editions = []
-            editionIDs = []
+            del editions[:]
+            del editionIDs[:]
             if subdlm:
                 edition_values = letter['edition'].split(subdlm)
             else:
@@ -434,7 +437,7 @@ with open(args.filename, 'rt') as letterTable:
         if args.line_numbers:
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if len(editionIDs):
+        if any(editionIDs):
             # multiple entries needs te be seperated by whitespace
             # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
             entry.set('source', '#' + ' #'.join(editionIDs))
@@ -453,7 +456,7 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('sender'))
             action.set('type', 'sent')
 
-            # add persName or orgName
+            # add name of sender
             if letter['sender']:
                 correspondents = createCorrespondent('sender')
                 for sender in correspondents:
@@ -484,7 +487,7 @@ with open(args.filename, 'rt') as letterTable:
             action.set('xml:id', createID('addressee'))
             action.set('type', 'received')
 
-            # add persName or orgName
+            # add name of addressee
             if letter['addressee']:
                 correspondents = createCorrespondent('addressee')
                 for addressee in correspondents:
