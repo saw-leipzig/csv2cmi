@@ -437,7 +437,7 @@ with open(args.filename, 'rt') as letterTable:
         if args.line_numbers:
             entry.set('n', str(table.line_num))
         entry.set('xml:id', createID('letter'))
-        if len(editionIDs):
+        if any(editionIDs):
             # multiple entries needs te be seperated by whitespace
             # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
             entry.set('source', '#' + ' #'.join(editionIDs))
