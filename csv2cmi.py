@@ -478,12 +478,22 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName(letter['senderPlace'], placeID))
             # add date
             try:
-                action.append(createDate(letter['senderDate']))
+                sent = createDate(letter['senderDate'])
             except (KeyError, TypeError):
                 pass
             except ValueError:
                 logging.warning(
                     'Could not parse senderDate in line %s', table.line_num)
+            # add literal date
+            try:
+                sent.text = letter['senderDateText'].strip()
+            except (AttributeError, NameError):
+                sent = Element('date')
+                sent.text = letter['senderDateText'].strip()
+            except KeyError:
+                pass
+            if sent.attrib or sent.text:
+                action.append(sent)
         else:
             logging.info('No information on sender in line %s', table.line_num)
 
@@ -510,12 +520,22 @@ with open(args.filename, 'rt') as letterTable:
                     letter['addresseePlace'], placeID))
             # add date
             try:
-                action.append(createDate(letter['addresseeDate']))
+                received = createDate(letter['addresseeDate'])
             except (KeyError, TypeError):
                 pass
             except ValueError:
                 logging.warning(
                     'Could not parse addresseeDate in line %s', table.line_num)
+            # add literal date
+            try:
+                received.text = letter['senderDateText'].strip()
+            except (AttributeError, NameError):
+                received = Element('date')
+                received.text = letter['senderDateText'].strip()
+            except KeyError:
+                pass
+            if received.attrib or received.text:
+                action.append(received)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
