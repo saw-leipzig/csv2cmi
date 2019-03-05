@@ -365,10 +365,15 @@ config = configparser.ConfigParser()
 # set default values
 config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
     os.path.basename(args.filename))[0] + '.xml'}
+
+iniFilename = 'csv2cmi.ini'
 try:
-    config.read_file(open('csv2cmi.ini'))
+    config.read_file(open(os.path.dirname(args.filename) + '/' + iniFilename))
 except IOError:
-    logging.error('No configuration file found')
+    try:
+        config.read_file(open(iniFilename))
+    except IOError:
+        logging.error('No configuration file found')
 
 # set type of edition
 editionType = 'print'
@@ -526,5 +531,5 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.splitext(os.path.basename(args.filename))[
+tree.write(os.path.dirname(args.filename) + '/' + os.path.splitext(os.path.basename(args.filename))[
            0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
