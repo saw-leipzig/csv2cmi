@@ -528,10 +528,10 @@ with open(args.filename, 'rt') as letterTable:
                     'Could not parse addresseeDate in line %s', table.line_num)
             # add literal date
             try:
-                received.text = letter['senderDateText'].strip()
+                received.text = letter['addresseeDateText'].strip()
             except (AttributeError, NameError):
                 received = Element('date')
-                received.text = letter['senderDateText'].strip()
+                received.text = letter['addresseeDateText'].strip()
             except KeyError:
                 pass
             if received.attrib or received.text:
