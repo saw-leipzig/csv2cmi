@@ -9,12 +9,12 @@
 import argparse
 import configparser
 import logging
-import os
 import random
 import string
 import urllib.request
 from csv import DictReader
 from datetime import datetime
+from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
@@ -371,13 +371,12 @@ connection = checkConnectivity()
 # read config file
 config = configparser.ConfigParser()
 # set default values
-config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
-    os.path.basename(args.filename))[0] + '.xml'}
+config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
+    path.basename(args.filename))[0] + '.xml'}
 
 iniFilename = 'csv2cmi.ini'
 try:
-    config.read_file(
-        open(os.path.join(os.path.dirname(args.filename), iniFilename)))
+    config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
 except IOError:
     try:
         config.read_file(open(iniFilename))
@@ -540,5 +539,5 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.join(os.path.dirname(args.filename), os.path.splitext(os.path.basename(args.filename))[
+tree.write(path.join(path.dirname(args.filename), path.splitext(path.basename(args.filename))[
            0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
