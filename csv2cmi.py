@@ -216,6 +216,8 @@ def createCorrespondent(nameString):
                         except UnicodeEncodeError:
                             print(authID)
                         else:
+                            elementset = ('DifferentiatedPerson',
+                                          'Royal', 'Family', 'Legendary')
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
                                 '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
@@ -226,7 +228,7 @@ def createCorrespondent(nameString):
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
-                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype or 'Legendary' in rdftype:
+                            elif any(entity in rdftype for entity in elementset):
                                 correspondent = Element('persName')
                             else:
                                 correspondent = Element('name')
