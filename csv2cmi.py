@@ -9,12 +9,12 @@
 import argparse
 import configparser
 import logging
-import os
 import random
 import string
 import urllib.request
 from csv import DictReader
 from datetime import datetime
+from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
@@ -216,6 +216,8 @@ def createCorrespondent(nameString):
                         except UnicodeEncodeError:
                             print(authID)
                         else:
+                            elementset = ('DifferentiatedPerson',
+                                          'Royal', 'Family', 'Legendary')
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
                                 '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
@@ -226,7 +228,7 @@ def createCorrespondent(nameString):
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
-                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype or 'Legendary' in rdftype:
+                            elif any(entity in rdftype for entity in elementset):
                                 correspondent = Element('persName')
                             else:
                                 correspondent = Element('name')
@@ -369,12 +371,17 @@ connection = checkConnectivity()
 # read config file
 config = configparser.ConfigParser()
 # set default values
-config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
-    os.path.basename(args.filename))[0] + '.xml'}
+config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
+    path.basename(args.filename))[0] + '.xml'}
+
+iniFilename = 'csv2cmi.ini'
 try:
-    config.read_file(open('csv2cmi.ini'))
+    config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
 except IOError:
-    logging.error('No configuration file found')
+    try:
+        config.read_file(open(iniFilename))
+    except IOError:
+        logging.error('No configuration file found')
 
 # set type of edition
 editionType = 'print'
@@ -552,5 +559,5 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.splitext(os.path.basename(args.filename))[
-           0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
+tree.write(path.join(path.dirname(args.filename), path.splitext(path.basename(args.filename))[
+           0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
