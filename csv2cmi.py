@@ -376,7 +376,8 @@ config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
 
 iniFilename = 'csv2cmi.ini'
 try:
-    config.read_file(open(os.path.dirname(args.filename) + '/' + iniFilename))
+    config.read_file(
+        open(os.path.join(os.path.dirname(args.filename), iniFilename)))
 except IOError:
     try:
         config.read_file(open(iniFilename))
@@ -539,5 +540,5 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.dirname(args.filename) + '/' + os.path.splitext(os.path.basename(args.filename))[
-           0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
+tree.write(os.path.join(os.path.dirname(args.filename), os.path.splitext(os.path.basename(args.filename))[
+           0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
