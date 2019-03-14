@@ -366,7 +366,7 @@ def processDate(letter, correspondent):
         pass
     except ValueError:
         logging.warning(
-            'Could not parse senderDate in line %s', table.line_num)
+            'Could not parse %sDate in line %s', correspondent, table.line_num)
     else:
         if correspDate is None:
             correspDate = Element('date')
