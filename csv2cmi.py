@@ -36,6 +36,7 @@ parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
 parser.add_argument('-n', '--notes', help='transfer notes',
                     action='store_true')
+parser.add_argument('-o', '--output', metavar="FILE", help='output file name')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--line-numbers',
@@ -553,5 +554,10 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(path.join(path.dirname(args.filename), path.splitext(path.basename(args.filename))[
-           0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
+if args.output:
+    outFile = args.output
+else:
+    outFile = path.join(path.dirname(args.filename), path.splitext(
+        path.basename(args.filename))[0] + '.xml')
+
+tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
