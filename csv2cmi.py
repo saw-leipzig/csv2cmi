@@ -9,12 +9,12 @@
 import argparse
 import configparser
 import logging
-import os
 import random
 import string
 import urllib.request
 from csv import DictReader
 from datetime import datetime
+from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
@@ -129,17 +129,21 @@ def createFileDesc(config):
     title.set('xml:id', createID('title'))
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
-    editor = SubElement(titleStmt, 'editor')
-    editor.text = config.get('Project', 'editor')
+    editors = ['']
+    editors = config.get('Project', 'editor').splitlines()
+    for entity in editors:
+        SubElement(titleStmt, 'editor').text = entity
+    if len(titleStmt.getchildren()) == 1:
+        logging.warning('Editor missing')
+        SubElement(titleStmt, 'editor')
     # publication statement
     publicationStmt = SubElement(fileDesc, 'publicationStmt')
-    if config.get('Project', 'publisher'):
-        publishers = config.get('Project', 'publisher').splitlines()
-        for entity in publishers:
-            SubElement(publicationStmt, 'publisher').text = entity
-    else:
-        SubElement(publicationStmt, 'publisher').text = config.get(
-            'Project', 'editor')
+    publishers = config.get('Project', 'publisher').splitlines()
+    for entity in publishers:
+        SubElement(publicationStmt, 'publisher').text = entity
+    if not(publicationStmt.getchildren()):
+        for editor in titleStmt.findall('editor'):
+            SubElement(publicationStmt, 'publisher').text = editor.text
     idno = SubElement(publicationStmt, 'idno')
     idno.set('type', 'url')
     idno.text = config.get('Project', 'fileURL')
@@ -212,15 +216,19 @@ def createCorrespondent(nameString):
                         except UnicodeEncodeError:
                             print(authID)
                         else:
+                            elementset = ('DifferentiatedPerson',
+                                          'Royal', 'Family', 'Legendary')
                             gndrdf_root = gndrdf.getroot()
-                            latestID = gndrdf_root[0].get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
+                            latestID = gndrdf_root[0].get(
+                                '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
                             if authID != latestID:
-                                logging.info('%s returns new ID %s', authID, latestID)
+                                logging.info(
+                                    '%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                             if 'Corporate' in rdftype:
                                 correspondent = Element('orgName')
-                            elif 'DifferentiatedPerson' in rdftype or 'Royal' in rdftype or 'Legendary' in rdftype:
+                            elif any(entity in rdftype for entity in elementset):
                                 correspondent = Element('persName')
                             else:
                                 correspondent = Element('name')
@@ -350,6 +358,25 @@ def createID(id_prefix):
     return fullID
 
 
+def processDate(letter, correspondent):
+    correspDate = Element('date')
+    try:
+        correspDate = createDate(letter[correspondent + 'Date'])
+    except (KeyError, TypeError):
+        pass
+    except ValueError:
+        logging.warning(
+            'Could not parse %sDate in line %s', correspondent, table.line_num)
+    else:
+        if correspDate is None:
+            correspDate = Element('date')
+    try:
+        correspDate.text = letter[correspondent + 'DateText'].strip()
+    except (KeyError, TypeError):
+        pass
+    return correspDate
+
+
 # simple test for file
 try:
     open(args.filename, 'rt').close()
@@ -363,12 +390,12 @@ connection = checkConnectivity()
 # read config file
 config = configparser.ConfigParser()
 # set default values
-config['Project'] = {'editor': '', 'publisher': '', 'fileURL': os.path.splitext(
-    os.path.basename(args.filename))[0] + '.xml'}
+config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
+    path.basename(args.filename))[0] + '.xml'}
 
 iniFilename = 'csv2cmi.ini'
 try:
-    config.read_file(open(os.path.dirname(args.filename) + '/' + iniFilename))
+    config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
 except IOError:
     try:
         config.read_file(open(iniFilename))
@@ -414,11 +441,11 @@ with open(args.filename, 'rt') as letterTable:
         except configparser.Error:
             edition = ""
             logging.warning('No edition stated. Please set manually.')
-        editionID = createID('edition')
-        sourceDesc.append(createEdition(
-            edition, editionType, editionID))
-        editions.append(edition)
-        editionIDs.append(editionID)
+        finally:
+            editionID = createID('edition')
+            sourceDesc.append(createEdition(edition, editionType, editionID))
+            editions.append(edition)
+            editionIDs.append(editionID)
     for letter in table:
         if ('edition' in table.fieldnames):
             del editions[:]
@@ -476,13 +503,9 @@ with open(args.filename, 'rt') as letterTable:
                                   letter['senderPlace'], table.line_num)
                 action.append(createPlaceName(letter['senderPlace'], placeID))
             # add date
-            try:
-                action.append(createDate(letter['senderDate']))
-            except (KeyError, TypeError):
-                pass
-            except ValueError:
-                logging.warning(
-                    'Could not parse senderDate in line %s', table.line_num)
+            senderDate = processDate(letter, "sender")
+            if senderDate.attrib or senderDate.text:
+                action.append(senderDate)
         else:
             logging.info('No information on sender in line %s', table.line_num)
 
@@ -508,13 +531,9 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName(
                     letter['addresseePlace'], placeID))
             # add date
-            try:
-                action.append(createDate(letter['addresseeDate']))
-            except (KeyError, TypeError):
-                pass
-            except ValueError:
-                logging.warning(
-                    'Could not parse addresseeDate in line %s', table.line_num)
+            addresseeDate = processDate(letter, "addressee")
+            if addresseeDate.attrib or addresseeDate.text:
+                action.append(addresseeDate)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
@@ -531,5 +550,5 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(os.path.dirname(args.filename) + '/' + os.path.splitext(os.path.basename(args.filename))[
-           0] + '.xml', encoding="utf-8", xml_declaration=True, method="xml")
+tree.write(path.join(path.dirname(args.filename), path.splitext(path.basename(args.filename))[
+           0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
