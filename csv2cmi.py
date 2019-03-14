@@ -36,6 +36,7 @@ parser.add_argument('-a', '--all',
                     help='include unedited letters', action='store_true')
 parser.add_argument('-n', '--notes', help='transfer notes',
                     action='store_true')
+parser.add_argument('-o', '--output', metavar="FILE", help='output file name')
 parser.add_argument('-v', '--verbose',
                     help='increase output verbosity', action='store_true')
 parser.add_argument('--line-numbers',
@@ -326,8 +327,7 @@ def createPlaceName(placeNameText, placeNameRef):
         if 'www.geonames.org' in placeNameRef:
             placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('No standardized ID for "%s" in line %s',
-                            placeNameText, table.line_num)
+            logging.warning('"%s" is no standardized ID', placeNameRef)
     return placeName
 
 
@@ -375,6 +375,21 @@ def processDate(letter, correspondent):
     except (KeyError, TypeError):
         pass
     return correspDate
+
+
+def processPlace(letter, correspondent):
+    place, placeID = '', ''
+    try:
+        place = letter[correspondent + 'Place']
+    except KeyError:
+        pass
+    else:
+        try:
+            placeID = letter[correspondent + 'PlaceID']
+        except KeyError:
+            pass
+    finally:
+        return createPlaceName(place, placeID)
 
 
 # simple test for file
@@ -494,14 +509,9 @@ with open(args.filename, 'rt') as letterTable:
                 for sender in correspondents:
                     action.append(sender)
             # add placeName
-            if 'senderPlace' in table.fieldnames and letter['senderPlace']:
-                try:
-                    placeID = letter['senderPlaceID']
-                except KeyError:
-                    placeID = ''
-                    logging.debug('ID for "%s" missing in line %s',
-                                  letter['senderPlace'], table.line_num)
-                action.append(createPlaceName(letter['senderPlace'], placeID))
+            senderPlace = processPlace(letter, "sender")
+            if senderPlace.attrib or senderPlace.text:
+                action.append(senderPlace)
             # add date
             senderDate = processDate(letter, "sender")
             if senderDate.attrib or senderDate.text:
@@ -521,15 +531,9 @@ with open(args.filename, 'rt') as letterTable:
                 for addressee in correspondents:
                     action.append(addressee)
             # add placeName
-            if 'addresseePlace' in table.fieldnames and letter['addresseePlace']:
-                try:
-                    placeID = letter['addresseePlaceID']
-                except KeyError:
-                    placeID = ''
-                    logging.debug('ID for "%s" missing in line %s',
-                                  letter['addresseePlace'], table.line_num)
-                action.append(createPlaceName(
-                    letter['addresseePlace'], placeID))
+            addresseePlace = processPlace(letter, "addressee")
+            if addresseePlace.attrib or addresseePlace.text:
+                action.append(addresseePlace)
             # add date
             addresseeDate = processDate(letter, "addressee")
             if addresseeDate.attrib or addresseeDate.text:
@@ -550,5 +554,10 @@ root.append(createTextstructure())
 
 # save cmi to file
 tree = ElementTree(root)
-tree.write(path.join(path.dirname(args.filename), path.splitext(path.basename(args.filename))[
-           0] + '.xml'), encoding="utf-8", xml_declaration=True, method="xml")
+if args.output:
+    outFile = args.output
+else:
+    outFile = path.join(path.dirname(args.filename), path.splitext(
+        path.basename(args.filename))[0] + '.xml')
+
+tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
