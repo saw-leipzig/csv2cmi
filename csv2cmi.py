@@ -358,6 +358,25 @@ def createID(id_prefix):
     return fullID
 
 
+def processDate(letter, correspondent):
+    correspDate = Element('date')
+    try:
+        correspDate = createDate(letter[correspondent + 'Date'])
+    except (KeyError, TypeError):
+        pass
+    except ValueError:
+        logging.warning(
+            'Could not parse senderDate in line %s', table.line_num)
+    else:
+        if correspDate is None:
+            correspDate = Element('date')
+    try:
+        correspDate.text = letter[correspondent + 'DateText'].strip()
+    except (KeyError, TypeError):
+        pass
+    return correspDate
+
+
 # simple test for file
 try:
     open(args.filename, 'rt').close()
@@ -484,23 +503,9 @@ with open(args.filename, 'rt') as letterTable:
                                   letter['senderPlace'], table.line_num)
                 action.append(createPlaceName(letter['senderPlace'], placeID))
             # add date
-            try:
-                sent = createDate(letter['senderDate'])
-            except (KeyError, TypeError):
-                pass
-            except ValueError:
-                logging.warning(
-                    'Could not parse senderDate in line %s', table.line_num)
-            # add literal date
-            try:
-                sent.text = letter['senderDateText'].strip()
-            except (AttributeError, NameError):
-                sent = Element('date')
-                sent.text = letter['senderDateText'].strip()
-            except KeyError:
-                pass
-            if sent.attrib or sent.text:
-                action.append(sent)
+            senderDate = processDate(letter, "sender")
+            if senderDate.attrib or senderDate.text:
+                action.append(senderDate)
         else:
             logging.info('No information on sender in line %s', table.line_num)
 
@@ -526,23 +531,9 @@ with open(args.filename, 'rt') as letterTable:
                 action.append(createPlaceName(
                     letter['addresseePlace'], placeID))
             # add date
-            try:
-                received = createDate(letter['addresseeDate'])
-            except (KeyError, TypeError):
-                pass
-            except ValueError:
-                logging.warning(
-                    'Could not parse addresseeDate in line %s', table.line_num)
-            # add literal date
-            try:
-                received.text = letter['addresseeDateText'].strip()
-            except (AttributeError, NameError):
-                received = Element('date')
-                received.text = letter['addresseeDateText'].strip()
-            except KeyError:
-                pass
-            if received.attrib or received.text:
-                action.append(received)
+            addresseeDate = processDate(letter, "addressee")
+            if addresseeDate.attrib or addresseeDate.text:
+                action.append(addresseeDate)
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
