@@ -472,16 +472,6 @@ with open(args.filename, 'rt') as letterTable:
             for edition in edition_values:
                 # By default use edition value as is
                 edition = edition.strip()
-                try:
-                    # Use edition value as config section key
-                    sectionKey = edition.strip()
-                    edition = config.get(sectionKey, 'title')
-                    editionType = config.get(sectionKey, 'type')
-                except configparser.NoOptionError:
-                    logging.warning('Incomplete section %s in ini file. Title and type option must be set.', sectionKey)
-                except configparser.NoSectionError:
-                    # if there is no matching section, we assume that there should be no
-                    pass
                 editionID = getEditonID(edition)
                 if not(edition or args.all):
                     continue
@@ -559,6 +549,26 @@ with open(args.filename, 'rt') as letterTable:
                 note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
+
+# replace short titles if configured
+for bibl in sourceDesc.findall('bibl'):
+    # Try to use bibliographic text as key for section in config file
+    editionKey = bibl.text
+    try:
+        editionTitle = config.get(editionKey, 'title')
+        try:
+            editionType = config.get(editionKey, 'type')
+        except configparser.NoOptionError:
+            # if type is not set, use the default one
+            pass
+        bibl.text = editionTitle
+        bibl.set('type', editionType)
+    except configparser.NoOptionError:
+        logging.warning('Incomplete section %s in ini file. Title and type option must be set.', editionKey)
+    except configparser.NoSectionError:
+        # if there is no matching section, we assume that there should be no one
+        pass
+
 
 # generate empty body
 root.append(createTextstructure())
