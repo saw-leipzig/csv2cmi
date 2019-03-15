@@ -470,7 +470,18 @@ with open(args.filename, 'rt') as letterTable:
             else:
                 edition_values = [letter['edition']]
             for edition in edition_values:
+                # By default use edition value as is
                 edition = edition.strip()
+                try:
+                    # Use edition value as config section key
+                    sectionKey = edition.strip()
+                    edition = config.get(sectionKey, 'title')
+                    editionType = config.get(sectionKey, 'type')
+                except configparser.NoOptionError:
+                    logging.warning('Incomplete section %s in ini file. Title and type option must be set.', sectionKey)
+                except configparser.NoSectionError:
+                    # if there is no matching section, we assume that there should be no
+                    pass
                 editionID = getEditonID(edition)
                 if not(edition or args.all):
                     continue
