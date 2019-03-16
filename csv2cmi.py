@@ -581,4 +581,7 @@ else:
     outFile = path.join(path.dirname(args.filename), path.splitext(
         path.basename(args.filename))[0] + '.xml')
 
-tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+try:
+    tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+except PermissionError:
+    logging.error('Could not save the file due to insufficient permission')
