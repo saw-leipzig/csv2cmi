@@ -1,0 +1,27 @@
+{
+  "title": "CSV2CMI",
+  "description": "converts a table of letters into CMI format",
+  "publication_date": "2019-03-20",
+  "creators": [{
+    "name": "Rettinghaus, Klaus",
+    "orcid": "0000-0003-1898-2543"
+  }],
+  "contributors": [{
+      "name": "Uwe Kretschmer",
+      "type": "Other"
+    },
+    {
+      "name": "Jana Dolan",
+      "type": "Other"
+    }
+  ],
+  "keywords": [
+    "TEI",
+    "CSV",
+    "CMIF",
+    "digital humanities",
+    "correspondence"
+  ],
+  "license": "mit-license",
+  "upload_type": "software"
+}
