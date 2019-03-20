@@ -4,11 +4,11 @@
   "identifier": "CSV2CMI",
   "name": "CSV2CMI",
   "description": "converts a table of letters into CMI format",
-  "softwareVersion": "1.6.2",
+  "softwareVersion": "2.0.0",
   "license": "OSI Approved :: MIT License",
   "programmingLanguage": "Python :: 3",
   "maintainer": "https://orcid.org/0000-0003-1898-2543",
-  "datePublished": "2015-12-04",
+  "datePublished": "2019-03-20",
   "codeRepository": "https://github.com/saw-leipzig/csv2cmi",
   "author": [{
     "@id": "https://orcid.org/0000-0003-1898-2543",
@@ -17,5 +17,17 @@
     "familyName": "Rettinghaus",
     "name": "Rettinghaus, Klaus",
     "email": "rettinghaus@bach-leipzig.de"
-  }]
+  }],
+  "contributor": [{
+      "@type": "Person",
+      "givenName": "Uwe",
+      "familyName": "Kretschmer",
+      "email": "kretschmer@saw-leipzig.de"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Jana",
+      "familyName": "Dolan",
+    }
+  ]
 }

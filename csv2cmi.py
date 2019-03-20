@@ -18,7 +18,7 @@ from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.0-beta'
+__version__ = '2.0.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
