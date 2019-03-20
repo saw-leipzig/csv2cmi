@@ -27,9 +27,21 @@ setup(
     version=get_version(),
     description='converts a table of letters into CMI format',
     long_description=get_long_description(),
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3',
+        'Topic :: Text Processing :: Markup :: XML'
+    ],
     author='Klaus Rettinghaus',
     author_email='rettinghaus@bach-leipzig.de',
     url='https://github.com/saw-leipzig/csv2cmi',
     py_modules=[package_name],
+    keywords=[
+        'TEI',
+        'CSV',
+        'CMIF',
+        'digital humanities',
+        'correspondence'
+    ],
     license='License :: OSI Approved :: MIT License',
 )
