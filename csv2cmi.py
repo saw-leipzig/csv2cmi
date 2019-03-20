@@ -388,8 +388,7 @@ def processPlace(letter, correspondent):
             placeID = letter[correspondent + 'PlaceID']
         except KeyError:
             pass
-    finally:
-        return createPlaceName(place, placeID)
+    return createPlaceName(place, placeID)
 
 
 # simple test for file
