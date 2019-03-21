@@ -175,7 +175,7 @@ def createCorrespondent(nameString):
             # assigning authority file IDs to their correspondents if provided
             if (index < len(personIDs)) and personIDs[index]:
                 # by default complete GND-IDNs to full URI
-                if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index])[:-2].isdigit():
+                if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index].strip())[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
                     authID = 'http://d-nb.info/gnd/' + \
@@ -563,7 +563,8 @@ for bibl in sourceDesc.findall('bibl'):
         bibl.text = editionTitle
         bibl.set('type', editionType)
     except configparser.NoOptionError:
-        logging.warning('Incomplete section %s in ini file. Title and type option must be set.', editionKey)
+        logging.warning(
+            'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
     except configparser.NoSectionError:
         # if there is no matching section, we assume that there should be no one
         pass
