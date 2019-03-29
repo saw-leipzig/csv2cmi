@@ -159,19 +159,27 @@ def createFileDesc(config):
 
 def createCorrespondent(nameString):
     if letter[nameString]:
+        defaultElement = 'name'
         correspondents = []
+        personIDs = []
         # Turning the cells of correspondent names and their IDs into lists since cells
         # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
         if subdlm:
             persons = letter[nameString].split(subdlm)
-            personIDs = letter[nameString + "ID"].split(subdlm)
+            try:
+                personIDs = letter[nameString + "ID"].split(subdlm)
+            except KeyError:
+                defaultElement = 'persName'
         else:
-            persons = [letter[nameString].strip()]
-            personIDs = [letter[nameString + "ID"]]
+            persons = [letter[nameString]]
+            try:
+                personIDs = [letter[nameString + "ID"]]
+            except KeyError:
+                defaultElement = 'persName'
         for index, person in enumerate(persons):
+            correspondent = Element(defaultElement)
             person = str(person).strip()
-            correspondent = Element('name')
             # assigning authority file IDs to their correspondents if provided
             if (index < len(personIDs)) and personIDs[index]:
                 # by default complete GND-IDNs to full URI
