@@ -18,7 +18,7 @@ from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -159,9 +159,7 @@ def createFileDesc(config):
 
 def createCorrespondent(nameString):
     if letter[nameString]:
-        defaultElement = 'name'
         correspondents = []
-        personIDs = []
         # Turning the cells of correspondent names and their IDs into lists since cells
         # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
@@ -170,15 +168,15 @@ def createCorrespondent(nameString):
             try:
                 personIDs = letter[nameString + "ID"].split(subdlm)
             except KeyError:
-                defaultElement = 'persName'
+                personIDs = []
         else:
             persons = [letter[nameString]]
             try:
                 personIDs = [letter[nameString + "ID"]]
             except KeyError:
-                defaultElement = 'persName'
+                personIDs = []
         for index, person in enumerate(persons):
-            correspondent = Element(defaultElement)
+            correspondent = Element('persName')
             person = str(person).strip()
             # assigning authority file IDs to their correspondents if provided
             if (index < len(personIDs)) and personIDs[index]:
@@ -225,7 +223,9 @@ def createCorrespondent(nameString):
                         except UnicodeEncodeError:
                             print(authID)
                         else:
-                            elementset = ('DifferentiatedPerson',
+                            corporatelike = (
+                                'Corporate', 'Company', 'ReligiousAdministrativeUnit')
+                            personlike = ('DifferentiatedPerson',
                                           'Royal', 'Family', 'Legendary')
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
@@ -235,12 +235,12 @@ def createCorrespondent(nameString):
                                     '%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                            if 'Corporate' in rdftype:
+                            if any(entity in rdftype for entity in corporatelike):
                                 correspondent = Element('orgName')
-                            elif any(entity in rdftype for entity in elementset):
+                            elif any(entity in rdftype for entity in personlike):
                                 correspondent = Element('persName')
                             else:
-                                correspondent = Element('name')
+                                authID = ''
                                 if 'UndifferentiatedPerson' in rdftype:
                                     logging.warning(
                                         '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
@@ -268,7 +268,7 @@ def createCorrespondent(nameString):
                     else:
                         logging.error(
                             'No proper authority record in line %s for %s', table.line_num, nameString)
-                if authID and correspondent.tag != "name":
+                if authID:
                     correspondent.set('ref', authID)
             else:
                 logging.debug('ID for "%s" missing in line %s',
