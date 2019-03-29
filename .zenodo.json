@@ -7,11 +7,12 @@
     "orcid": "0000-0003-1898-2543"
   }],
   "contributors": [{
-      "name": "Uwe Kretschmer",
+      "name": "Kretschmer, Uwe",
+      "orcid": "0000-0002-3685-6519",
       "type": "Other"
     },
     {
-      "name": "Jana Dolan",
+      "name": "Dolan, Jana",
       "type": "Other"
     }
   ],

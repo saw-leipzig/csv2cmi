@@ -19,15 +19,18 @@
     "email": "rettinghaus@bach-leipzig.de"
   }],
   "contributor": [{
+      "@id": "https://orcid.org/0000-0002-3685-6519",
       "@type": "Person",
       "givenName": "Uwe",
       "familyName": "Kretschmer",
+      "name": "Kretschmer, Uwe",
       "email": "kretschmer@saw-leipzig.de"
     },
     {
       "@type": "Person",
       "givenName": "Jana",
-      "familyName": "Dolan"
+      "familyName": "Dolan",
+      "name": "Dolan, Jana"
     }
   ]
 }
