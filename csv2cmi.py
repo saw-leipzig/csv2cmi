@@ -188,7 +188,9 @@ def createCorrespondent(nameString):
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
-                if profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                if profileDesc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
+                    correspondent = Element('persName')
+                elif profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
                     correspondent = Element('orgName')
                 elif connection:
                     if 'viaf' in authID:
