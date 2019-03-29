@@ -221,7 +221,9 @@ def createCorrespondent(nameString):
                         except UnicodeEncodeError:
                             print(authID)
                         else:
-                            elementset = ('DifferentiatedPerson',
+                            corporatelike = (
+                                'Corporate', 'Company', 'ReligiousAdministrativeUnit')
+                            personlike = ('DifferentiatedPerson',
                                           'Royal', 'Family', 'Legendary')
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
@@ -231,12 +233,12 @@ def createCorrespondent(nameString):
                                     '%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
                                 './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
-                            if 'Corporate' in rdftype:
+                            if any(entity in rdftype for entity in corporatelike):
                                 correspondent = Element('orgName')
-                            elif any(entity in rdftype for entity in elementset):
+                            elif any(entity in rdftype for entity in personlike):
                                 correspondent = Element('persName')
                             else:
-                                correspondent = Element('name')
+                                authID = ''
                                 if 'UndifferentiatedPerson' in rdftype:
                                     logging.warning(
                                         '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
@@ -264,7 +266,7 @@ def createCorrespondent(nameString):
                     else:
                         logging.error(
                             'No proper authority record in line %s for %s', table.line_num, nameString)
-                if authID and correspondent.tag != "name":
+                if authID:
                     correspondent.set('ref', authID)
             else:
                 logging.debug('ID for "%s" missing in line %s',
