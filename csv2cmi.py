@@ -159,9 +159,7 @@ def createFileDesc(config):
 
 def createCorrespondent(nameString):
     if letter[nameString]:
-        defaultElement = 'name'
         correspondents = []
-        personIDs = []
         # Turning the cells of correspondent names and their IDs into lists since cells
         # can contain various correspondents split by an extra delimiter.
         # In that case it is essential to be able to call each by their index.
@@ -170,15 +168,15 @@ def createCorrespondent(nameString):
             try:
                 personIDs = letter[nameString + "ID"].split(subdlm)
             except KeyError:
-                defaultElement = 'persName'
+                personIDs = []
         else:
             persons = [letter[nameString]]
             try:
                 personIDs = [letter[nameString + "ID"]]
             except KeyError:
-                defaultElement = 'persName'
+                personIDs = []
         for index, person in enumerate(persons):
-            correspondent = Element(defaultElement)
+            correspondent = Element('persName')
             person = str(person).strip()
             # assigning authority file IDs to their correspondents if provided
             if (index < len(personIDs)) and personIDs[index]:
@@ -190,9 +188,7 @@ def createCorrespondent(nameString):
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
-                if profileDesc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
-                    correspondent = Element('persName')
-                elif profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                if profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
                     correspondent = Element('orgName')
                 elif connection:
                     if 'viaf' in authID:
