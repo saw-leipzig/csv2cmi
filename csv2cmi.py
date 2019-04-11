@@ -15,7 +15,8 @@ import urllib.request
 from csv import DictReader
 from datetime import datetime
 from os import path
-from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
+from xml.etree.ElementTree import (Element, SubElement, Comment, ElementTree,
+                                   fromstring, ParseError)
 
 __license__ = "MIT"
 __version__ = '2.0.1'
@@ -341,8 +342,28 @@ def createPlaceName(placeNameText, placeNameRef):
 
 def createEdition(biblText, biblType, biblID):
     """Create a new bibliographic entry."""
-    bibl = Element('bibl')
-    bibl.text = biblText
+    try:
+        bibl = fromstring(biblText)
+        if bibl.tag != 'bibl':
+            logging.warning('Structured edition "%s" has wrong root ' +
+                            'element <%s> given in csv file. Only ' +
+                            '<bibl>-element is allowed.',
+                            biblText, bibl.tag)
+            raise Exception
+    except ParseError as e:
+        bibl = Element('bibl')
+        bibl.text = biblText
+        # error code 2 is syntax error and this should be the case for all
+        # unstructured titles. Higher error codes are XML specific like
+        # completeness, well-formedness or mismatching tags etc. We assume,
+        # that those codes are produced by bad but wanted structures, so we
+        # leave a warning message.
+        if e.code > 2:
+            logging.warning('If edition value "%s" should be structured. ' +
+                            'It\'s not parsable. Error: %s', biblText, e)
+    except Exception:
+        bibl = Element('bibl')
+        bibl.text = biblText
     bibl.set('type', biblType)
     bibl.set('xml:id', biblID)
     return bibl
@@ -435,7 +456,8 @@ if ('Edition' in config) and ('type' in config['Edition']):
 root = Element('TEI')
 root.set('xmlns', ns.get('tei'))
 root.append(
-    Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
+    Comment(' Generated from table of letters with csv2cmi ' +
+            __version__ + ' '))
 
 # teiHeader
 teiHeader = SubElement(root, 'teiHeader')
@@ -568,15 +590,46 @@ for bibl in sourceDesc.findall('bibl'):
         except configparser.NoOptionError:
             # if type is not set, use the default one
             pass
-        bibl.text = editionTitle
-        bibl.set('type', editionType)
+        # Remember id to add it later, in case we got structured content.
+        id = bibl.get('xml:id')
+        try:
+            # Try to parse title as XML to allow structured content
+            bibl_new = fromstring(editionTitle)
+            if bibl_new.tag != 'bibl':
+                logging.warning('Structured title for key "%s" has wrong ' +
+                                'root element <%s> given in ini file. Only ' +
+                                '<bibl>-element is allowed.',
+                                editionKey, bibl_new.tag)
+                raise Exception
+            bibl_new.set('xml:id', id)
+            bibl_new.set('type', editionType)
+            # Setting bibl = bibl_new doesn't work. We have to explicitly
+            # replace the original bibl element by the new structured bibl
+            # element.
+            sourceDesc.replace(bibl, bibl_new)
+        except ParseError as e:
+            bibl.text = editionTitle
+            bibl.set('type', editionType)
+            # error code 2 is syntax error and this should be the case for all
+            # unstructured titles. Higher error codes are XML specific like
+            # completeness, well-formedness or mismatching tags etc. We assume,
+            # that those codes are produced by bad but wanted structures, so we
+            # leave a warning message.
+            if e.code > 2:
+                logging.warning('If title for key "%s" in ini file should ' +
+                                'be structured. It\'s not parsable. Error: %s',
+                                editionKey, e)
+        except Exception:
+            bibl.text = editionTitle
+            bibl.set('type', editionType)
     except configparser.NoOptionError:
         logging.warning(
-            'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
+            'Incomplete section %s in ini file. ' +
+            'Title and type option must be set.', editionKey)
     except configparser.NoSectionError:
-        # if there is no matching section, we assume that there should be no one
+        # if there is no matching section, we assume that there should be
+        # no one.
         pass
-
 
 # generate empty body
 root.append(createTextstructure())
