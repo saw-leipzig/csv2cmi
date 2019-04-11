@@ -580,7 +580,7 @@ with open(args.filename, 'rt') as letterTable:
             profileDesc.append(entry)
 
 # replace short titles if configured
-for bibl in sourceDesc.findall('bibl'):
+for idx, bibl in enumerate(sourceDesc.findall('bibl')):
     # Try to use bibliographic text as key for section in config file
     editionKey = bibl.text
     try:
@@ -606,7 +606,8 @@ for bibl in sourceDesc.findall('bibl'):
             # Setting bibl = bibl_new doesn't work. We have to explicitly
             # replace the original bibl element by the new structured bibl
             # element.
-            sourceDesc.replace(bibl, bibl_new)
+            sourceDesc.remove(bibl)
+            sourceDesc.insert(idx, bibl_new)
         except ParseError as e:
             bibl.text = editionTitle
             bibl.set('type', editionType)
