@@ -127,6 +127,7 @@ def createFileDesc(config):
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
     title = SubElement(titleStmt, 'title')
+    random.seed(title)
     title.set('xml:id', createID('title'))
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
@@ -364,9 +365,11 @@ def getEditonID(editionTitle):
 def createID(id_prefix):
     if (id_prefix.strip() == ''):
         id_prefix = ''.join(random.choice(
-            string.ascii_lowercase + string.digits) for _ in range(8))
-    fullID = id_prefix.strip() + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
-        8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+            string.ascii_lowercase) for _ in range(8))
+    fullID = id_prefix.strip() + '-' + ''.join(random.sample(string.hexdigits, 4)) + '-' + \
+        ''.join(random.sample(string.hexdigits, 4)) + \
+        '-' + ''.join(random.sample(string.hexdigits, 10))
+    # fullID =str(uuid.UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
     return fullID
 
 
@@ -468,6 +471,7 @@ with open(args.filename, 'rt') as letterTable:
             edition = ""
             logging.warning('No edition stated. Please set manually.')
         finally:
+            random.seed(edition)
             editionID = createID('edition')
             sourceDesc.append(createEdition(edition, editionType, editionID))
             editions.append(edition)
@@ -578,7 +582,7 @@ for bibl in sourceDesc.findall('bibl'):
         logging.warning(
             'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
     except configparser.NoSectionError:
-        # if there is no matching section, we assume that there should be no one
+        # if there is no matching section, we assume that there shouldn't one
         pass
 
 
