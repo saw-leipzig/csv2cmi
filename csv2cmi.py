@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2018 Klaus Rettinghaus
+# Copyright (c) 2015-2019 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -290,6 +290,10 @@ def createDate(dateString):
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
+    if normalizedDate[-1] == 'X':
+        normalizedDate = normalizedDate[0:-3]
+        if normalizedDate[-1] == 'X':
+            normalizedDate = normalizedDate[0:-3]
     if checkDatableW3C(normalizedDate):
         date.set('when', str(normalizedDate))
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
