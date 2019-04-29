@@ -127,10 +127,10 @@ def createFileDesc(config):
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
     title = SubElement(titleStmt, 'title')
-    random.seed(title)
-    title.set('xml:id', createID('title'))
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
+    random.seed(title.text)
+    title.set('xml:id', createID('title'))
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
