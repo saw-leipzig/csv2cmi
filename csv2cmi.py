@@ -366,9 +366,9 @@ def createID(id_prefix):
     if (id_prefix.strip() == ''):
         id_prefix = ''.join(random.choice(
             string.ascii_lowercase) for _ in range(8))
-    fullID = id_prefix.strip() + '-' + ''.join(random.sample(string.hexdigits, 4)) + '-' + \
-        ''.join(random.sample(string.hexdigits, 4)) + \
-        '-' + ''.join(random.sample(string.hexdigits, 10))
+    fullID = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
+        ''.join(random.sample('0123456789abcdef', 4)) + \
+        '-' + ''.join(random.sample('0123456789abcdef', 10))
     # fullID =str(uuid.UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
     return fullID
 
