@@ -491,6 +491,7 @@ with open(args.filename, 'rt') as letterTable:
                 if not(edition or args.all):
                     continue
                 if edition and not editionID:
+                    random.seed(edition)
                     editionID = createID('edition')
                     sourceDesc.append(createEdition(
                         edition, editionType, editionID))
