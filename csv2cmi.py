@@ -12,6 +12,7 @@ import logging
 import random
 import string
 import urllib.request
+import uuid
 from csv import DictReader
 from datetime import datetime
 from os import path
@@ -129,8 +130,7 @@ def createFileDesc(config):
     title = SubElement(titleStmt, 'title')
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
-    random.seed(title.text)
-    title.set('xml:id', createID('title'))
+    title.set('xml:id', createID('title', title.text))
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
@@ -362,15 +362,18 @@ def getEditonID(editionTitle):
     return editionID
 
 
-def createID(id_prefix):
-    if (id_prefix.strip() == ''):
-        id_prefix = ''.join(random.choice(
-            string.ascii_lowercase) for _ in range(8))
-    fullID = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
-        ''.join(random.sample('0123456789abcdef', 4)) + \
-        '-' + ''.join(random.sample('0123456789abcdef', 10))
-    # fullID =str(uuid.UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
-    return fullID
+def createID(id_prefix, name=None):
+    '''Returns an xml:id-valid identifier, which is a conjunction of the
+    given prefix and an uuid. If a name is given, the uuid level 5 is used
+    to generate a stable identifier, based on a pseudo URL which consists
+    of the configured CMIF fileURL parameter and the name string, e.g. the
+    title of the project or an edition.
+    '''
+    if name is not None and name.strip() != '':
+        id = uuid.uuid5(uuid.NAMESPACE_URL, config.get('Project', 'fileURL') + '/' + name)
+    else:
+        id = uuid.uuid1()
+    return id_prefix + '_' + str(id)
 
 
 def processDate(letter, correspondent):
@@ -471,8 +474,7 @@ with open(args.filename, 'rt') as letterTable:
             edition = ""
             logging.warning('No edition stated. Please set manually.')
         finally:
-            random.seed(edition)
-            editionID = createID('edition')
+            editionID = createID('edition', edition)
             sourceDesc.append(createEdition(edition, editionType, editionID))
             editions.append(edition)
             editionIDs.append(editionID)
@@ -491,8 +493,7 @@ with open(args.filename, 'rt') as letterTable:
                 if not(edition or args.all):
                     continue
                 if edition and not editionID:
-                    random.seed(edition)
-                    editionID = createID('edition')
+                    editionID = createID('edition', edition)
                     sourceDesc.append(createEdition(
                         edition, editionType, editionID))
                 editions.append(edition)
