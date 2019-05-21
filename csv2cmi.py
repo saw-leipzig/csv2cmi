@@ -58,7 +58,6 @@ if args.extra_delimiter:
     else:
         logging.error('Delimiter has to be a single character')
         exit()
-
 else:
     subdlm = None
 
@@ -267,6 +266,7 @@ def createCorrespondent(nameString):
                                 logging.warning(
                                     '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                     else:
+                        authID = ''
                         logging.error(
                             'No proper authority record in line %s for %s', table.line_num, nameString)
                 if authID:
@@ -444,6 +444,16 @@ editionType = 'print'
 if ('Edition' in config) and ('type' in config['Edition']):
     if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
         editionType = config.get('Edition', 'type')
+
+# set extra delimiter
+if not subdlm:
+    try:
+        subdlm = config.get('Project', 'extra-delimiter')
+        if len(subdlm) > 1:
+            logging.error('Delimiter has to be a single character')
+            exit()
+    except configparser.NoOptionError:
+        pass
 
 # building cmi
 # generating root element
