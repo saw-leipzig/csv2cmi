@@ -5,12 +5,12 @@
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
-# needs Python3
 import argparse
 import configparser
 import logging
 import random
 import string
+import uuid
 import urllib.request
 from csv import DictReader
 from datetime import datetime
@@ -130,7 +130,7 @@ def createFileDesc(config):
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
     random.seed(title.text)
-    title.set('xml:id', createID('title'))
+    title.set('xml:id', generateID('title'))
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
@@ -362,15 +362,23 @@ def getEditonID(editionTitle):
     return editionID
 
 
-def createID(id_prefix):
+def generateID(id_prefix):
     if (id_prefix.strip() == ''):
         id_prefix = ''.join(random.choice(
             string.ascii_lowercase) for _ in range(8))
     fullID = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
         ''.join(random.sample('0123456789abcdef', 4)) + \
         '-' + ''.join(random.sample('0123456789abcdef', 10))
-    # fullID =str(uuid.UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
     return fullID
+
+
+def generateUUID():
+    """Generate a UUID."""
+    UUID = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
+                                     for _ in range(16)), version=4))
+    if UUID[0].isdigit():
+        UUID = generateUUID()
+    return UUID
 
 
 def processDate(letter, correspondent):
@@ -472,7 +480,7 @@ with open(args.filename, 'rt') as letterTable:
             logging.warning('No edition stated. Please set manually.')
         finally:
             random.seed(edition)
-            editionID = createID('edition')
+            editionID = generateUUID()
             sourceDesc.append(createEdition(edition, editionType, editionID))
             editions.append(edition)
             editionIDs.append(editionID)
@@ -492,7 +500,7 @@ with open(args.filename, 'rt') as letterTable:
                     continue
                 if edition and not editionID:
                     random.seed(edition)
-                    editionID = createID('edition')
+                    editionID = generateUUID()
                     sourceDesc.append(createEdition(
                         edition, editionType, editionID))
                 editions.append(edition)
@@ -500,7 +508,6 @@ with open(args.filename, 'rt') as letterTable:
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
-        entry.set('xml:id', createID('letter'))
         if any(editionIDs):
             # multiple entries needs te be seperated by whitespace
             # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
@@ -517,7 +524,7 @@ with open(args.filename, 'rt') as letterTable:
         # sender info block
         if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
             action = SubElement(entry, 'correspAction')
-            action.set('xml:id', createID('sender'))
+            action.set('xml:id', generateID('sender'))
             action.set('type', 'sent')
 
             # add name of sender
@@ -539,7 +546,7 @@ with open(args.filename, 'rt') as letterTable:
         # addressee info block
         if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
             action = SubElement(entry, 'correspAction')
-            action.set('xml:id', createID('addressee'))
+            action.set('xml:id', generateID('addressee'))
             action.set('type', 'received')
 
             # add name of addressee
@@ -558,10 +565,11 @@ with open(args.filename, 'rt') as letterTable:
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
+        entry.set('xml:id', generateID('letter'))
         if args.notes:
             if ('note' in table.fieldnames) and letter['note']:
                 note = SubElement(entry, 'note')
-                note.set('xml:id', createID('note'))
+                note.set('xml:id', generateID('note'))
                 note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
