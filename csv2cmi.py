@@ -621,5 +621,6 @@ else:
 
 try:
     tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+    print('CMI file written to', outFile)
 except PermissionError:
     logging.error('Could not save the file due to insufficient permission')
