@@ -134,7 +134,7 @@ def createFileDesc(config):
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
         SubElement(titleStmt, 'editor').text = entity
-    if len(titleStmt.getchildren()) == 1:
+    if len(list(titleStmt)) == 1:
         logging.warning('Editor missing')
         SubElement(titleStmt, 'editor')
     # publication statement
@@ -142,7 +142,7 @@ def createFileDesc(config):
     publishers = config.get('Project', 'publisher').splitlines()
     for entity in publishers:
         SubElement(publicationStmt, 'publisher').text = entity
-    if not(publicationStmt.getchildren()):
+    if not(list(publicationStmt)):
         for editor in titleStmt.findall('editor'):
             SubElement(publicationStmt, 'publisher').text = editor.text
     idno = SubElement(publicationStmt, 'idno')
