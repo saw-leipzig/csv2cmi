@@ -18,7 +18,7 @@ from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -591,5 +591,6 @@ else:
 
 try:
     tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+    print('CMI file written to', outFile)
 except PermissionError:
     logging.error('Could not save the file due to insufficient permission')
