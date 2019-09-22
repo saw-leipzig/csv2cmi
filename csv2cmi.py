@@ -18,7 +18,7 @@ from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -134,7 +134,7 @@ def createFileDesc(config):
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
         SubElement(titleStmt, 'editor').text = entity
-    if len(titleStmt.getchildren()) == 1:
+    if len(list(titleStmt)) == 1:
         logging.warning('Editor missing')
         SubElement(titleStmt, 'editor')
     # publication statement
@@ -142,7 +142,7 @@ def createFileDesc(config):
     publishers = config.get('Project', 'publisher').splitlines()
     for entity in publishers:
         SubElement(publicationStmt, 'publisher').text = entity
-    if not(publicationStmt.getchildren()):
+    if not(list(publicationStmt)):
         for editor in titleStmt.findall('editor'):
             SubElement(publicationStmt, 'publisher').text = editor.text
     idno = SubElement(publicationStmt, 'idno')
@@ -591,5 +591,6 @@ else:
 
 try:
     tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+    print('CMI file written to', outFile)
 except PermissionError:
     logging.error('Could not save the file due to insufficient permission')
