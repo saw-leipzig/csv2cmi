@@ -154,7 +154,7 @@ def createFileDesc(config):
     licence = SubElement(availability, 'licence')
     licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
     licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
-    # The CC-BY licence may not apply to the final CMI file 
+    # The CC-BY licence may not apply to the final CMI file
     #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
     #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
     return fileDesc
@@ -343,7 +343,7 @@ def createPlaceName(placeNameText, placeNameRef):
         if 'www.geonames.org' in placeNameRef:
             placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('"%s" is no standardized ID', placeNameRef)
+            logging.warning('"%s" is no standardized GeoNames ID', placeNameRef)
     return placeName
 
 
