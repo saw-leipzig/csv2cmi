@@ -187,7 +187,7 @@ def createCorrespondent(nameString):
                 if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index].strip())[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
-                    authID = 'http://d-nb.info/gnd/' + \
+                    authID = 'https://d-nb.info/gnd/' + \
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
@@ -233,7 +233,7 @@ def createCorrespondent(nameString):
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
                                 '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
-                            if authID != latestID:
+                            if urllib.parse.urlparse(authID).path != urllib.parse.urlparse(latestID).path:
                                 logging.info(
                                     '%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
