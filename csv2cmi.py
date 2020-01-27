@@ -224,7 +224,7 @@ def createCorrespondent(nameString):
                         except urllib.error.URLError:
                             logging.error('Failed to reach GND')
                         except UnicodeEncodeError:
-                            print(authID)
+                            logging.error('Failed to encode %s', authID)
                         else:
                             corporatelike = (
                                 'Corporate', 'Company', 'ReligiousAdministrativeUnit')
