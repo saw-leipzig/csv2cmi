@@ -31,6 +31,13 @@
       "givenName": "Jana",
       "familyName": "Dolan",
       "name": "Dolan, Jana"
+    },
+    {
+      "@id": "https://orcid.org/0000-0002-8303-1798",
+      "@type": "Person",
+      "givenName": "Sophie",
+      "familyName": "Schneider",
+      "name": "Schneider, Sophie"
     }
   ]
 }
