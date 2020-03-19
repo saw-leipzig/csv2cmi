@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2018 Klaus Rettinghaus
+# Copyright (c) 2015-2019 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
-# needs Python3
 import argparse
 import configparser
 import logging
 import random
 import string
+import uuid
 import urllib.request
 from csv import DictReader
 from datetime import datetime
@@ -18,7 +18,7 @@ from os import path
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.0.2'
+__version__ = '2.1.0-beta'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -58,7 +58,6 @@ if args.extra_delimiter:
     else:
         logging.error('Delimiter has to be a single character')
         exit()
-
 else:
     subdlm = None
 
@@ -127,9 +126,10 @@ def createFileDesc(config):
     # title statement
     titleStmt = SubElement(fileDesc, 'titleStmt')
     title = SubElement(titleStmt, 'title')
-    title.set('xml:id', createID('title'))
     title.text = config.get(
         'Project', 'title', fallback='untitled letters project')
+    random.seed(title.text)
+    title.set('xml:id', generateID('title'))
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
@@ -154,6 +154,9 @@ def createFileDesc(config):
     licence = SubElement(availability, 'licence')
     licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
     licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
+    # The CC-BY licence may not apply to the final CMI file
+    #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
+    #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
     return fileDesc
 
 
@@ -184,7 +187,7 @@ def createCorrespondent(nameString):
                 if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index].strip())[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
-                    authID = 'http://d-nb.info/gnd/' + \
+                    authID = 'https://d-nb.info/gnd/' + \
                         str(personIDs[index].strip())
                 else:
                     authID = str(personIDs[index].strip())
@@ -221,7 +224,7 @@ def createCorrespondent(nameString):
                         except urllib.error.URLError:
                             logging.error('Failed to reach GND')
                         except UnicodeEncodeError:
-                            print(authID)
+                            logging.error('Failed to encode %s', authID)
                         else:
                             corporatelike = (
                                 'Corporate', 'Company', 'ReligiousAdministrativeUnit')
@@ -230,7 +233,7 @@ def createCorrespondent(nameString):
                             gndrdf_root = gndrdf.getroot()
                             latestID = gndrdf_root[0].get(
                                 '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
-                            if authID != latestID:
+                            if urllib.parse.urlparse(authID).path != urllib.parse.urlparse(latestID).path:
                                 logging.info(
                                     '%s returns new ID %s', authID, latestID)
                             rdftype = gndrdf_root.find(
@@ -266,6 +269,7 @@ def createCorrespondent(nameString):
                                 logging.warning(
                                     '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                     else:
+                        authID = ''
                         logging.error(
                             'No proper authority record in line %s for %s', table.line_num, nameString)
                 if authID:
@@ -290,6 +294,10 @@ def createDate(dateString):
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
+    if normalizedDate[-1] == 'X':
+        normalizedDate = normalizedDate[0:-3]
+        if normalizedDate[-1] == 'X':
+            normalizedDate = normalizedDate[0:-3]
     if checkDatableW3C(normalizedDate):
         date.set('when', str(normalizedDate))
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
@@ -335,7 +343,7 @@ def createPlaceName(placeNameText, placeNameRef):
         if 'www.geonames.org' in placeNameRef:
             placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('"%s" is no standardized ID', placeNameRef)
+            logging.warning('"%s" is no standardized GeoNames ID', placeNameRef)
     return placeName
 
 
@@ -357,13 +365,23 @@ def getEditonID(editionTitle):
     return editionID
 
 
-def createID(id_prefix):
+def generateID(id_prefix):
     if (id_prefix.strip() == ''):
         id_prefix = ''.join(random.choice(
-            string.ascii_lowercase + string.digits) for _ in range(8))
-    fullID = id_prefix.strip() + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(
-        8)) + '_' + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+            string.ascii_lowercase) for _ in range(8))
+    fullID = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
+        ''.join(random.sample('0123456789abcdef', 4)) + \
+        '-' + ''.join(random.sample('0123456789abcdef', 10))
     return fullID
+
+
+def generateUUID():
+    """Generate a UUID."""
+    UUID = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
+                                     for _ in range(16)), version=4))
+    if UUID[0].isdigit():
+        UUID = generateUUID()
+    return UUID
 
 
 def processDate(letter, correspondent):
@@ -430,6 +448,16 @@ if ('Edition' in config) and ('type' in config['Edition']):
     if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
         editionType = config.get('Edition', 'type')
 
+# set extra delimiter
+if not subdlm:
+    try:
+        subdlm = config.get('Project', 'extra-delimiter')
+        if len(subdlm) > 1:
+            logging.error('Delimiter has to be a single character')
+            exit()
+    except configparser.NoOptionError:
+        pass
+
 # building cmi
 # generating root element
 root = Element('TEI')
@@ -464,7 +492,8 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
             edition = ""
             logging.warning('No edition stated. Please set manually.')
         finally:
-            editionID = createID('edition')
+            random.seed(edition)
+            editionID = generateUUID()
             sourceDesc.append(createEdition(edition, editionType, editionID))
             editions.append(edition)
             editionIDs.append(editionID)
@@ -483,7 +512,8 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
                 if not(edition or args.all):
                     continue
                 if edition and not editionID:
-                    editionID = createID('edition')
+                    random.seed(edition)
+                    editionID = generateUUID()
                     sourceDesc.append(createEdition(
                         edition, editionType, editionID))
                 editions.append(edition)
@@ -491,7 +521,6 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         entry = Element('correspDesc')
         if args.line_numbers:
             entry.set('n', str(table.line_num))
-        entry.set('xml:id', createID('letter'))
         if any(editionIDs):
             # multiple entries needs te be seperated by whitespace
             # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
@@ -508,7 +537,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         # sender info block
         if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
             action = SubElement(entry, 'correspAction')
-            action.set('xml:id', createID('sender'))
+            action.set('xml:id', generateID('sender'))
             action.set('type', 'sent')
 
             # add name of sender
@@ -530,7 +559,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         # addressee info block
         if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
             action = SubElement(entry, 'correspAction')
-            action.set('xml:id', createID('addressee'))
+            action.set('xml:id', generateID('addressee'))
             action.set('type', 'received')
 
             # add name of addressee
@@ -549,10 +578,11 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         else:
             logging.info('No information on addressee in line %s',
                          table.line_num)
+        entry.set('xml:id', generateID('letter'))
         if args.notes:
             if ('note' in table.fieldnames) and letter['note']:
                 note = SubElement(entry, 'note')
-                note.set('xml:id', createID('note'))
+                note.set('xml:id', generateID('note'))
                 note.text = str(letter['note'])
         if entry.find('*'):
             profileDesc.append(entry)
@@ -574,7 +604,7 @@ for bibl in sourceDesc.findall('bibl'):
         logging.warning(
             'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
     except configparser.NoSectionError:
-        # if there is no matching section, we assume that there should be no one
+        # if there is no matching section, we assume that there shouldn't one
         pass
 
 
