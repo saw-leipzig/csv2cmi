@@ -448,7 +448,7 @@ sourceDesc = SubElement(fileDesc, 'sourceDesc')
 # filling in correspondance meta-data
 profileDesc = SubElement(teiHeader, 'profileDesc')
 
-with open(args.filename, 'rt') as letterTable:
+with open(args.filename, 'rt', encoding='utf-8') as letterTable:
     # global table
     table = DictReader(letterTable)
     logging.debug('Recognized columns: %s', table.fieldnames)
