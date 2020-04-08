@@ -15,6 +15,7 @@ import urllib.request
 from csv import DictReader
 from datetime import datetime
 from os import path
+import sys
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
@@ -57,7 +58,7 @@ if args.extra_delimiter:
         subdlm = args.extra_delimiter
     else:
         logging.error('Delimiter has to be a single character')
-        exit()
+        sys.exit(1)
 else:
     subdlm = None
 
@@ -422,7 +423,7 @@ try:
     open(args.filename, 'rt').close()
 except FileNotFoundError:
     logging.error('File not found')
-    exit()
+    sys.exit(1)
 
 # check internet connection via DNB
 connection = checkConnectivity()
@@ -454,7 +455,7 @@ if not subdlm:
         subdlm = config.get('Project', 'extra-delimiter')
         if len(subdlm) > 1:
             logging.error('Delimiter has to be a single character')
-            exit()
+            sys.exit(1)
     except configparser.NoOptionError:
         pass
 
@@ -482,7 +483,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
     logging.debug('Recognized columns: %s', table.fieldnames)
     if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
         logging.error('No sender/addressee field in table')
-        exit()
+        sys.exit(1)
     editions = []
     editionIDs = []
     if not('edition' in table.fieldnames):
@@ -622,5 +623,7 @@ else:
 try:
     tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
     print('CMI file written to', outFile)
+    sys.exit(0)
 except PermissionError:
     logging.error('Could not save the file due to insufficient permission')
+    sys.exit(1)
