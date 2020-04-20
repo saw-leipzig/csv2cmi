@@ -185,7 +185,7 @@ def createCorrespondent(nameString):
             # assigning authority file IDs to their correspondents if provided
             if (index < len(personIDs)) and personIDs[index]:
                 # by default complete GND-IDNs to full URI
-                if 'http://' not in str(personIDs[index].strip()) and str(personIDs[index].strip())[:-2].isdigit():
+                if not str(personIDs[index].strip()).startswith('http') and str(personIDs[index].strip())[:-2].isdigit():
                     logging.debug('Assigning ID %s to GND', str(
                         personIDs[index].strip()))
                     authID = 'https://d-nb.info/gnd/' + \
@@ -530,7 +530,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
             if not(edition):
                 logging.error('Key without edition in line %s', table.line_num)
             else:
-                if 'http://' in str(letter['key']):
+                if str(letter['key']).startswith('http'):
                     entry.set('ref', str(letter['key']).strip())
                 else:
                     entry.set('key', str(letter['key']).strip())
