@@ -19,7 +19,7 @@ import sys
 from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
 
 __license__ = "MIT"
-__version__ = '2.1.0-beta'
+__version__ = '2.1.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -289,16 +289,21 @@ def createCorrespondent(nameString):
 
 
 def createDate(dateString):
-    """Convert an extended ISO date into a proper TEI element."""
+    """Convert an EDTF date into a proper TEI element."""
     if not(dateString):
         return None
     date = Element('date')
     # normalize date
     normalizedDate = dateString.translate(dateString.maketrans('', '', '?~%'))
-    if normalizedDate[-1] == 'X':
+    if len(normalizedDate) > 4 and normalizedDate[-1] == 'X':
+        # remove day and month with unspecified digits
         normalizedDate = normalizedDate[0:-3]
         if normalizedDate[-1] == 'X':
             normalizedDate = normalizedDate[0:-3]
+    if normalizedDate[-1] == 'X':
+        # change year with unspecified digits to interval
+        normalizedDate = normalizedDate.replace(
+            'X', '0') + '/' + normalizedDate.replace('X', '9')
     if checkDatableW3C(normalizedDate):
         date.set('when', str(normalizedDate))
     elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
@@ -344,7 +349,8 @@ def createPlaceName(placeNameText, placeNameRef):
         if 'www.geonames.org' in placeNameRef:
             placeName.set('ref', str(placeNameRef))
         else:
-            logging.warning('"%s" is no standardized GeoNames ID', placeNameRef)
+            logging.warning(
+                '"%s" is no standardized GeoNames ID', placeNameRef)
     return placeName
 
 
