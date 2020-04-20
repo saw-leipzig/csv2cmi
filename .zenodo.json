@@ -1,7 +1,7 @@
 {
   "title": "CSV2CMI",
   "description": "converts a table of letters into CMI format",
-  "publication_date": "2020-01-24",
+  "publication_date": "2020-04-20",
   "creators": [{
     "name": "Rettinghaus, Klaus",
     "orcid": "0000-0003-1898-2543"
@@ -13,6 +13,11 @@
     },
     {
       "name": "Dolan, Jana",
+      "type": "Other"
+    },
+    {
+      "name": "Schneider, Sophie"
+      "orcid": "0000-0002-8303-1798",
       "type": "Other"
     }
   ],
