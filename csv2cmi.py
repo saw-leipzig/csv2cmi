@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2019 Klaus Rettinghaus
+# Copyright (c) 2015-2020 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
