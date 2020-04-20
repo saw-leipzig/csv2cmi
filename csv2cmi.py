@@ -594,7 +594,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         if entry.find('*'):
             profileDesc.append(entry)
 
-# replace short titles if configured
+# replace short titles, if configured
 for bibl in sourceDesc.findall('bibl'):
     # Try to use bibliographic text as key for section in config file
     editionKey = bibl.text
@@ -611,7 +611,7 @@ for bibl in sourceDesc.findall('bibl'):
         logging.warning(
             'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
     except configparser.NoSectionError:
-        # if there is no matching section, we assume that there shouldn't one
+        # if there is no matching section, we assume that there shouldn't be one
         pass
 
 
