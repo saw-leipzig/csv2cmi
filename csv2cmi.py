@@ -10,16 +10,16 @@ import configparser
 import logging
 import random
 import string
-import uuid
+import sys
 import urllib.request
+import uuid
 from csv import DictReader
 from datetime import datetime
 from os import path
-import sys
-from xml.etree.ElementTree import Element, SubElement, Comment, ElementTree
+from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -222,8 +222,9 @@ def createCorrespondent(nameString):
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                        except urllib.error.URLError:
-                            logging.error('Failed to reach GND')
+                        except urllib.error.URLError as e:
+                            logging.error(
+                                'Failed to reach GND (' + str(e.reason) + ')')
                         except UnicodeEncodeError:
                             logging.error('Failed to encode %s', authID)
                         else:
