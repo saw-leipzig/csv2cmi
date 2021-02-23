@@ -204,8 +204,9 @@ def createCorrespondent(nameString):
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                        except urllib.error.URLError:
-                            logging.error('Failed to reach VIAF')
+                        except urllib.error.URLError as e:
+                            logging.error(
+                                'Failed to reach VIAF (' + str(e.reason) + ')')
                         else:
                             viafrdf_root = viafrdf.getroot()
                             if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', ns) is not None:
@@ -259,8 +260,9 @@ def createCorrespondent(nameString):
                         except urllib.error.HTTPError:
                             logging.error(
                                 'Authority file not found for %sID in line %s', nameString, table.line_num)
-                        except urllib.error.URLError:
-                            logging.error('Failed to reach LOC')
+                        except urllib.error.URLError as e:
+                            logging.error(
+                                'Failed to reach LOC (' + str(e.reason) + ')')
                         else:
                             locrdf_root = locrdf.getroot()
                             if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', ns) is not None:
