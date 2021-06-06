@@ -418,214 +418,215 @@ class csv2cmi():
         return self.createPlaceName(place, placeID)
 
 
-# simple test for file
-try:
-    open(args.filename, 'rt').close()
-except FileNotFoundError:
-    logging.error('File not found')
-    sys.exit(1)
-
-csv2cmi = csv2cmi()
-
-# check internet connection via DNB
-connection = csv2cmi.checkConnectivity()
-
-# read config file
-config = configparser.ConfigParser()
-# set default values
-config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
-    path.basename(args.filename))[0] + '.xml'}
-
-iniFilename = 'csv2cmi.ini'
-try:
-    config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
-except IOError:
+if __name__ == "__main__":
+    # simple test for file
     try:
-        config.read_file(open(iniFilename))
-    except IOError:
-        logging.error('No configuration file found')
-
-# set type of edition
-editionType = 'print'
-if ('Edition' in config) and ('type' in config['Edition']):
-    if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
-        editionType = config.get('Edition', 'type')
-
-# set extra delimiter
-if not subdlm:
-    try:
-        subdlm = config.get('Project', 'extra-delimiter')
-        if len(subdlm) > 1:
-            logging.error('Delimiter has to be a single character')
-            sys.exit(1)
-    except configparser.NoOptionError:
-        pass
-
-# building cmi
-# generating root element
-root = Element('TEI')
-root.set('xmlns', ns.get('tei'))
-root.append(
-    Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
-
-# teiHeader
-teiHeader = SubElement(root, 'teiHeader')
-# create a file description from config file
-fileDesc = csv2cmi.createFileDesc(config)
-teiHeader.append(fileDesc)
-# container for bibliographic data
-# global sourceDesc
-sourceDesc = SubElement(fileDesc, 'sourceDesc')
-# filling in correspondance meta-data
-profileDesc = SubElement(teiHeader, 'profileDesc')
-
-with open(args.filename, 'rt', encoding='utf-8') as letterTable:
-    # global table
-    table = DictReader(letterTable)
-    logging.debug('Recognized columns: %s', table.fieldnames)
-    if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
-        logging.error('No sender/addressee field in table')
+        open(args.filename, 'rt').close()
+    except FileNotFoundError:
+        logging.error('File not found')
         sys.exit(1)
-    editions = []
-    editionIDs = []
-    if not('edition' in table.fieldnames):
+
+    csv2cmi = csv2cmi()
+
+    # check internet connection via DNB
+    connection = csv2cmi.checkConnectivity()
+
+    # read config file
+    config = configparser.ConfigParser()
+    # set default values
+    config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
+        path.basename(args.filename))[0] + '.xml'}
+
+    iniFilename = 'csv2cmi.ini'
+    try:
+        config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
+    except IOError:
         try:
-            edition = config.get('Edition', 'title')
-        except configparser.Error:
-            edition = ""
-            logging.warning('No edition stated. Please set manually.')
-        finally:
-            random.seed(edition)
-            editionID = csv2cmi.generateUUID()
-            sourceDesc.append(csv2cmi.createEdition(edition, editionType, editionID))
-            editions.append(edition)
-            editionIDs.append(editionID)
-    for letter in table:
-        if ('edition' in table.fieldnames):
-            del editions[:]
-            del editionIDs[:]
-            if subdlm:
-                edition_values = letter['edition'].split(subdlm)
-            else:
-                edition_values = [letter['edition']]
-            for edition in edition_values:
-                # By default use edition value as is
-                edition = edition.strip()
-                editionID = csv2cmi.getEditonID(edition)
-                if not(edition or args.all):
-                    continue
-                if edition and not editionID:
-                    random.seed(edition)
-                    editionID = csv2cmi.generateUUID()
-                    sourceDesc.append(csv2cmi.createEdition(
-                        edition, editionType, editionID))
+            config.read_file(open(iniFilename))
+        except IOError:
+            logging.error('No configuration file found')
+
+    # set type of edition
+    editionType = 'print'
+    if ('Edition' in config) and ('type' in config['Edition']):
+        if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
+            editionType = config.get('Edition', 'type')
+
+    # set extra delimiter
+    if not subdlm:
+        try:
+            subdlm = config.get('Project', 'extra-delimiter')
+            if len(subdlm) > 1:
+                logging.error('Delimiter has to be a single character')
+                sys.exit(1)
+        except configparser.NoOptionError:
+            pass
+
+    # building cmi
+    # generating root element
+    root = Element('TEI')
+    root.set('xmlns', ns.get('tei'))
+    root.append(
+        Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
+
+    # teiHeader
+    teiHeader = SubElement(root, 'teiHeader')
+    # create a file description from config file
+    fileDesc = csv2cmi.createFileDesc(config)
+    teiHeader.append(fileDesc)
+    # container for bibliographic data
+    # global sourceDesc
+    sourceDesc = SubElement(fileDesc, 'sourceDesc')
+    # filling in correspondance meta-data
+    profileDesc = SubElement(teiHeader, 'profileDesc')
+
+    with open(args.filename, 'rt', encoding='utf-8') as letterTable:
+        # global table
+        table = DictReader(letterTable)
+        logging.debug('Recognized columns: %s', table.fieldnames)
+        if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
+            logging.error('No sender/addressee field in table')
+            sys.exit(1)
+        editions = []
+        editionIDs = []
+        if not('edition' in table.fieldnames):
+            try:
+                edition = config.get('Edition', 'title')
+            except configparser.Error:
+                edition = ""
+                logging.warning('No edition stated. Please set manually.')
+            finally:
+                random.seed(edition)
+                editionID = csv2cmi.generateUUID()
+                sourceDesc.append(csv2cmi.createEdition(edition, editionType, editionID))
                 editions.append(edition)
                 editionIDs.append(editionID)
-        entry = Element('correspDesc')
-        if args.line_numbers:
-            entry.set('n', str(table.line_num))
-        if any(editionIDs):
-            # multiple entries needs te be seperated by whitespace
-            # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
-            entry.set('source', '#' + ' #'.join(editionIDs))
-        if 'key' in table.fieldnames and letter['key']:
-            if not(edition):
-                logging.error('Key without edition in line %s', table.line_num)
-            else:
-                if str(letter['key']).startswith('http'):
-                    entry.set('ref', str(letter['key']).strip())
+        for letter in table:
+            if ('edition' in table.fieldnames):
+                del editions[:]
+                del editionIDs[:]
+                if subdlm:
+                    edition_values = letter['edition'].split(subdlm)
                 else:
-                    entry.set('key', str(letter['key']).strip())
+                    edition_values = [letter['edition']]
+                for edition in edition_values:
+                    # By default use edition value as is
+                    edition = edition.strip()
+                    editionID = csv2cmi.getEditonID(edition)
+                    if not(edition or args.all):
+                        continue
+                    if edition and not editionID:
+                        random.seed(edition)
+                        editionID = csv2cmi.generateUUID()
+                        sourceDesc.append(csv2cmi.createEdition(
+                            edition, editionType, editionID))
+                    editions.append(edition)
+                    editionIDs.append(editionID)
+            entry = Element('correspDesc')
+            if args.line_numbers:
+                entry.set('n', str(table.line_num))
+            if any(editionIDs):
+                # multiple entries needs te be seperated by whitespace
+                # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
+                entry.set('source', '#' + ' #'.join(editionIDs))
+            if 'key' in table.fieldnames and letter['key']:
+                if not(edition):
+                    logging.error('Key without edition in line %s', table.line_num)
+                else:
+                    if str(letter['key']).startswith('http'):
+                        entry.set('ref', str(letter['key']).strip())
+                    else:
+                        entry.set('key', str(letter['key']).strip())
 
-        # sender info block
-        if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
-            action = SubElement(entry, 'correspAction')
-            action.set('xml:id', csv2cmi.generateID('sender'))
-            action.set('type', 'sent')
+            # sender info block
+            if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
+                action = SubElement(entry, 'correspAction')
+                action.set('xml:id', csv2cmi.generateID('sender'))
+                action.set('type', 'sent')
 
-            # add name of sender
-            if letter['sender']:
-                correspondents = csv2cmi.createCorrespondent('sender')
-                for sender in correspondents:
-                    action.append(sender)
-            # add placeName
-            senderPlace = csv2cmi.processPlace(letter, "sender")
-            if senderPlace.attrib or senderPlace.text:
-                action.append(senderPlace)
-            # add date
-            senderDate = csv2cmi.processDate(letter, "sender")
-            if senderDate.attrib or senderDate.text:
-                action.append(senderDate)
-        else:
-            logging.info('No information on sender in line %s', table.line_num)
+                # add name of sender
+                if letter['sender']:
+                    correspondents = csv2cmi.createCorrespondent('sender')
+                    for sender in correspondents:
+                        action.append(sender)
+                # add placeName
+                senderPlace = csv2cmi.processPlace(letter, "sender")
+                if senderPlace.attrib or senderPlace.text:
+                    action.append(senderPlace)
+                # add date
+                senderDate = csv2cmi.processDate(letter, "sender")
+                if senderDate.attrib or senderDate.text:
+                    action.append(senderDate)
+            else:
+                logging.info('No information on sender in line %s', table.line_num)
 
-        # addressee info block
-        if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
-            action = SubElement(entry, 'correspAction')
-            action.set('xml:id', csv2cmi.generateID('addressee'))
-            action.set('type', 'received')
+            # addressee info block
+            if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
+                action = SubElement(entry, 'correspAction')
+                action.set('xml:id', csv2cmi.generateID('addressee'))
+                action.set('type', 'received')
 
-            # add name of addressee
-            if letter['addressee']:
-                correspondents = csv2cmi.createCorrespondent('addressee')
-                for addressee in correspondents:
-                    action.append(addressee)
-            # add placeName
-            addresseePlace = csv2cmi.processPlace(letter, "addressee")
-            if addresseePlace.attrib or addresseePlace.text:
-                action.append(addresseePlace)
-            # add date
-            addresseeDate = csv2cmi.processDate(letter, "addressee")
-            if addresseeDate.attrib or addresseeDate.text:
-                action.append(addresseeDate)
-        else:
-            logging.info('No information on addressee in line %s',
-                         table.line_num)
-        entry.set('xml:id', csv2cmi.generateID('letter'))
-        if args.notes:
-            if ('note' in table.fieldnames) and letter['note']:
-                note = SubElement(entry, 'note')
-                note.set('xml:id', csv2cmi.generateID('note'))
-                note.text = str(letter['note'])
-        if entry.find('*'):
-            profileDesc.append(entry)
+                # add name of addressee
+                if letter['addressee']:
+                    correspondents = csv2cmi.createCorrespondent('addressee')
+                    for addressee in correspondents:
+                        action.append(addressee)
+                # add placeName
+                addresseePlace = csv2cmi.processPlace(letter, "addressee")
+                if addresseePlace.attrib or addresseePlace.text:
+                    action.append(addresseePlace)
+                # add date
+                addresseeDate = csv2cmi.processDate(letter, "addressee")
+                if addresseeDate.attrib or addresseeDate.text:
+                    action.append(addresseeDate)
+            else:
+                logging.info('No information on addressee in line %s',
+                            table.line_num)
+            entry.set('xml:id', csv2cmi.generateID('letter'))
+            if args.notes:
+                if ('note' in table.fieldnames) and letter['note']:
+                    note = SubElement(entry, 'note')
+                    note.set('xml:id', csv2cmi.generateID('note'))
+                    note.text = str(letter['note'])
+            if entry.find('*'):
+                profileDesc.append(entry)
 
-# replace short titles, if configured
-for bibl in sourceDesc.findall('bibl'):
-    # Try to use bibliographic text as key for section in config file
-    editionKey = bibl.text
-    try:
-        editionTitle = config.get(editionKey, 'title')
+    # replace short titles, if configured
+    for bibl in sourceDesc.findall('bibl'):
+        # Try to use bibliographic text as key for section in config file
+        editionKey = bibl.text
         try:
-            editionType = config.get(editionKey, 'type')
+            editionTitle = config.get(editionKey, 'title')
+            try:
+                editionType = config.get(editionKey, 'type')
+            except configparser.NoOptionError:
+                # if type is not set, use the default one
+                pass
+            bibl.text = editionTitle
+            bibl.set('type', editionType)
         except configparser.NoOptionError:
-            # if type is not set, use the default one
+            logging.warning(
+                'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
+        except configparser.NoSectionError:
+            # if there is no matching section, we assume that there shouldn't be one
             pass
-        bibl.text = editionTitle
-        bibl.set('type', editionType)
-    except configparser.NoOptionError:
-        logging.warning(
-            'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
-    except configparser.NoSectionError:
-        # if there is no matching section, we assume that there shouldn't be one
-        pass
 
 
-# generate empty body
-root.append(csv2cmi.createTextstructure())
+    # generate empty body
+    root.append(csv2cmi.createTextstructure())
 
-# save cmi to file
-tree = ElementTree(root)
-if args.output:
-    outFile = args.output
-else:
-    outFile = path.join(path.dirname(args.filename), path.splitext(
-        path.basename(args.filename))[0] + '.xml')
+    # save cmi to file
+    tree = ElementTree(root)
+    if args.output:
+        outFile = args.output
+    else:
+        outFile = path.join(path.dirname(args.filename), path.splitext(
+            path.basename(args.filename))[0] + '.xml')
 
-try:
-    tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
-    print('CMI file written to', outFile)
-    sys.exit(0)
-except PermissionError:
-    logging.error('Could not save the file due to insufficient permission')
-    sys.exit(1)
+    try:
+        tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+        print('CMI file written to', outFile)
+        sys.exit(0)
+    except PermissionError:
+        logging.error('Could not save the file due to insufficient permission')
+        sys.exit(1)
