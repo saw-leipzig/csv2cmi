@@ -46,21 +46,6 @@ parser.add_argument('--version', action='version',
                     version='%(prog)s ' + __version__)
 parser.add_argument('--extra-delimiter',
                     help='delimiter for different values within cells')
-args = parser.parse_args()
-
-# set verbosity
-if args.verbose:
-    logs.setLevel('INFO')
-
-# set extra delimiter
-if args.extra_delimiter:
-    if len(args.extra_delimiter) == 1:
-        subdlm = args.extra_delimiter
-    else:
-        logging.error('Delimiter has to be a single character')
-        sys.exit(1)
-else:
-    subdlm = None
 
 
 class csv2cmi():
@@ -419,6 +404,22 @@ class csv2cmi():
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+
+    # set verbosity
+    if args.verbose:
+        logs.setLevel('INFO')
+
+    # set extra delimiter
+    if args.extra_delimiter:
+        if len(args.extra_delimiter) == 1:
+            subdlm = args.extra_delimiter
+        else:
+            logging.error('Delimiter has to be a single character')
+            sys.exit(1)
+    else:
+        subdlm = None
+
     # simple test for file
     try:
         open(args.filename, 'rt').close()
@@ -439,7 +440,8 @@ if __name__ == "__main__":
 
     iniFilename = 'csv2cmi.ini'
     try:
-        config.read_file(open(path.join(path.dirname(args.filename), iniFilename)))
+        config.read_file(
+            open(path.join(path.dirname(args.filename), iniFilename)))
     except IOError:
         try:
             config.read_file(open(iniFilename))
@@ -498,7 +500,8 @@ if __name__ == "__main__":
             finally:
                 random.seed(edition)
                 editionID = csv2cmi.generateUUID()
-                sourceDesc.append(csv2cmi.createEdition(edition, editionType, editionID))
+                sourceDesc.append(csv2cmi.createEdition(
+                    edition, editionType, editionID))
                 editions.append(edition)
                 editionIDs.append(editionID)
         for letter in table:
@@ -531,7 +534,8 @@ if __name__ == "__main__":
                 entry.set('source', '#' + ' #'.join(editionIDs))
             if 'key' in table.fieldnames and letter['key']:
                 if not(edition):
-                    logging.error('Key without edition in line %s', table.line_num)
+                    logging.error(
+                        'Key without edition in line %s', table.line_num)
                 else:
                     if str(letter['key']).startswith('http'):
                         entry.set('ref', str(letter['key']).strip())
@@ -558,7 +562,8 @@ if __name__ == "__main__":
                 if senderDate.attrib or senderDate.text:
                     action.append(senderDate)
             else:
-                logging.info('No information on sender in line %s', table.line_num)
+                logging.info(
+                    'No information on sender in line %s', table.line_num)
 
             # addressee info block
             if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
@@ -581,7 +586,7 @@ if __name__ == "__main__":
                     action.append(addresseeDate)
             else:
                 logging.info('No information on addressee in line %s',
-                            table.line_num)
+                             table.line_num)
             entry.set('xml:id', csv2cmi.generateID('letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
@@ -611,7 +616,6 @@ if __name__ == "__main__":
             # if there is no matching section, we assume that there shouldn't be one
             pass
 
-
     # generate empty body
     root.append(csv2cmi.createTextstructure())
 
@@ -624,7 +628,8 @@ if __name__ == "__main__":
             path.basename(args.filename))[0] + '.xml')
 
     try:
-        tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+        tree.write(outFile, encoding="utf-8",
+                   xml_declaration=True, method="xml")
         print('CMI file written to', outFile)
         sys.exit(0)
     except PermissionError:
