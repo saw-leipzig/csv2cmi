@@ -19,7 +19,7 @@ from os import path
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
-__version__ = '2.1.1'
+__version__ = '2.5.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -51,7 +51,21 @@ parser.add_argument('--extra-delimiter',
 class csv2cmi():
     """Transform a table of letters into the CMI format."""
 
-    def checkIsodate(self, dateString):
+    def __init__(self):
+        """Create an empty TEI file."""
+        self.cmi = Element('TEI')
+        self.cmi.set('xmlns', ns.get('tei'))
+        self.cmi.append(Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
+        # TEI header
+        tei_header = SubElement(self.cmi, 'teiHeader')
+        self.file_desc = SubElement(tei_header, 'fileDesc')
+        self.profile_desc = SubElement(tei_header, 'profileDesc')
+        # TEI body
+        text = SubElement(self.cmi, 'text')
+        body = SubElement(text, 'body')
+        SubElement(body, 'p')
+
+    def check_isodate(self, dateString):
         """Check if a string is from datatype teidata.temporal.iso."""
         try:
             datetime.strptime(dateString, '%Y-%m-%d')
@@ -67,12 +81,12 @@ class csv2cmi():
                 except ValueError:
                     return False
 
-    def checkDatableW3C(self, dateString):
+    def check_datable_w3c(self, dateString):
         """Check if a string is from datatype teidata.temporal.w3c."""
         # handle negative dates
         if dateString.startswith('-') and len(dateString) > 4 and dateString[1].isdigit():
             dateString = dateString[1:]
-        if self.checkIsodate(dateString):
+        if self.check_isodate(dateString):
             return True
         else:
             # handle dates without year
@@ -98,16 +112,9 @@ class csv2cmi():
             logging.error('No internet connection')
             return False
 
-    def createTextstructure(self):
-        """Create an empty TEI text body."""
-        text = Element('text')
-        body = SubElement(text, 'body')
-        SubElement(body, 'p')
-        return text
-
-    def createFileDesc(self, config):
+    def create_file_desc(self, config):
         """Create a TEI file description from config file."""
-        fileDesc = Element('fileDesc')
+        fileDesc = csv2cmi.file_desc
         # title statement
         titleStmt = SubElement(fileDesc, 'titleStmt')
         title = SubElement(titleStmt, 'title')
@@ -142,9 +149,9 @@ class csv2cmi():
         # The CC-BY licence may not apply to the final CMI file
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
-        return fileDesc
+        return
 
-    def createCorrespondent(self, nameString):
+    def create_correspondent(self, nameString):
         if letter[nameString]:
             correspondents = []
             # Turning the cells of correspondent names and their IDs into lists since cells
@@ -175,9 +182,9 @@ class csv2cmi():
                             str(personIDs[index].strip())
                     else:
                         authID = str(personIDs[index].strip())
-                    if profileDesc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
+                    if csv2cmi.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
                         correspondent = Element('persName')
-                    elif profileDesc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                    elif csv2cmi.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
                         correspondent = Element('orgName')
                     elif connection:
                         if 'viaf' in authID:
@@ -273,7 +280,7 @@ class csv2cmi():
                 correspondents.append(correspondent)
         return(correspondents)
 
-    def createDate(self, dateString):
+    def create_date(self, dateString):
         """Convert an EDTF date into a proper TEI element."""
         if not(dateString):
             return None
@@ -290,7 +297,7 @@ class csv2cmi():
             # change year with unspecified digits to interval
             normalizedDate = normalizedDate.replace(
                 'X', '0') + '/' + normalizedDate.replace('X', '9')
-        if self.checkDatableW3C(normalizedDate):
+        if self.check_datable_w3c(normalizedDate):
             date.set('when', str(normalizedDate))
         elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
             # one of set
@@ -298,17 +305,17 @@ class csv2cmi():
             dateFirst = dateList[0].split(".")[0]
             dateLast = dateList[-1].split(".")[-1]
             if dateFirst or dateLast:
-                if self.checkDatableW3C(dateFirst):
+                if self.check_datable_w3c(dateFirst):
                     date.set('notBefore', str(dateFirst))
-                if self.checkDatableW3C(dateLast):
+                if self.check_datable_w3c(dateLast):
                     date.set('notAfter', str(dateLast))
         else:
             # time interval
             dateList = normalizedDate.split('/')
             if len(dateList) == 2 and (dateList[0] or dateList[1]):
-                if self.checkDatableW3C(dateList[0]):
+                if self.check_datable_w3c(dateList[0]):
                     date.set('from', str(dateList[0]))
-                if self.checkDatableW3C(dateList[1]):
+                if self.check_datable_w3c(dateList[1]):
                     date.set('to', str(dateList[1]))
         if date.attrib:
             if normalizedDate != dateString:
@@ -363,18 +370,18 @@ class csv2cmi():
             '-' + ''.join(random.sample('0123456789abcdef', 10))
         return fullID
 
-    def generateUUID(self):
+    def generate_uuid(self):
         """Generate a UUID."""
         UUID = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
                                          for _ in range(16)), version=4))
         if UUID[0].isdigit():
-            UUID = self.generateUUID()
+            UUID = self.generate_uuid()
         return UUID
 
-    def processDate(self, letter, correspondent):
+    def process_date(self, letter, correspondent):
         correspDate = Element('date')
         try:
-            correspDate = self.createDate(letter[correspondent + 'Date'])
+            correspDate = self.create_date(letter[correspondent + 'Date'])
         except (KeyError, TypeError):
             pass
         except ValueError:
@@ -389,7 +396,7 @@ class csv2cmi():
             pass
         return correspDate
 
-    def processPlace(self, letter, correspondent):
+    def process_placee(self, letter, correspondent):
         place, placeID = '', ''
         try:
             place = letter[correspondent + 'Place']
@@ -465,22 +472,9 @@ if __name__ == "__main__":
             pass
 
     # building cmi
-    # generating root element
-    root = Element('TEI')
-    root.set('xmlns', ns.get('tei'))
-    root.append(
-        Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
-
-    # teiHeader
-    teiHeader = SubElement(root, 'teiHeader')
     # create a file description from config file
-    fileDesc = csv2cmi.createFileDesc(config)
-    teiHeader.append(fileDesc)
-    # container for bibliographic data
-    # global sourceDesc
-    sourceDesc = SubElement(fileDesc, 'sourceDesc')
-    # filling in correspondance meta-data
-    profileDesc = SubElement(teiHeader, 'profileDesc')
+    csv2cmi.create_file_desc(config)
+    sourceDesc = SubElement(csv2cmi.file_desc, 'sourceDesc')
 
     with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         # global table
@@ -499,7 +493,7 @@ if __name__ == "__main__":
                 logging.warning('No edition stated. Please set manually.')
             finally:
                 random.seed(edition)
-                editionID = csv2cmi.generateUUID()
+                editionID = csv2cmi.generate_uuid()
                 sourceDesc.append(csv2cmi.createEdition(
                     edition, editionType, editionID))
                 editions.append(edition)
@@ -520,7 +514,7 @@ if __name__ == "__main__":
                         continue
                     if edition and not editionID:
                         random.seed(edition)
-                        editionID = csv2cmi.generateUUID()
+                        editionID = csv2cmi.generate_uuid()
                         sourceDesc.append(csv2cmi.createEdition(
                             edition, editionType, editionID))
                     editions.append(edition)
@@ -550,15 +544,15 @@ if __name__ == "__main__":
 
                 # add name of sender
                 if letter['sender']:
-                    correspondents = csv2cmi.createCorrespondent('sender')
+                    correspondents = csv2cmi.create_correspondent('sender')
                     for sender in correspondents:
                         action.append(sender)
                 # add placeName
-                senderPlace = csv2cmi.processPlace(letter, "sender")
+                senderPlace = csv2cmi.process_placee(letter, "sender")
                 if senderPlace.attrib or senderPlace.text:
                     action.append(senderPlace)
                 # add date
-                senderDate = csv2cmi.processDate(letter, "sender")
+                senderDate = csv2cmi.process_date(letter, "sender")
                 if senderDate.attrib or senderDate.text:
                     action.append(senderDate)
             else:
@@ -573,15 +567,15 @@ if __name__ == "__main__":
 
                 # add name of addressee
                 if letter['addressee']:
-                    correspondents = csv2cmi.createCorrespondent('addressee')
+                    correspondents = csv2cmi.create_correspondent('addressee')
                     for addressee in correspondents:
                         action.append(addressee)
                 # add placeName
-                addresseePlace = csv2cmi.processPlace(letter, "addressee")
+                addresseePlace = csv2cmi.process_placee(letter, "addressee")
                 if addresseePlace.attrib or addresseePlace.text:
                     action.append(addresseePlace)
                 # add date
-                addresseeDate = csv2cmi.processDate(letter, "addressee")
+                addresseeDate = csv2cmi.process_date(letter, "addressee")
                 if addresseeDate.attrib or addresseeDate.text:
                     action.append(addresseeDate)
             else:
@@ -594,7 +588,7 @@ if __name__ == "__main__":
                     note.set('xml:id', csv2cmi.generateID('note'))
                     note.text = str(letter['note'])
             if entry.find('*'):
-                profileDesc.append(entry)
+                csv2cmi.profile_desc.append(entry)
 
     # replace short titles, if configured
     for bibl in sourceDesc.findall('bibl'):
@@ -616,11 +610,8 @@ if __name__ == "__main__":
             # if there is no matching section, we assume that there shouldn't be one
             pass
 
-    # generate empty body
-    root.append(csv2cmi.createTextstructure())
-
     # save cmi to file
-    tree = ElementTree(root)
+    tree = ElementTree(csv2cmi.cmi)
     if args.output:
         outFile = args.output
     else:
@@ -628,8 +619,7 @@ if __name__ == "__main__":
             path.basename(args.filename))[0] + '.xml')
 
     try:
-        tree.write(outFile, encoding="utf-8",
-                   xml_declaration=True, method="xml")
+        tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
         print('CMI file written to', outFile)
         sys.exit(0)
     except PermissionError:
