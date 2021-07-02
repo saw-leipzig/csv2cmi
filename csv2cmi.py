@@ -353,7 +353,8 @@ class csv2cmi():
         bibl.set('xml:id', biblID)
         return bibl
 
-    def getEditonID(self, editionTitle):
+    def getEditonID(self, editionTitle: str) -> str:
+        """Get the ID for an edition """
         editionID = ''
         for bibl in sourceDesc.findall('bibl'):
             if editionTitle == bibl.text:
@@ -370,8 +371,8 @@ class csv2cmi():
             '-' + ''.join(random.sample('0123456789abcdef', 10))
         return fullID
 
-    def generate_uuid(self):
-        """Generate a UUID."""
+    def generate_uuid(self) -> str:
+        """Generate a UUID of type xs:ID."""
         UUID = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
                                          for _ in range(16)), version=4))
         if UUID[0].isdigit():
