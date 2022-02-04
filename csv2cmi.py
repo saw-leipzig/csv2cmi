@@ -280,11 +280,11 @@ class CSV2CMI():
                 correspondents.append(correspondent)
         return correspondents
 
-    def create_date(self, date_string):
+    def create_date(self, date_string: str) -> Element:
         """Convert an EDTF date into a proper TEI element."""
         if not date_string:
             return None
-        date = Element('date')
+        tei_date = Element('date')
         # normalize date
         normalized_date = date_string.translate(
             date_string.maketrans('', '', '?~%'))
@@ -298,7 +298,7 @@ class CSV2CMI():
             normalized_date = normalized_date.replace(
                 'X', '0') + '/' + normalized_date.replace('X', '9')
         if self.check_datable_w3c(normalized_date):
-            date.set('when', str(normalized_date))
+            tei_date.set('when', str(normalized_date))
         elif normalized_date.startswith('[') and normalized_date.endswith(']'):
             # one of set
             date_list = normalized_date[1:-1].split(",")
@@ -306,23 +306,23 @@ class CSV2CMI():
             date_last = date_list[-1].split(".")[-1]
             if date_first or date_last:
                 if self.check_datable_w3c(date_first):
-                    date.set('notBefore', str(date_first))
+                    tei_date.set('notBefore', str(date_first))
                 if self.check_datable_w3c(date_last):
-                    date.set('notAfter', str(date_last))
+                    tei_date.set('notAfter', str(date_last))
         else:
             # time interval
             date_list = normalized_date.split('/')
             if len(date_list) == 2 and (date_list[0] or date_list[1]):
                 if self.check_datable_w3c(date_list[0]):
-                    date.set('from', str(date_list[0]))
+                    tei_date.set('from', str(date_list[0]))
                 if self.check_datable_w3c(date_list[1]):
-                    date.set('to', str(date_list[1]))
-        if date.attrib:
+                    tei_date.set('to', str(date_list[1]))
+        if tei_date.attrib:
             if normalized_date != date_string:
-                date.set('cert', 'medium')
+                tei_date.set('cert', 'medium')
                 logging.info(
                     'Added @cert to <date> from line %s', table.line_num)
-            return date
+            return tei_date
         else:
             raise ValueError(
                 'unable to parse \'%s\' as TEI date' % date_string)
