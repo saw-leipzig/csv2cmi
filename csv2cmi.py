@@ -142,6 +142,24 @@ def create_date(date_string: str) -> Element:
         return tei_date
     raise ValueError('unable to parse \'%s\' as TEI date' % date_string)
 
+def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
+    """Create a placeName element."""
+    place_name = Element('placeName')
+    place_name_text = place_name_text.strip()
+    if place_name_text.startswith('[') and place_name_text.endswith(']'):
+        place_name.set('evidence', 'conjecture')
+        place_name_text = place_name_text[1:-1]
+        logging.info('Added @evidence to <placeName> from line %s',
+                        table.line_num)
+    place_name.text = str(place_name_text)
+    if geonames_uri:
+        geonames_uri = geonames_uri.strip()
+        if 'www.geonames.org' in geonames_uri:
+            place_name.set('ref', str(geonames_uri))
+        else:
+            logging.warning(
+                '"%s" is no GeoNames URI', geonames_uri)
+    return place_name
 
 class CSV2CMI():
     """Transform a table of letters into the CMI format."""
@@ -156,6 +174,7 @@ class CSV2CMI():
         tei_header = SubElement(self.cmi, 'teiHeader')
         self.file_desc = SubElement(tei_header, 'fileDesc')
         self.profile_desc = SubElement(tei_header, 'profileDesc')
+        self.source_desc = SubElement(tei_header, 'sourceDesc')
         # TEI body
         text = SubElement(self.cmi, 'text')
         tei_body = SubElement(text, 'body')
@@ -163,7 +182,7 @@ class CSV2CMI():
 
     def create_file_desc(self, config):
         """Create a TEI file description from config file."""
-        fileDesc = cmi_object.file_desc
+        fileDesc = self.file_desc
         # title statement
         titleStmt = SubElement(fileDesc, 'titleStmt')
         title = SubElement(titleStmt, 'title')
@@ -199,6 +218,21 @@ class CSV2CMI():
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
         return
+
+    def add_edition(self, biblText: str, biblType: str, biblID: str):
+        """Create a new bibliographic entry."""
+        tei_bibl = Element('bibl')
+        tei_bibl.text = biblText
+        tei_bibl.set('type', biblType)
+        tei_bibl.set('xml:id', biblID)
+        self.source_desc.append(tei_bibl)
+
+    def get_id_by_title(self, edition_title: str) -> str:
+        """Get the ID for an edition by title."""
+        for bibliographic_entry in self.source_desc.findall('bibl'):
+            if edition_title == bibliographic_entry.text:
+                return bibliographic_entry.get('xml:id')
+        return None
 
     def create_correspondent(self, nameString):
         if letter[nameString]:
@@ -330,42 +364,6 @@ class CSV2CMI():
                 correspondents.append(correspondent)
         return correspondents
 
-    def create_place_name(self, place_name_text: str, geonames_uri: str) -> Element:
-        """Create a placeName element."""
-        place_name = Element('placeName')
-        place_name_text = place_name_text.strip()
-        if place_name_text.startswith('[') and place_name_text.endswith(']'):
-            place_name.set('evidence', 'conjecture')
-            place_name_text = place_name_text[1:-1]
-            logging.info('Added @evidence to <placeName> from line %s',
-                         table.line_num)
-        place_name.text = str(place_name_text)
-        if geonames_uri:
-            geonames_uri = geonames_uri.strip()
-            if 'www.geonames.org' in geonames_uri:
-                place_name.set('ref', str(geonames_uri))
-            else:
-                logging.warning(
-                    '"%s" is no GeoNames URI', geonames_uri)
-        return place_name
-
-    def createEdition(self, biblText: str, biblType: str, biblID: str) -> Element:
-        """Create a new bibliographic entry."""
-        tei_bibl = Element('bibl')
-        tei_bibl.text = biblText
-        tei_bibl.set('type', biblType)
-        tei_bibl.set('xml:id', biblID)
-        return tei_bibl
-
-    def getEditonID(self, edition_title: str) -> str:
-        """Get the ID for an edition by title."""
-        edition_id = ''
-        for bibl in sourceDesc.findall('bibl'):
-            if edition_title == bibl.text:
-                edition_id = bibl.get('xml:id')
-                break
-        return edition_id
-
     def generate_id(self, id_prefix: str) -> str:
         if id_prefix.strip() == '':
             id_prefix = ''.join(random.choice(
@@ -384,6 +382,7 @@ class CSV2CMI():
         return generated_uuid
 
     def process_date(self, letter, correspondent):
+        """Process date."""
         correspDate = Element('date')
         try:
             correspDate = create_date(letter[correspondent + 'Date'])
@@ -413,7 +412,7 @@ class CSV2CMI():
                 placeID = letter[correspondent_type + 'PlaceID']
             except KeyError:
                 pass
-        return self.create_place_name(place, placeID)
+        return create_place_name(place, placeID)
 
 
 if __name__ == "__main__":
@@ -480,7 +479,6 @@ if __name__ == "__main__":
     # building cmi
     # create a file description from config file
     cmi_object.create_file_desc(config)
-    sourceDesc = SubElement(CSV2CMI.file_desc, 'sourceDesc')
 
     with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         # global table
@@ -500,8 +498,7 @@ if __name__ == "__main__":
             finally:
                 random.seed(edition)
                 edition_id = cmi_object.generate_uuid()
-                sourceDesc.append(cmi_object.createEdition(
-                    edition, editionType, edition_id))
+                cmi_object.add_edition(edition, editionType, edition_id)
                 editions.append(edition)
                 edition_ids.append(edition_id)
         for letter in table:
@@ -515,13 +512,13 @@ if __name__ == "__main__":
                 for edition in edition_values:
                     # By default use edition value as is
                     edition = edition.strip()
-                    edition_id = cmi_object.getEditonID(edition)
+                    edition_id = cmi_object.get_id_by_title(edition)
                     if not(edition or args.all):
                         continue
                     if edition and not edition_id:
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
-                        sourceDesc.append(cmi_object.createEdition(
+                        cmi_object.source_desc.append(cmi_object.add_edition(
                             edition, editionType, edition_id))
                     editions.append(edition)
                     edition_ids.append(edition_id)
@@ -597,7 +594,7 @@ if __name__ == "__main__":
                 cmi_object.profile_desc.append(entry)
 
     # replace short titles, if configured
-    for bibl in sourceDesc.findall('bibl'):
+    for bibl in cmi_object.source_desc.findall('bibl'):
         # Try to use bibliographic text as key for section in config file
         editionKey = bibl.text
         try:
