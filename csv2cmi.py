@@ -373,8 +373,8 @@ class CSV2CMI():
         if id_prefix.strip() == '':
             id_prefix = ''.join(random.choice(
                 string.ascii_lowercase) for _ in range(8))
-        generated_id = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
-            ''.join(random.sample('0123456789abcdef', 4)) + \
+        generated_id = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + \
+            '-' + ''.join(random.sample('0123456789abcdef', 4)) + \
             '-' + ''.join(random.sample('0123456789abcdef', 10))
         return generated_id
 
@@ -455,13 +455,13 @@ if __name__ == "__main__":
     config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
         path.basename(args.filename))[0] + '.xml'}
 
-    iniFilename = 'csv2cmi.ini'
+    ini_file = 'csv2cmi.ini'
     try:
         config.read_file(
-            open(path.join(path.dirname(args.filename), iniFilename)))
+            open(path.join(path.dirname(args.filename), ini_file)))
     except IOError:
         try:
-            config.read_file(open(iniFilename))
+            config.read_file(open(ini_file))
         except IOError:
             logging.error('No configuration file found')
 
