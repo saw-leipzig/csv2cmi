@@ -163,14 +163,14 @@ class CSV2CMI():
 
     def create_file_desc(self, config):
         """Create a TEI file description from config file."""
-        fileDesc = CSV2CMI.file_desc
+        fileDesc = cmi_object.file_desc
         # title statement
         titleStmt = SubElement(fileDesc, 'titleStmt')
         title = SubElement(titleStmt, 'title')
         title.text = config.get(
             'Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
-        title.set('xml:id', self.generate_id(id_prefix='title'))
+        title.set('xml:id', self.generate_id('title'))
         editors = ['']
         editors = config.get('Project', 'editor').splitlines()
         for entity in editors:
@@ -231,9 +231,9 @@ class CSV2CMI():
                             str(person_ids[index].strip())
                     else:
                         authority_file_uri = str(person_ids[index].strip())
-                    if CSV2CMI.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authority_file_uri + '"]'):
+                    if cmi_object.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authority_file_uri + '"]'):
                         correspondent = Element('persName')
-                    elif CSV2CMI.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authority_file_uri + '"]'):
+                    elif cmi_object.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authority_file_uri + '"]'):
                         correspondent = Element('orgName')
                     elif connection:
                         if 'viaf' in authority_file_uri:
@@ -440,7 +440,7 @@ if __name__ == "__main__":
         logging.error('File not found')
         sys.exit(1)
 
-    CSV2CMI = CSV2CMI()
+    cmi_object = CSV2CMI()
 
     # check internet connection via DNB
     connection = check_connectivity()
@@ -451,7 +451,7 @@ if __name__ == "__main__":
     config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
         path.basename(args.filename))[0] + '.xml'}
 
-    iniFilename = 'CSV2CMI.ini'
+    iniFilename = 'csv2cmi.ini'
     try:
         config.read_file(
             open(path.join(path.dirname(args.filename), iniFilename)))
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
     # building cmi
     # create a file description from config file
-    CSV2CMI.create_file_desc(config)
+    cmi_object.create_file_desc(config)
     sourceDesc = SubElement(CSV2CMI.file_desc, 'sourceDesc')
 
     with open(args.filename, 'rt', encoding='utf-8') as letterTable:
@@ -499,8 +499,8 @@ if __name__ == "__main__":
                 logging.warning('No edition stated. Please set manually.')
             finally:
                 random.seed(edition)
-                edition_id = CSV2CMI.generate_uuid()
-                sourceDesc.append(CSV2CMI.createEdition(
+                edition_id = cmi_object.generate_uuid()
+                sourceDesc.append(cmi_object.createEdition(
                     edition, editionType, edition_id))
                 editions.append(edition)
                 edition_ids.append(edition_id)
@@ -515,13 +515,13 @@ if __name__ == "__main__":
                 for edition in edition_values:
                     # By default use edition value as is
                     edition = edition.strip()
-                    edition_id = CSV2CMI.getEditonID(edition)
+                    edition_id = cmi_object.getEditonID(edition)
                     if not(edition or args.all):
                         continue
                     if edition and not edition_id:
                         random.seed(edition)
-                        edition_id = CSV2CMI.generate_uuid()
-                        sourceDesc.append(CSV2CMI.createEdition(
+                        edition_id = cmi_object.generate_uuid()
+                        sourceDesc.append(cmi_object.createEdition(
                             edition, editionType, edition_id))
                     editions.append(edition)
                     edition_ids.append(edition_id)
@@ -545,20 +545,20 @@ if __name__ == "__main__":
             # sender info block
             if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', CSV2CMI.generate_id(id_prefix='sender'))
+                action.set('xml:id', cmi_object.generate_id('sender'))
                 action.set('type', 'sent')
 
                 # add name of sender
                 if letter['sender']:
-                    correspondents = CSV2CMI.create_correspondent('sender')
+                    correspondents = cmi_object.create_correspondent('sender')
                     for sender in correspondents:
                         action.append(sender)
                 # add place_name
-                senderPlace = CSV2CMI.process_place(letter, "sender")
+                senderPlace = cmi_object.process_place(letter, "sender")
                 if senderPlace.attrib or senderPlace.text:
                     action.append(senderPlace)
                 # add date
-                senderDate = CSV2CMI.process_date(letter, "sender")
+                senderDate = cmi_object.process_date(letter, "sender")
                 if senderDate.attrib or senderDate.text:
                     action.append(senderDate)
             else:
@@ -568,33 +568,33 @@ if __name__ == "__main__":
             # addressee info block
             if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', CSV2CMI.generate_id(id_prefix='addressee'))
+                action.set('xml:id', cmi_object.generate_id('addressee'))
                 action.set('type', 'received')
 
                 # add name of addressee
                 if letter['addressee']:
-                    correspondents = CSV2CMI.create_correspondent('addressee')
+                    correspondents = cmi_object.create_correspondent('addressee')
                     for addressee in correspondents:
                         action.append(addressee)
                 # add place_name
-                addresseePlace = CSV2CMI.process_place(letter, "addressee")
+                addresseePlace = cmi_object.process_place(letter, "addressee")
                 if addresseePlace.attrib or addresseePlace.text:
                     action.append(addresseePlace)
                 # add date
-                addresseeDate = CSV2CMI.process_date(letter, "addressee")
+                addresseeDate = cmi_object.process_date(letter, "addressee")
                 if addresseeDate.attrib or addresseeDate.text:
                     action.append(addresseeDate)
             else:
                 logging.info('No information on addressee in line %s',
                              table.line_num)
-            entry.set('xml:id', CSV2CMI.generate_id(id_prefix='letter'))
+            entry.set('xml:id', cmi_object.generate_id('letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
                     note = SubElement(entry, 'note')
-                    note.set('xml:id', CSV2CMI.generate_id(id_prefix='note'))
+                    note.set('xml:id', cmi_object.generate_id('note'))
                     note.text = str(letter['note'])
             if entry.find('*'):
-                CSV2CMI.profile_desc.append(entry)
+                cmi_object.profile_desc.append(entry)
 
     # replace short titles, if configured
     for bibl in sourceDesc.findall('bibl'):
