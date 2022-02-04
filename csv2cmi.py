@@ -613,7 +613,7 @@ if __name__ == "__main__":
             pass
 
     # save cmi to file
-    tree = ElementTree(CSV2CMI.cmi)
+    tree = ElementTree(cmi_object.cmi)
     if args.output:
         outFile = args.output
     else:
