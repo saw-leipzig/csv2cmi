@@ -49,6 +49,7 @@ parser.add_argument('--extra-delimiter',
 
 
 def check_connectivity() -> bool:
+    """Simple check for internet connection."""
     try:
         urllib.request.urlopen('http://193.175.100.220', timeout=1)
         return True
@@ -142,6 +143,7 @@ def create_date(date_string: str) -> Element:
         return tei_date
     raise ValueError('unable to parse \'%s\' as TEI date' % date_string)
 
+
 def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
     """Create a placeName element."""
     place_name = Element('placeName')
@@ -150,7 +152,7 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
         place_name.set('evidence', 'conjecture')
         place_name_text = place_name_text[1:-1]
         logging.info('Added @evidence to <placeName> from line %s',
-                        table.line_num)
+                     table.line_num)
     place_name.text = str(place_name_text)
     if geonames_uri:
         geonames_uri = geonames_uri.strip()
@@ -160,6 +162,7 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
             logging.warning(
                 '"%s" is no GeoNames URI', geonames_uri)
     return place_name
+
 
 class CSV2CMI():
     """Transform a table of letters into the CMI format."""
@@ -235,6 +238,7 @@ class CSV2CMI():
         return None
 
     def create_correspondent(self, nameString):
+        """Create a correspondent."""
         if letter[nameString]:
             correspondents = []
             # Turning the cells of correspondent names and their IDs into lists since cells
@@ -365,6 +369,7 @@ class CSV2CMI():
         return correspondents
 
     def generate_id(self, id_prefix: str) -> str:
+        """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == '':
             id_prefix = ''.join(random.choice(
                 string.ascii_lowercase) for _ in range(8))
@@ -518,7 +523,8 @@ if __name__ == "__main__":
                     if edition and not edition_id:
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
-                        cmi_object.add_edition(edition, editionType, edition_id)
+                        cmi_object.add_edition(
+                            edition, editionType, edition_id)
                     editions.append(edition)
                     edition_ids.append(edition_id)
             entry = Element('correspDesc')
@@ -569,7 +575,8 @@ if __name__ == "__main__":
 
                 # add name of addressee
                 if letter['addressee']:
-                    correspondents = cmi_object.create_correspondent('addressee')
+                    correspondents = cmi_object.create_correspondent(
+                        'addressee')
                     for addressee in correspondents:
                         action.append(addressee)
                 # add place_name
