@@ -48,6 +48,101 @@ parser.add_argument('--extra-delimiter',
                     help='delimiter for different values within cells')
 
 
+def check_connectivity() -> bool:
+    try:
+        urllib.request.urlopen('http://193.175.100.220', timeout=1)
+        return True
+    except urllib.error.URLError:
+        logging.error('No internet connection')
+        return False
+
+
+def check_isodate(date_string):
+    """Check if a string is from datatype teidata.temporal.iso."""
+    try:
+        datetime.strptime(date_string, '%Y-%m-%d')
+        return True
+    except ValueError:
+        try:
+            datetime.strptime(date_string, '%Y-%m')
+            return True
+        except ValueError:
+            try:
+                datetime.strptime(date_string, '%Y')
+                return True
+            except ValueError:
+                return False
+
+
+def check_datable_w3c(date_string):
+    """Check if a string is from datatype teidata.temporal.w3c."""
+    # handle negative dates
+    if date_string.startswith('-') and len(date_string) > 4 and date_string[1].isdigit():
+        date_string = date_string[1:]
+    if check_isodate(date_string):
+        return True
+    # handle dates without year
+    try:
+        datetime.strptime(date_string, '--%m-%d')
+        return True
+    except ValueError:
+        try:
+            datetime.strptime(date_string, '--%m')
+            return True
+        except ValueError:
+            try:
+                datetime.strptime(date_string, '---%d')
+                return True
+            except ValueError:
+                return False
+
+
+def create_date(date_string: str) -> Element:
+    """Convert an EDTF date into a proper TEI element."""
+    if not date_string:
+        return None
+    tei_date = Element('date')
+    # normalize date
+    normalized_date = date_string.translate(
+        date_string.maketrans('', '', '?~%'))
+    if len(normalized_date) > 4 and normalized_date[-1] == 'X':
+        # remove day and month with unspecified digits
+        normalized_date = normalized_date[0:-3]
+        if normalized_date[-1] == 'X':
+            normalized_date = normalized_date[0:-3]
+    if normalized_date[-1] == 'X':
+        # change year with unspecified digits to interval
+        normalized_date = normalized_date.replace(
+            'X', '0') + '/' + normalized_date.replace('X', '9')
+    if check_datable_w3c(normalized_date):
+        tei_date.set('when', str(normalized_date))
+    elif normalized_date.startswith('[') and normalized_date.endswith(']'):
+        # one of set
+        date_list = normalized_date[1:-1].split(",")
+        date_first = date_list[0].split(".")[0]
+        date_last = date_list[-1].split(".")[-1]
+        if date_first or date_last:
+            if check_datable_w3c(date_first):
+                tei_date.set('notBefore', str(date_first))
+            if check_datable_w3c(date_last):
+                tei_date.set('notAfter', str(date_last))
+    else:
+        # time interval
+        date_list = normalized_date.split('/')
+        if len(date_list) == 2 and (date_list[0] or date_list[1]):
+            if check_datable_w3c(date_list[0]):
+                tei_date.set('from', str(date_list[0]))
+            if check_datable_w3c(date_list[1]):
+                tei_date.set('to', str(date_list[1]))
+    if tei_date.attrib:
+        if normalized_date != date_string:
+            tei_date.set('cert', 'medium')
+            logging.info(
+                'Added @cert to <date> from line %s', table.line_num)
+        return tei_date
+    raise ValueError('unable to parse \'%s\' as TEI date' % date_string)
+
+
 class CSV2CMI():
     """Transform a table of letters into the CMI format."""
 
@@ -63,54 +158,8 @@ class CSV2CMI():
         self.profile_desc = SubElement(tei_header, 'profileDesc')
         # TEI body
         text = SubElement(self.cmi, 'text')
-        body = SubElement(text, 'body')
-        SubElement(body, 'p')
-
-    def check_isodate(self, date_string):
-        """Check if a string is from datatype teidata.temporal.iso."""
-        try:
-            datetime.strptime(date_string, '%Y-%m-%d')
-            return True
-        except ValueError:
-            try:
-                datetime.strptime(date_string, '%Y-%m')
-                return True
-            except ValueError:
-                try:
-                    datetime.strptime(date_string, '%Y')
-                    return True
-                except ValueError:
-                    return False
-
-    def check_datable_w3c(self, date_string):
-        """Check if a string is from datatype teidata.temporal.w3c."""
-        # handle negative dates
-        if date_string.startswith('-') and len(date_string) > 4 and date_string[1].isdigit():
-            date_string = date_string[1:]
-        if self.check_isodate(date_string):
-            return True
-        # handle dates without year
-        try:
-            datetime.strptime(date_string, '--%m-%d')
-            return True
-        except ValueError:
-            try:
-                datetime.strptime(date_string, '--%m')
-                return True
-            except ValueError:
-                try:
-                    datetime.strptime(date_string, '---%d')
-                    return True
-                except ValueError:
-                    return False
-
-    def check_connectivity(self):
-        try:
-            urllib.request.urlopen('http://193.175.100.220', timeout=1)
-            return True
-        except urllib.error.URLError:
-            logging.error('No internet connection')
-            return False
+        tei_body = SubElement(text, 'body')
+        SubElement(tei_body, 'p')
 
     def create_file_desc(self, config):
         """Create a TEI file description from config file."""
@@ -121,7 +170,7 @@ class CSV2CMI():
         title.text = config.get(
             'Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
-        title.set('xml:id', self.generate_id('title'))
+        title.set('xml:id', self.generate_id(id_prefix='title'))
         editors = ['']
         editors = config.get('Project', 'editor').splitlines()
         for entity in editors:
@@ -217,7 +266,8 @@ class CSV2CMI():
                                 logging.error(
                                     'Failed to reach GND (%s)', str(e.reason))
                             except UnicodeEncodeError:
-                                logging.error('Failed to encode %s', authority_file_uri)
+                                logging.error(
+                                    'Failed to encode %s', authority_file_uri)
                             else:
                                 corporatelike = (
                                     'Corporate', 'Company', 'ReligiousAdministrativeUnit')
@@ -280,53 +330,6 @@ class CSV2CMI():
                 correspondents.append(correspondent)
         return correspondents
 
-    def create_date(self, date_string: str) -> Element:
-        """Convert an EDTF date into a proper TEI element."""
-        if not date_string:
-            return None
-        tei_date = Element('date')
-        # normalize date
-        normalized_date = date_string.translate(
-            date_string.maketrans('', '', '?~%'))
-        if len(normalized_date) > 4 and normalized_date[-1] == 'X':
-            # remove day and month with unspecified digits
-            normalized_date = normalized_date[0:-3]
-            if normalized_date[-1] == 'X':
-                normalized_date = normalized_date[0:-3]
-        if normalized_date[-1] == 'X':
-            # change year with unspecified digits to interval
-            normalized_date = normalized_date.replace(
-                'X', '0') + '/' + normalized_date.replace('X', '9')
-        if self.check_datable_w3c(normalized_date):
-            tei_date.set('when', str(normalized_date))
-        elif normalized_date.startswith('[') and normalized_date.endswith(']'):
-            # one of set
-            date_list = normalized_date[1:-1].split(",")
-            date_first = date_list[0].split(".")[0]
-            date_last = date_list[-1].split(".")[-1]
-            if date_first or date_last:
-                if self.check_datable_w3c(date_first):
-                    tei_date.set('notBefore', str(date_first))
-                if self.check_datable_w3c(date_last):
-                    tei_date.set('notAfter', str(date_last))
-        else:
-            # time interval
-            date_list = normalized_date.split('/')
-            if len(date_list) == 2 and (date_list[0] or date_list[1]):
-                if self.check_datable_w3c(date_list[0]):
-                    tei_date.set('from', str(date_list[0]))
-                if self.check_datable_w3c(date_list[1]):
-                    tei_date.set('to', str(date_list[1]))
-        if tei_date.attrib:
-            if normalized_date != date_string:
-                tei_date.set('cert', 'medium')
-                logging.info(
-                    'Added @cert to <date> from line %s', table.line_num)
-            return tei_date
-        else:
-            raise ValueError(
-                'unable to parse \'%s\' as TEI date' % date_string)
-
     def create_place_name(self, place_name_text: str, geonames_uri: str) -> Element:
         """Create a placeName element."""
         place_name = Element('placeName')
@@ -383,7 +386,7 @@ class CSV2CMI():
     def process_date(self, letter, correspondent):
         correspDate = Element('date')
         try:
-            correspDate = self.create_date(letter[correspondent + 'Date'])
+            correspDate = create_date(letter[correspondent + 'Date'])
         except (KeyError, TypeError):
             pass
         except ValueError:
@@ -398,15 +401,16 @@ class CSV2CMI():
             pass
         return correspDate
 
-    def process_placee(self, letter, correspondent):
+    def process_place(self, letter, correspondent_type: str):
+        """Process place."""
         place, placeID = '', ''
         try:
-            place = letter[correspondent + 'Place']
+            place = letter[correspondent_type + 'Place']
         except KeyError:
             pass
         else:
             try:
-                placeID = letter[correspondent + 'PlaceID']
+                placeID = letter[correspondent_type + 'PlaceID']
             except KeyError:
                 pass
         return self.create_place_name(place, placeID)
@@ -439,7 +443,7 @@ if __name__ == "__main__":
     CSV2CMI = CSV2CMI()
 
     # check internet connection via DNB
-    connection = CSV2CMI.check_connectivity()
+    connection = check_connectivity()
 
     # read config file
     config = configparser.ConfigParser()
@@ -541,7 +545,7 @@ if __name__ == "__main__":
             # sender info block
             if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', CSV2CMI.generate_id('sender'))
+                action.set('xml:id', CSV2CMI.generate_id(id_prefix='sender'))
                 action.set('type', 'sent')
 
                 # add name of sender
@@ -550,7 +554,7 @@ if __name__ == "__main__":
                     for sender in correspondents:
                         action.append(sender)
                 # add place_name
-                senderPlace = CSV2CMI.process_placee(letter, "sender")
+                senderPlace = CSV2CMI.process_place(letter, "sender")
                 if senderPlace.attrib or senderPlace.text:
                     action.append(senderPlace)
                 # add date
@@ -564,7 +568,7 @@ if __name__ == "__main__":
             # addressee info block
             if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', CSV2CMI.generate_id('addressee'))
+                action.set('xml:id', CSV2CMI.generate_id(id_prefix='addressee'))
                 action.set('type', 'received')
 
                 # add name of addressee
@@ -573,7 +577,7 @@ if __name__ == "__main__":
                     for addressee in correspondents:
                         action.append(addressee)
                 # add place_name
-                addresseePlace = CSV2CMI.process_placee(letter, "addressee")
+                addresseePlace = CSV2CMI.process_place(letter, "addressee")
                 if addresseePlace.attrib or addresseePlace.text:
                     action.append(addresseePlace)
                 # add date
@@ -583,11 +587,11 @@ if __name__ == "__main__":
             else:
                 logging.info('No information on addressee in line %s',
                              table.line_num)
-            entry.set('xml:id', CSV2CMI.generate_id('letter'))
+            entry.set('xml:id', CSV2CMI.generate_id(id_prefix='letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
                     note = SubElement(entry, 'note')
-                    note.set('xml:id', CSV2CMI.generate_id('note'))
+                    note.set('xml:id', CSV2CMI.generate_id(id_prefix='note'))
                     note.text = str(letter['note'])
             if entry.find('*'):
                 CSV2CMI.profile_desc.append(entry)
