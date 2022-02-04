@@ -518,8 +518,7 @@ if __name__ == "__main__":
                     if edition and not edition_id:
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
-                        cmi_object.source_desc.append(cmi_object.add_edition(
-                            edition, editionType, edition_id))
+                        cmi_object.add_edition(edition, editionType, edition_id)
                     editions.append(edition)
                     edition_ids.append(edition_id)
             entry = Element('correspDesc')
