@@ -230,10 +230,10 @@ class CSV2CMI():
         tei_bibl.set('xml:id', biblID)
         self.source_desc.append(tei_bibl)
 
-    def get_id_by_title(self, edition_title: str) -> str:
+    def get_id_by_title(self, title: str) -> str:
         """Get the ID for an edition by title."""
         for bibliographic_entry in self.source_desc.findall('bibl'):
-            if edition_title == bibliographic_entry.text:
+            if title == bibliographic_entry.text:
                 return bibliographic_entry.get('xml:id')
         return None
 
