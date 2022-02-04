@@ -173,8 +173,10 @@ class CSV2CMI():
         # TEI header
         tei_header = SubElement(self.cmi, 'teiHeader')
         self.file_desc = SubElement(tei_header, 'fileDesc')
+        SubElement(self.file_desc, 'titleStmt')
+        SubElement(self.file_desc, 'publicationStmt')
+        self.source_desc = SubElement(self.file_desc, 'sourceDesc')
         self.profile_desc = SubElement(tei_header, 'profileDesc')
-        self.source_desc = SubElement(tei_header, 'sourceDesc')
         # TEI body
         text = SubElement(self.cmi, 'text')
         tei_body = SubElement(text, 'body')
@@ -182,10 +184,9 @@ class CSV2CMI():
 
     def create_file_desc(self, config):
         """Create a TEI file description from config file."""
-        fileDesc = self.file_desc
         # title statement
-        titleStmt = SubElement(fileDesc, 'titleStmt')
-        title = SubElement(titleStmt, 'title')
+        title_stmt = self.file_desc.find('titleStmt')
+        title = SubElement(title_stmt, 'title')
         title.text = config.get(
             'Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
@@ -193,31 +194,30 @@ class CSV2CMI():
         editors = ['']
         editors = config.get('Project', 'editor').splitlines()
         for entity in editors:
-            SubElement(titleStmt, 'editor').text = entity
-        if len(list(titleStmt)) == 1:
+            SubElement(title_stmt, 'editor').text = entity
+        if len(list(title_stmt)) == 1:
             logging.warning('Editor missing')
-            SubElement(titleStmt, 'editor')
+            SubElement(title_stmt, 'editor')
         # publication statement
-        publicationStmt = SubElement(fileDesc, 'publicationStmt')
+        publication_stmt = self.file_desc.find('publicationStmt')
         publishers = config.get('Project', 'publisher').splitlines()
         for entity in publishers:
-            SubElement(publicationStmt, 'publisher').text = entity
-        if not list(publicationStmt):
-            for editor in titleStmt.findall('editor'):
-                SubElement(publicationStmt, 'publisher').text = editor.text
-        idno = SubElement(publicationStmt, 'idno')
+            SubElement(publication_stmt, 'publisher').text = entity
+        if not list(publication_stmt):
+            for editor in title_stmt.findall('editor'):
+                SubElement(publication_stmt, 'publisher').text = editor.text
+        idno = SubElement(publication_stmt, 'idno')
         idno.set('type', 'url')
         idno.text = config.get('Project', 'fileURL')
-        SubElement(publicationStmt, 'date').set(
+        SubElement(publication_stmt, 'date').set(
             'when', str(datetime.now().isoformat()))
-        availability = SubElement(publicationStmt, 'availability')
+        availability = SubElement(publication_stmt, 'availability')
         licence = SubElement(availability, 'licence')
         licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
         licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
         # The CC-BY licence may not apply to the final CMI file
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
-        return
 
     def add_edition(self, biblText: str, biblType: str, biblID: str):
         """Create a new bibliographic entry."""
