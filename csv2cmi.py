@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# csv2cmi
+# CSV2CMI
 #
 # Copyright (c) 2015-2020 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
@@ -48,14 +48,15 @@ parser.add_argument('--extra-delimiter',
                     help='delimiter for different values within cells')
 
 
-class csv2cmi():
+class CSV2CMI():
     """Transform a table of letters into the CMI format."""
 
     def __init__(self):
         """Create an empty TEI file."""
         self.cmi = Element('TEI')
         self.cmi.set('xmlns', ns.get('tei'))
-        self.cmi.append(Comment(' Generated from table of letters with csv2cmi ' + __version__ + ' '))
+        self.cmi.append(
+            Comment(' Generated from table of letters with CSV2CMI ' + __version__ + ' '))
         # TEI header
         tei_header = SubElement(self.cmi, 'teiHeader')
         self.file_desc = SubElement(tei_header, 'fileDesc')
@@ -65,46 +66,45 @@ class csv2cmi():
         body = SubElement(text, 'body')
         SubElement(body, 'p')
 
-    def check_isodate(self, dateString):
+    def check_isodate(self, date_string):
         """Check if a string is from datatype teidata.temporal.iso."""
         try:
-            datetime.strptime(dateString, '%Y-%m-%d')
+            datetime.strptime(date_string, '%Y-%m-%d')
             return True
         except ValueError:
             try:
-                datetime.strptime(dateString, '%Y-%m')
+                datetime.strptime(date_string, '%Y-%m')
                 return True
             except ValueError:
                 try:
-                    datetime.strptime(dateString, '%Y')
+                    datetime.strptime(date_string, '%Y')
                     return True
                 except ValueError:
                     return False
 
-    def check_datable_w3c(self, dateString):
+    def check_datable_w3c(self, date_string):
         """Check if a string is from datatype teidata.temporal.w3c."""
         # handle negative dates
-        if dateString.startswith('-') and len(dateString) > 4 and dateString[1].isdigit():
-            dateString = dateString[1:]
-        if self.check_isodate(dateString):
+        if date_string.startswith('-') and len(date_string) > 4 and date_string[1].isdigit():
+            date_string = date_string[1:]
+        if self.check_isodate(date_string):
             return True
-        else:
-            # handle dates without year
+        # handle dates without year
+        try:
+            datetime.strptime(date_string, '--%m-%d')
+            return True
+        except ValueError:
             try:
-                datetime.strptime(dateString, '--%m-%d')
+                datetime.strptime(date_string, '--%m')
                 return True
             except ValueError:
                 try:
-                    datetime.strptime(dateString, '--%m')
+                    datetime.strptime(date_string, '---%d')
                     return True
                 except ValueError:
-                    try:
-                        datetime.strptime(dateString, '---%d')
-                        return True
-                    except ValueError:
-                        return False
+                    return False
 
-    def checkConnectivity(self):
+    def check_connectivity(self):
         try:
             urllib.request.urlopen('http://193.175.100.220', timeout=1)
             return True
@@ -114,14 +114,14 @@ class csv2cmi():
 
     def create_file_desc(self, config):
         """Create a TEI file description from config file."""
-        fileDesc = csv2cmi.file_desc
+        fileDesc = CSV2CMI.file_desc
         # title statement
         titleStmt = SubElement(fileDesc, 'titleStmt')
         title = SubElement(titleStmt, 'title')
         title.text = config.get(
             'Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
-        title.set('xml:id', self.generateID('title'))
+        title.set('xml:id', self.generate_id('title'))
         editors = ['']
         editors = config.get('Project', 'editor').splitlines()
         for entity in editors:
@@ -134,7 +134,7 @@ class csv2cmi():
         publishers = config.get('Project', 'publisher').splitlines()
         for entity in publishers:
             SubElement(publicationStmt, 'publisher').text = entity
-        if not(list(publicationStmt)):
+        if not list(publicationStmt):
             for editor in titleStmt.findall('editor'):
                 SubElement(publicationStmt, 'publisher').text = editor.text
         idno = SubElement(publicationStmt, 'idno')
@@ -160,43 +160,43 @@ class csv2cmi():
             if subdlm:
                 persons = letter[nameString].split(subdlm)
                 try:
-                    personIDs = letter[nameString + "ID"].split(subdlm)
+                    person_ids = letter[nameString + "ID"].split(subdlm)
                 except KeyError:
-                    personIDs = []
+                    person_ids = []
             else:
                 persons = [letter[nameString]]
                 try:
-                    personIDs = [letter[nameString + "ID"]]
+                    person_ids = [letter[nameString + "ID"]]
                 except KeyError:
-                    personIDs = []
+                    person_ids = []
             for index, person in enumerate(persons):
                 correspondent = Element('persName')
                 person = str(person).strip()
                 # assigning authority file IDs to their correspondents if provided
-                if (index < len(personIDs)) and personIDs[index]:
+                if (index < len(person_ids)) and person_ids[index]:
                     # by default complete GND-IDNs to full URI
-                    if not str(personIDs[index].strip()).startswith('http') and str(personIDs[index].strip())[:-2].isdigit():
+                    if not str(person_ids[index].strip()).startswith('http') and str(person_ids[index].strip())[:-2].isdigit():
                         logging.debug('Assigning ID %s to GND', str(
-                            personIDs[index].strip()))
-                        authID = 'https://d-nb.info/gnd/' + \
-                            str(personIDs[index].strip())
+                            person_ids[index].strip()))
+                        authority_file_uri = 'https://d-nb.info/gnd/' + \
+                            str(person_ids[index].strip())
                     else:
-                        authID = str(personIDs[index].strip())
-                    if csv2cmi.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authID + '"]'):
+                        authority_file_uri = str(person_ids[index].strip())
+                    if CSV2CMI.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authority_file_uri + '"]'):
                         correspondent = Element('persName')
-                    elif csv2cmi.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authID + '"]'):
+                    elif CSV2CMI.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authority_file_uri + '"]'):
                         correspondent = Element('orgName')
                     elif connection:
-                        if 'viaf' in authID:
+                        if 'viaf' in authority_file_uri:
                             try:
                                 viafrdf = ElementTree(
-                                    file=urllib.request.urlopen(authID + '/rdf.xml'))
+                                    file=urllib.request.urlopen(authority_file_uri + '/rdf.xml'))
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', nameString, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
-                                    'Failed to reach VIAF (' + str(e.reason) + ')')
+                                    'Failed to reach VIAF (%s)', str(e.reason))
                             else:
                                 viafrdf_root = viafrdf.getroot()
                                 if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', ns) is not None:
@@ -206,18 +206,18 @@ class csv2cmi():
                                 else:
                                     logging.warning(
                                         '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
-                        elif 'gnd' in authID:
+                        elif 'gnd' in authority_file_uri:
                             try:
                                 gndrdf = ElementTree(
-                                    file=urllib.request.urlopen(authID + '/about/rdf'))
+                                    file=urllib.request.urlopen(authority_file_uri + '/about/rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', nameString, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
-                                    'Failed to reach GND (' + str(e.reason) + ')')
+                                    'Failed to reach GND (%s)', str(e.reason))
                             except UnicodeEncodeError:
-                                logging.error('Failed to encode %s', authID)
+                                logging.error('Failed to encode %s', authority_file_uri)
                             else:
                                 corporatelike = (
                                     'Corporate', 'Company', 'ReligiousAdministrativeUnit')
@@ -226,9 +226,9 @@ class csv2cmi():
                                 gndrdf_root = gndrdf.getroot()
                                 latestID = gndrdf_root[0].get(
                                     '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
-                                if urllib.parse.urlparse(authID).path != urllib.parse.urlparse(latestID).path:
+                                if urllib.parse.urlparse(authority_file_uri).path != urllib.parse.urlparse(latestID).path:
                                     logging.info(
-                                        '%s returns new ID %s', authID, latestID)
+                                        '%s returns new ID %s', authority_file_uri, latestID)
                                 rdftype = gndrdf_root.find(
                                     './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                                 if any(entity in rdftype for entity in corporatelike):
@@ -236,23 +236,23 @@ class csv2cmi():
                                 elif any(entity in rdftype for entity in personlike):
                                     correspondent = Element('persName')
                                 else:
-                                    authID = ''
+                                    authority_file_uri = ''
                                     if 'UndifferentiatedPerson' in rdftype:
                                         logging.warning(
                                             '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
                                     else:
                                         logging.error(
                                             '%sID in line %s has wrong rdf:type', nameString, table.line_num)
-                        elif 'loc' in authID:
+                        elif 'loc' in authority_file_uri:
                             try:
                                 locrdf = ElementTree(
-                                    file=urllib.request.urlopen(authID + '.rdf'))
+                                    file=urllib.request.urlopen(authority_file_uri + '.rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', nameString, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
-                                    'Failed to reach LOC (' + str(e.reason) + ')')
+                                    'Failed to reach LOC (%s)', str(e.reason))
                             else:
                                 locrdf_root = locrdf.getroot()
                                 if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', ns) is not None:
@@ -263,11 +263,11 @@ class csv2cmi():
                                     logging.warning(
                                         '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
                         else:
-                            authID = ''
+                            authority_file_uri = ''
                             logging.error(
                                 'No proper authority record in line %s for %s', table.line_num, nameString)
-                    if authID:
-                        correspondent.set('ref', authID)
+                    if authority_file_uri:
+                        correspondent.set('ref', authority_file_uri)
                 else:
                     logging.debug('ID for "%s" missing in line %s',
                                   person, table.line_num)
@@ -278,106 +278,107 @@ class csv2cmi():
                                  table.line_num)
                 correspondent.text = person
                 correspondents.append(correspondent)
-        return(correspondents)
+        return correspondents
 
-    def create_date(self, dateString):
+    def create_date(self, date_string):
         """Convert an EDTF date into a proper TEI element."""
-        if not(dateString):
+        if not date_string:
             return None
         date = Element('date')
         # normalize date
-        normalizedDate = dateString.translate(
-            dateString.maketrans('', '', '?~%'))
-        if len(normalizedDate) > 4 and normalizedDate[-1] == 'X':
+        normalized_date = date_string.translate(
+            date_string.maketrans('', '', '?~%'))
+        if len(normalized_date) > 4 and normalized_date[-1] == 'X':
             # remove day and month with unspecified digits
-            normalizedDate = normalizedDate[0:-3]
-            if normalizedDate[-1] == 'X':
-                normalizedDate = normalizedDate[0:-3]
-        if normalizedDate[-1] == 'X':
+            normalized_date = normalized_date[0:-3]
+            if normalized_date[-1] == 'X':
+                normalized_date = normalized_date[0:-3]
+        if normalized_date[-1] == 'X':
             # change year with unspecified digits to interval
-            normalizedDate = normalizedDate.replace(
-                'X', '0') + '/' + normalizedDate.replace('X', '9')
-        if self.check_datable_w3c(normalizedDate):
-            date.set('when', str(normalizedDate))
-        elif normalizedDate.startswith('[') and normalizedDate.endswith(']'):
+            normalized_date = normalized_date.replace(
+                'X', '0') + '/' + normalized_date.replace('X', '9')
+        if self.check_datable_w3c(normalized_date):
+            date.set('when', str(normalized_date))
+        elif normalized_date.startswith('[') and normalized_date.endswith(']'):
             # one of set
-            dateList = normalizedDate[1:-1].split(",")
-            dateFirst = dateList[0].split(".")[0]
-            dateLast = dateList[-1].split(".")[-1]
-            if dateFirst or dateLast:
-                if self.check_datable_w3c(dateFirst):
-                    date.set('notBefore', str(dateFirst))
-                if self.check_datable_w3c(dateLast):
-                    date.set('notAfter', str(dateLast))
+            date_list = normalized_date[1:-1].split(",")
+            date_first = date_list[0].split(".")[0]
+            date_last = date_list[-1].split(".")[-1]
+            if date_first or date_last:
+                if self.check_datable_w3c(date_first):
+                    date.set('notBefore', str(date_first))
+                if self.check_datable_w3c(date_last):
+                    date.set('notAfter', str(date_last))
         else:
             # time interval
-            dateList = normalizedDate.split('/')
-            if len(dateList) == 2 and (dateList[0] or dateList[1]):
-                if self.check_datable_w3c(dateList[0]):
-                    date.set('from', str(dateList[0]))
-                if self.check_datable_w3c(dateList[1]):
-                    date.set('to', str(dateList[1]))
+            date_list = normalized_date.split('/')
+            if len(date_list) == 2 and (date_list[0] or date_list[1]):
+                if self.check_datable_w3c(date_list[0]):
+                    date.set('from', str(date_list[0]))
+                if self.check_datable_w3c(date_list[1]):
+                    date.set('to', str(date_list[1]))
         if date.attrib:
-            if normalizedDate != dateString:
+            if normalized_date != date_string:
                 date.set('cert', 'medium')
                 logging.info(
                     'Added @cert to <date> from line %s', table.line_num)
             return date
         else:
-            raise ValueError('unable to parse \'%s\' as TEI date' % dateString)
+            raise ValueError(
+                'unable to parse \'%s\' as TEI date' % date_string)
 
-    def createPlaceName(self, placeNameText, placeNameRef):
+    def create_place_name(self, place_name_text: str, geonames_uri: str) -> Element:
         """Create a placeName element."""
-        placeName = Element('placeName')
-        placeNameText = placeNameText.strip()
-        if placeNameText.startswith('[') and placeNameText.endswith(']'):
-            placeName.set('evidence', 'conjecture')
-            placeNameText = placeNameText[1:-1]
+        place_name = Element('placeName')
+        place_name_text = place_name_text.strip()
+        if place_name_text.startswith('[') and place_name_text.endswith(']'):
+            place_name.set('evidence', 'conjecture')
+            place_name_text = place_name_text[1:-1]
             logging.info('Added @evidence to <placeName> from line %s',
                          table.line_num)
-        placeName.text = str(placeNameText)
-        if placeNameRef:
-            placeNameRef = placeNameRef.strip()
-            if 'www.geonames.org' in placeNameRef:
-                placeName.set('ref', str(placeNameRef))
+        place_name.text = str(place_name_text)
+        if geonames_uri:
+            geonames_uri = geonames_uri.strip()
+            if 'www.geonames.org' in geonames_uri:
+                place_name.set('ref', str(geonames_uri))
             else:
                 logging.warning(
-                    '"%s" is no standardized GeoNames ID', placeNameRef)
-        return placeName
+                    '"%s" is no GeoNames URI', geonames_uri)
+        return place_name
 
-    def createEdition(self, biblText, biblType, biblID):
+    def createEdition(self, biblText: str, biblType: str, biblID: str) -> Element:
         """Create a new bibliographic entry."""
-        bibl = Element('bibl')
-        bibl.text = biblText
-        bibl.set('type', biblType)
-        bibl.set('xml:id', biblID)
-        return bibl
+        tei_bibl = Element('bibl')
+        tei_bibl.text = biblText
+        tei_bibl.set('type', biblType)
+        tei_bibl.set('xml:id', biblID)
+        return tei_bibl
 
-    def getEditonID(self, editionTitle: str) -> str:
-        """Get the ID for an edition """
-        editionID = ''
+    def getEditonID(self, edition_title: str) -> str:
+        """Get the ID for an edition by title."""
+        edition_id = ''
         for bibl in sourceDesc.findall('bibl'):
-            if editionTitle == bibl.text:
-                editionID = bibl.get('xml:id')
+            if edition_title == bibl.text:
+                edition_id = bibl.get('xml:id')
                 break
-        return editionID
+        return edition_id
 
-    def generateID(self, id_prefix):
-        if (id_prefix.strip() == ''):
+    def generate_id(self, id_prefix: str) -> str:
+        if id_prefix.strip() == '':
             id_prefix = ''.join(random.choice(
                 string.ascii_lowercase) for _ in range(8))
-        fullID = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
+        generated_id = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + '-' + \
             ''.join(random.sample('0123456789abcdef', 4)) + \
             '-' + ''.join(random.sample('0123456789abcdef', 10))
-        return fullID
+        return generated_id
 
     def generate_uuid(self) -> str:
         """Generate a UUID of type xs:ID."""
-        UUID = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
-                                         for _ in range(16)), version=4))
-        if UUID[0].isdigit():
-            UUID = self.generate_uuid()
-        return UUID
+        generated_uuid = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
+                                                   for _ in range(16)), version=4))
+        if generated_uuid[0].isdigit():
+            generated_uuid = self.generate_uuid()
+        return generated_uuid
 
     def process_date(self, letter, correspondent):
         correspDate = Element('date')
@@ -408,7 +409,7 @@ class csv2cmi():
                 placeID = letter[correspondent + 'PlaceID']
             except KeyError:
                 pass
-        return self.createPlaceName(place, placeID)
+        return self.create_place_name(place, placeID)
 
 
 if __name__ == "__main__":
@@ -435,10 +436,10 @@ if __name__ == "__main__":
         logging.error('File not found')
         sys.exit(1)
 
-    csv2cmi = csv2cmi()
+    CSV2CMI = CSV2CMI()
 
     # check internet connection via DNB
-    connection = csv2cmi.checkConnectivity()
+    connection = CSV2CMI.check_connectivity()
 
     # read config file
     config = configparser.ConfigParser()
@@ -446,7 +447,7 @@ if __name__ == "__main__":
     config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
         path.basename(args.filename))[0] + '.xml'}
 
-    iniFilename = 'csv2cmi.ini'
+    iniFilename = 'CSV2CMI.ini'
     try:
         config.read_file(
             open(path.join(path.dirname(args.filename), iniFilename)))
@@ -474,8 +475,8 @@ if __name__ == "__main__":
 
     # building cmi
     # create a file description from config file
-    csv2cmi.create_file_desc(config)
-    sourceDesc = SubElement(csv2cmi.file_desc, 'sourceDesc')
+    CSV2CMI.create_file_desc(config)
+    sourceDesc = SubElement(CSV2CMI.file_desc, 'sourceDesc')
 
     with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         # global table
@@ -485,8 +486,8 @@ if __name__ == "__main__":
             logging.error('No sender/addressee field in table')
             sys.exit(1)
         editions = []
-        editionIDs = []
-        if not('edition' in table.fieldnames):
+        edition_ids = []
+        if 'edition' not in table.fieldnames:
             try:
                 edition = config.get('Edition', 'title')
             except configparser.Error:
@@ -494,15 +495,15 @@ if __name__ == "__main__":
                 logging.warning('No edition stated. Please set manually.')
             finally:
                 random.seed(edition)
-                editionID = csv2cmi.generate_uuid()
-                sourceDesc.append(csv2cmi.createEdition(
-                    edition, editionType, editionID))
+                edition_id = CSV2CMI.generate_uuid()
+                sourceDesc.append(CSV2CMI.createEdition(
+                    edition, editionType, edition_id))
                 editions.append(edition)
-                editionIDs.append(editionID)
+                edition_ids.append(edition_id)
         for letter in table:
-            if ('edition' in table.fieldnames):
+            if 'edition' in table.fieldnames:
                 del editions[:]
-                del editionIDs[:]
+                del edition_ids[:]
                 if subdlm:
                     edition_values = letter['edition'].split(subdlm)
                 else:
@@ -510,25 +511,25 @@ if __name__ == "__main__":
                 for edition in edition_values:
                     # By default use edition value as is
                     edition = edition.strip()
-                    editionID = csv2cmi.getEditonID(edition)
+                    edition_id = CSV2CMI.getEditonID(edition)
                     if not(edition or args.all):
                         continue
-                    if edition and not editionID:
+                    if edition and not edition_id:
                         random.seed(edition)
-                        editionID = csv2cmi.generate_uuid()
-                        sourceDesc.append(csv2cmi.createEdition(
-                            edition, editionType, editionID))
+                        edition_id = CSV2CMI.generate_uuid()
+                        sourceDesc.append(CSV2CMI.createEdition(
+                            edition, editionType, edition_id))
                     editions.append(edition)
-                    editionIDs.append(editionID)
+                    edition_ids.append(edition_id)
             entry = Element('correspDesc')
             if args.line_numbers:
                 entry.set('n', str(table.line_num))
-            if any(editionIDs):
+            if any(edition_ids):
                 # multiple entries needs te be seperated by whitespace
                 # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
-                entry.set('source', '#' + ' #'.join(editionIDs))
+                entry.set('source', '#' + ' #'.join(edition_ids))
             if 'key' in table.fieldnames and letter['key']:
-                if not(edition):
+                if not edition:
                     logging.error(
                         'Key without edition in line %s', table.line_num)
                 else:
@@ -540,20 +541,20 @@ if __name__ == "__main__":
             # sender info block
             if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', csv2cmi.generateID('sender'))
+                action.set('xml:id', CSV2CMI.generate_id('sender'))
                 action.set('type', 'sent')
 
                 # add name of sender
                 if letter['sender']:
-                    correspondents = csv2cmi.create_correspondent('sender')
+                    correspondents = CSV2CMI.create_correspondent('sender')
                     for sender in correspondents:
                         action.append(sender)
-                # add placeName
-                senderPlace = csv2cmi.process_placee(letter, "sender")
+                # add place_name
+                senderPlace = CSV2CMI.process_placee(letter, "sender")
                 if senderPlace.attrib or senderPlace.text:
                     action.append(senderPlace)
                 # add date
-                senderDate = csv2cmi.process_date(letter, "sender")
+                senderDate = CSV2CMI.process_date(letter, "sender")
                 if senderDate.attrib or senderDate.text:
                     action.append(senderDate)
             else:
@@ -563,46 +564,46 @@ if __name__ == "__main__":
             # addressee info block
             if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
                 action = SubElement(entry, 'correspAction')
-                action.set('xml:id', csv2cmi.generateID('addressee'))
+                action.set('xml:id', CSV2CMI.generate_id('addressee'))
                 action.set('type', 'received')
 
                 # add name of addressee
                 if letter['addressee']:
-                    correspondents = csv2cmi.create_correspondent('addressee')
+                    correspondents = CSV2CMI.create_correspondent('addressee')
                     for addressee in correspondents:
                         action.append(addressee)
-                # add placeName
-                addresseePlace = csv2cmi.process_placee(letter, "addressee")
+                # add place_name
+                addresseePlace = CSV2CMI.process_placee(letter, "addressee")
                 if addresseePlace.attrib or addresseePlace.text:
                     action.append(addresseePlace)
                 # add date
-                addresseeDate = csv2cmi.process_date(letter, "addressee")
+                addresseeDate = CSV2CMI.process_date(letter, "addressee")
                 if addresseeDate.attrib or addresseeDate.text:
                     action.append(addresseeDate)
             else:
                 logging.info('No information on addressee in line %s',
                              table.line_num)
-            entry.set('xml:id', csv2cmi.generateID('letter'))
+            entry.set('xml:id', CSV2CMI.generate_id('letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
                     note = SubElement(entry, 'note')
-                    note.set('xml:id', csv2cmi.generateID('note'))
+                    note.set('xml:id', CSV2CMI.generate_id('note'))
                     note.text = str(letter['note'])
             if entry.find('*'):
-                csv2cmi.profile_desc.append(entry)
+                CSV2CMI.profile_desc.append(entry)
 
     # replace short titles, if configured
     for bibl in sourceDesc.findall('bibl'):
         # Try to use bibliographic text as key for section in config file
         editionKey = bibl.text
         try:
-            editionTitle = config.get(editionKey, 'title')
+            edition_title = config.get(editionKey, 'title')
             try:
                 editionType = config.get(editionKey, 'type')
             except configparser.NoOptionError:
                 # if type is not set, use the default one
                 pass
-            bibl.text = editionTitle
+            bibl.text = edition_title
             bibl.set('type', editionType)
         except configparser.NoOptionError:
             logging.warning(
@@ -612,7 +613,7 @@ if __name__ == "__main__":
             pass
 
     # save cmi to file
-    tree = ElementTree(csv2cmi.cmi)
+    tree = ElementTree(CSV2CMI.cmi)
     if args.output:
         outFile = args.output
     else:
@@ -620,7 +621,8 @@ if __name__ == "__main__":
             path.basename(args.filename))[0] + '.xml')
 
     try:
-        tree.write(outFile, encoding="utf-8", xml_declaration=True, method="xml")
+        tree.write(outFile, encoding="utf-8",
+                   xml_declaration=True, method="xml")
         print('CMI file written to', outFile)
         sys.exit(0)
     except PermissionError:
