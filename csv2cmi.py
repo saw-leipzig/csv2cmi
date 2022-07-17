@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # CSV2CMI
 #
-# Copyright (c) 2015-2020 Klaus Rettinghaus
+# Copyright (c) 2015-2022 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -16,10 +16,11 @@ import uuid
 from csv import DictReader
 from datetime import datetime
 from os import path
+from pathlib import Path
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
-__version__ = '2.5.0'
+__version__ = '3.0.0-alpha'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -438,9 +439,8 @@ if __name__ == "__main__":
         subdlm = None
 
     # simple test for file
-    try:
-        open(args.filename, 'rt').close()
-    except FileNotFoundError:
+    letters_csv = Path(args.filename)
+    if not letters_csv.exists():
         logging.error('File not found')
         sys.exit(1)
 
@@ -452,24 +452,22 @@ if __name__ == "__main__":
     # read config file
     config = configparser.ConfigParser()
     # set default values
-    config['Project'] = {'editor': '', 'publisher': '', 'fileURL': path.splitext(
-        path.basename(args.filename))[0] + '.xml'}
+    config['Project'] = {'editor': '', 'publisher': '', 'fileURL': letters_csv.with_suffix('.xml')}
 
-    ini_file = 'csv2cmi.ini'
+    INI_FILE = 'csv2cmi.ini'
     try:
-        config.read_file(
-            open(path.join(path.dirname(args.filename), ini_file)))
+        config.read_file(open(Path(letters_csv.parent, INI_FILE), encoding='utf-8'))
     except IOError:
         try:
-            config.read_file(open(ini_file))
+            config.read_file(open(INI_FILE, encoding='utf-8'))
         except IOError:
             logging.error('No configuration file found')
 
     # set type of edition
-    editionType = 'print'
+    edition_type = 'print'
     if ('Edition' in config) and ('type' in config['Edition']):
         if config.get('Edition', 'type') in ['print', 'hybrid', 'online']:
-            editionType = config.get('Edition', 'type')
+            edition_type = config.get('Edition', 'type')
 
     # set extra delimiter
     if not subdlm:
@@ -485,9 +483,9 @@ if __name__ == "__main__":
     # create a file description from config file
     cmi_object.create_file_desc(config)
 
-    with open(args.filename, 'rt', encoding='utf-8') as letterTable:
+    with open(letters_csv, 'rt', encoding='utf-8') as letters_table:
         # global table
-        table = DictReader(letterTable)
+        table = DictReader(letters_table)
         logging.debug('Recognized columns: %s', table.fieldnames)
         if not ('sender' in table.fieldnames and 'addressee' in table.fieldnames):
             logging.error('No sender/addressee field in table')
@@ -622,15 +620,14 @@ if __name__ == "__main__":
     # save cmi to file
     tree = ElementTree(cmi_object.cmi)
     if args.output:
-        outFile = args.output
+        letters_xml = Path(args.output)
     else:
-        outFile = path.join(path.dirname(args.filename), path.splitext(
-            path.basename(args.filename))[0] + '.xml')
+        letters_xml = letters_csv.with_suffix('.xml')
 
     try:
-        tree.write(outFile, encoding="utf-8",
+        tree.write(letters_xml, encoding="utf-8",
                    xml_declaration=True, method="xml")
-        print('CMI file written to', outFile)
+        print(f'CMI file written to {letters_xml}')
         sys.exit(0)
     except PermissionError:
         logging.error('Could not save the file due to insufficient permission')
