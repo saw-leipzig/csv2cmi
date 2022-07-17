@@ -223,12 +223,12 @@ class CSV2CMI():
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
 
-    def add_edition(self, biblText: str, biblType: str, biblID: str):
+    def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str):
         """Create a new bibliographic entry."""
         tei_bibl = Element('bibl')
-        tei_bibl.text = biblText
-        tei_bibl.set('type', biblType)
-        tei_bibl.set('xml:id', biblID)
+        tei_bibl.text = bibl_text
+        tei_bibl.set('type', bibl_type)
+        tei_bibl.set('xml:id', bibl_id)
         self.source_desc.append(tei_bibl)
 
     def get_id_by_title(self, title: str) -> str:
@@ -238,23 +238,23 @@ class CSV2CMI():
                 return bibliographic_entry.get('xml:id')
         return None
 
-    def create_correspondent(self, nameString):
+    def create_correspondent(self, name_string: str):
         """Create a correspondent."""
-        if letter[nameString]:
+        if letter[name_string]:
             correspondents = []
             # Turning the cells of correspondent names and their IDs into lists since cells
             # can contain various correspondents split by an extra delimiter.
             # In that case it is essential to be able to call each by their index.
             if subdlm:
-                persons = letter[nameString].split(subdlm)
+                persons = letter[name_string].split(subdlm)
                 try:
-                    person_ids = letter[nameString + "ID"].split(subdlm)
+                    person_ids = letter[name_string + "ID"].split(subdlm)
                 except KeyError:
                     person_ids = []
             else:
-                persons = [letter[nameString]]
+                persons = [letter[name_string]]
                 try:
-                    person_ids = [letter[nameString + "ID"]]
+                    person_ids = [letter[name_string + "ID"]]
                 except KeyError:
                     person_ids = []
             for index, person in enumerate(persons):
@@ -281,7 +281,7 @@ class CSV2CMI():
                                     file=urllib.request.urlopen(authority_file_uri + '/rdf.xml'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', nameString, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
                                     'Failed to reach VIAF (%s)', str(e.reason))
@@ -293,14 +293,14 @@ class CSV2CMI():
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
-                                        '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
+                                        '%sID in line %s links to unprocessable authority file', name_string, table.line_num)
                         elif 'gnd' in authority_file_uri:
                             try:
                                 gndrdf = ElementTree(
                                     file=urllib.request.urlopen(authority_file_uri + '/about/rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', nameString, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
                                     'Failed to reach GND (%s)', str(e.reason))
@@ -328,17 +328,17 @@ class CSV2CMI():
                                     authority_file_uri = ''
                                     if 'UndifferentiatedPerson' in rdftype:
                                         logging.warning(
-                                            '%sID in line %s links to undifferentiated Person', nameString, table.line_num)
+                                            '%sID in line %s links to undifferentiated Person', name_string, table.line_num)
                                     else:
                                         logging.error(
-                                            '%sID in line %s has wrong rdf:type', nameString, table.line_num)
+                                            '%sID in line %s has wrong rdf:type', name_string, table.line_num)
                         elif 'loc' in authority_file_uri:
                             try:
                                 locrdf = ElementTree(
                                     file=urllib.request.urlopen(authority_file_uri + '.rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', nameString, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as e:
                                 logging.error(
                                     'Failed to reach LOC (%s)', str(e.reason))
@@ -350,11 +350,11 @@ class CSV2CMI():
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
-                                        '%sID in line %s links to unprocessable authority file', nameString, table.line_num)
+                                        '%sID in line %s links to unprocessable authority file', name_string, table.line_num)
                         else:
                             authority_file_uri = ''
                             logging.error(
-                                'No proper authority record in line %s for %s', table.line_num, nameString)
+                                'No proper authority record in line %s for %s', table.line_num, name_string)
                     if authority_file_uri:
                         correspondent.set('ref', authority_file_uri)
                 else:
@@ -501,7 +501,7 @@ if __name__ == "__main__":
             finally:
                 random.seed(edition)
                 edition_id = cmi_object.generate_uuid()
-                cmi_object.add_edition(edition, editionType, edition_id)
+                cmi_object.add_edition(edition, edition_type, edition_id)
                 editions.append(edition)
                 edition_ids.append(edition_id)
         for letter in table:
@@ -522,7 +522,7 @@ if __name__ == "__main__":
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
                         cmi_object.add_edition(
-                            edition, editionType, edition_id)
+                            edition, edition_type, edition_id)
                     editions.append(edition)
                     edition_ids.append(edition_id)
             entry = Element('correspDesc')
@@ -604,12 +604,12 @@ if __name__ == "__main__":
         try:
             edition_title = config.get(editionKey, 'title')
             try:
-                editionType = config.get(editionKey, 'type')
+                edition_type = config.get(editionKey, 'type')
             except configparser.NoOptionError:
                 # if type is not set, use the default one
                 pass
             bibl.text = edition_title
-            bibl.set('type', editionType)
+            bibl.set('type', edition_type)
         except configparser.NoOptionError:
             logging.warning(
                 'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
