@@ -1,4 +1,5 @@
 # CSV2CMI
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1249332.svg)](https://doi.org/10.5281/zenodo.1249332)
 ![GitHub release](https://img.shields.io/github/release/saw-leipzig/csv2cmi.svg)
 [![license](https://img.shields.io/github/license/saw-leipzig/csv2cmi.svg)](https://opensource.org/licenses/MIT)
@@ -13,12 +14,14 @@ It is mainly intended for printed (print only) editions and catalogues of letter
 ## Usage
 
 You have to name your columns as follows:
+
 * name of the sender: "sender"
 * name of the addressee: "addressee"
 * IDs of the named person or organization: "senderID" and "addresseeID" (this is essential for *correspSearch*)
 * the date, when the letter has been sent: "senderDate"
 
 You may provide additional information:
+
 * where a letter has been sent: "senderPlace" (with the appropriate "senderPlaceID" as proper [GeoNames URL](http://www.geonames.org/))
 * where a letter has been received: "addresseePlace" (with the appropriate "addresseePlaceID" as proper [GeoNames URL](http://www.geonames.org/))
 * when a letter has been received: "addresseeDate"
