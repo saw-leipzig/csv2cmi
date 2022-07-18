@@ -15,7 +15,6 @@ import urllib.request
 import uuid
 from csv import DictReader
 from datetime import datetime
-from os import path
 from pathlib import Path
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
@@ -26,9 +25,8 @@ __version__ = '3.0.0-alpha'
 logging.basicConfig(format='%(levelname)s: %(message)s')
 logs = logging.getLogger()
 
-# define namespaces
-ns = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-      'tei': 'http://www.tei-c.org/ns/1.0'}
+# define namespace
+RDF_NS = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
 
 # define arguments
 parser = argparse.ArgumentParser(
@@ -142,7 +140,7 @@ def create_date(date_string: str) -> Element:
             logging.info(
                 'Added @cert to <date> from line %s', table.line_num)
         return tei_date
-    raise ValueError('unable to parse \'%s\' as TEI date' % date_string)
+    raise ValueError(f'unable to parse "{date_string}" as TEI date')
 
 
 def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
@@ -152,8 +150,8 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
     if place_name_text.startswith('[') and place_name_text.endswith(']'):
         place_name.set('evidence', 'conjecture')
         place_name_text = place_name_text[1:-1]
-        logging.info('Added @evidence to <placeName> from line %s',
-                     table.line_num)
+        logging.info(
+            'Added @evidence to <placeName> from line %s', table.line_num)
     place_name.text = str(place_name_text)
     if geonames_uri:
         geonames_uri = geonames_uri.strip()
@@ -171,7 +169,7 @@ class CSV2CMI():
     def __init__(self):
         """Create an empty TEI file."""
         self.cmi = Element('TEI')
-        self.cmi.set('xmlns', ns.get('tei'))
+        self.cmi.set('xmlns', 'http://www.tei-c.org/ns/1.0')
         self.cmi.append(
             Comment(' Generated from table of letters with CSV2CMI ' + __version__ + ' '))
         # TEI header
@@ -186,17 +184,17 @@ class CSV2CMI():
         tei_body = SubElement(text, 'body')
         SubElement(tei_body, 'p')
 
-    def create_file_desc(self, config):
+    def create_file_desc(self, project: configparser) -> None:
         """Create a TEI file description from config file."""
         # title statement
         title_stmt = self.file_desc.find('titleStmt')
         title = SubElement(title_stmt, 'title')
-        title.text = config.get(
+        title.text = project.get(
             'Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
         title.set('xml:id', self.generate_id('title'))
         editors = ['']
-        editors = config.get('Project', 'editor').splitlines()
+        editors = project.get('Project', 'editor').splitlines()
         for entity in editors:
             SubElement(title_stmt, 'editor').text = entity
         if len(list(title_stmt)) == 1:
@@ -204,7 +202,7 @@ class CSV2CMI():
             SubElement(title_stmt, 'editor')
         # publication statement
         publication_stmt = self.file_desc.find('publicationStmt')
-        publishers = config.get('Project', 'publisher').splitlines()
+        publishers = project.get('Project', 'publisher').splitlines()
         for entity in publishers:
             SubElement(publication_stmt, 'publisher').text = entity
         if not list(publication_stmt):
@@ -212,7 +210,7 @@ class CSV2CMI():
                 SubElement(publication_stmt, 'publisher').text = editor.text
         idno = SubElement(publication_stmt, 'idno')
         idno.set('type', 'url')
-        idno.text = config.get('Project', 'fileURL')
+        idno.text = project.get('Project', 'fileURL')
         SubElement(publication_stmt, 'date').set(
             'when', str(datetime.now().isoformat()))
         availability = SubElement(publication_stmt, 'availability')
@@ -223,7 +221,7 @@ class CSV2CMI():
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
 
-    def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str):
+    def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str) -> None:
         """Create a new bibliographic entry."""
         tei_bibl = Element('bibl')
         tei_bibl.text = bibl_text
@@ -238,10 +236,10 @@ class CSV2CMI():
                 return bibliographic_entry.get('xml:id')
         return None
 
-    def create_correspondent(self, name_string: str):
+    def create_correspondent(self, name_string: str) -> list:
         """Create a correspondent."""
         if letter[name_string]:
-            correspondents = []
+            correspondent_list = list()
             # Turning the cells of correspondent names and their IDs into lists since cells
             # can contain various correspondents split by an extra delimiter.
             # In that case it is essential to be able to call each by their index.
@@ -270,9 +268,9 @@ class CSV2CMI():
                             str(person_ids[index].strip())
                     else:
                         authority_file_uri = str(person_ids[index].strip())
-                    if cmi_object.profile_desc.findall('correspDesc/correspAction/persName[@ref="' + authority_file_uri + '"]'):
+                    if self.profile_desc.findall(f'correspDesc/correspAction/persName[@ref="{authority_file_uri}"]'):
                         correspondent = Element('persName')
-                    elif cmi_object.profile_desc.findall('correspDesc/correspAction/orgName[@ref="' + authority_file_uri + '"]'):
+                    elif self.profile_desc.findall(f'correspDesc/correspAction/orgName[@ref="{authority_file_uri}"]'):
                         correspondent = Element('orgName')
                     elif connection:
                         if 'viaf' in authority_file_uri:
@@ -282,14 +280,13 @@ class CSV2CMI():
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
-                            except urllib.error.URLError as e:
-                                logging.error(
-                                    'Failed to reach VIAF (%s)', str(e.reason))
+                            except urllib.error.URLError as connection_issue:
+                                logging.error('Failed to reach VIAF (%s)', str(connection_issue.reason))
                             else:
                                 viafrdf_root = viafrdf.getroot()
-                                if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', ns) is not None:
+                                if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', RDF_NS) is not None:
                                     correspondent = Element('orgName')
-                                elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', ns) is not None:
+                                elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', RDF_NS) is not None:
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
@@ -301,25 +298,22 @@ class CSV2CMI():
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
-                            except urllib.error.URLError as e:
-                                logging.error(
-                                    'Failed to reach GND (%s)', str(e.reason))
+                            except urllib.error.URLError as connection_issue:
+                                logging.error('Failed to reach GND (%s)', str(connection_issue.reason))
                             except UnicodeEncodeError:
                                 logging.error(
                                     'Failed to encode %s', authority_file_uri)
                             else:
-                                corporatelike = (
-                                    'Corporate', 'Company', 'ReligiousAdministrativeUnit')
-                                personlike = ('DifferentiatedPerson',
-                                              'Royal', 'Family', 'Legendary')
+                                corporatelike = ('Corporate', 'Company', 'ReligiousAdministrativeUnit')
+                                personlike = ('DifferentiatedPerson', 'Royal', 'Family', 'Legendary')
                                 gndrdf_root = gndrdf.getroot()
-                                latestID = gndrdf_root[0].get(
+                                current_id = gndrdf_root[0].get(
                                     '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
-                                if urllib.parse.urlparse(authority_file_uri).path != urllib.parse.urlparse(latestID).path:
+                                if urllib.parse.urlparse(authority_file_uri).path != urllib.parse.urlparse(current_id).path:
                                     logging.info(
-                                        '%s returns new ID %s', authority_file_uri, latestID)
+                                        '%s returns new ID %s', authority_file_uri, current_id)
                                 rdftype = gndrdf_root.find(
-                                    './/rdf:type', ns).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                                    './/rdf:type', RDF_NS).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
                                 if any(entity in rdftype for entity in corporatelike):
                                     correspondent = Element('orgName')
                                 elif any(entity in rdftype for entity in personlike):
@@ -339,14 +333,13 @@ class CSV2CMI():
                             except urllib.error.HTTPError:
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
-                            except urllib.error.URLError as e:
-                                logging.error(
-                                    'Failed to reach LOC (%s)', str(e.reason))
+                            except urllib.error.URLError as connection_issue:
+                                logging.error('Failed to reach LOC (%s)', str(connection_issue.reason))
                             else:
                                 locrdf_root = locrdf.getroot()
-                                if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', ns) is not None:
+                                if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', RDF_NS) is not None:
                                     correspondent = Element('orgName')
-                                elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', ns) is not None:
+                                elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', RDF_NS) is not None:
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
@@ -366,8 +359,8 @@ class CSV2CMI():
                     logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
                                  table.line_num)
                 correspondent.text = person
-                correspondents.append(correspondent)
-        return correspondents
+                correspondent_list.append(correspondent)
+        return correspondent_list
 
     def generate_id(self, id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
@@ -408,17 +401,17 @@ class CSV2CMI():
 
     def process_place(self, letter, correspondent_type: str):
         """Process place."""
-        place, placeID = '', ''
+        place_name, place_id = '', ''
         try:
-            place = letter[correspondent_type + 'Place']
+            place_name = letter[correspondent_type + 'Place']
         except KeyError:
             pass
         else:
             try:
-                placeID = letter[correspondent_type + 'PlaceID']
+                place_id = letter[correspondent_type + 'PlaceID']
             except KeyError:
                 pass
-        return create_place_name(place, placeID)
+        return create_place_name(place_name, place_id)
 
 
 if __name__ == "__main__":
@@ -452,11 +445,13 @@ if __name__ == "__main__":
     # read config file
     config = configparser.ConfigParser()
     # set default values
-    config['Project'] = {'editor': '', 'publisher': '', 'fileURL': letters_csv.with_suffix('.xml')}
+    config['Project'] = {'editor': '', 'publisher': '',
+                         'fileURL': letters_csv.with_suffix('.xml')}
 
     INI_FILE = 'csv2cmi.ini'
     try:
-        config.read_file(open(Path(letters_csv.parent, INI_FILE), encoding='utf-8'))
+        config.read_file(
+            open(Path(letters_csv.parent, INI_FILE), encoding='utf-8'))
     except IOError:
         try:
             config.read_file(open(INI_FILE, encoding='utf-8'))
