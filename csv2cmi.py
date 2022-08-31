@@ -274,7 +274,7 @@ class CMI():
                         correspondent = Element('persName')
                     elif self.profile_desc.findall(f'correspDesc/correspAction/orgName[@ref="{authority_file_uri}"]'):
                         correspondent = Element('orgName')
-                    elif connection:
+                    elif CONNECTION:
                         if 'viaf' in authority_file_uri:
                             try:
                                 viafrdf = ElementTree(
@@ -442,7 +442,7 @@ if __name__ == "__main__":
     cmi_object = CMI()
 
     # check internet connection via DNB
-    connection = check_connectivity()
+    CONNECTION = check_connectivity()
 
     # read config file
     config = configparser.ConfigParser()
