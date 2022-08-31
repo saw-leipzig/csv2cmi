@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
-# CSV2CMI
-#
-# Copyright (c) 2015-2022 Klaus Rettinghaus
-# programmed by Klaus Rettinghaus
-# licensed under MIT license
+"""
+CSV2CMI
+
+Copyright (c) 2015-2022 Klaus Rettinghaus
+programmed by Klaus Rettinghaus
+licensed under MIT license
+"""
 
 import argparse
 import configparser
