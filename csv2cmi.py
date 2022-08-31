@@ -20,6 +20,7 @@ from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
 __version__ = '3.0.0-alpha'
+__author__ = 'Klaus Rettinghaus'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -163,7 +164,7 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
     return place_name
 
 
-class CSV2CMI():
+class CMI():
     """Transform a table of letters into the CMI format."""
 
     def __init__(self):
@@ -171,7 +172,7 @@ class CSV2CMI():
         self.cmi = Element('TEI')
         self.cmi.set('xmlns', 'http://www.tei-c.org/ns/1.0')
         self.cmi.append(
-            Comment(' Generated from table of letters with CSV2CMI ' + __version__ + ' '))
+            Comment(' Generated with CSV2CMI ' + __version__ + ' '))
         # TEI header
         tei_header = SubElement(self.cmi, 'teiHeader')
         self.file_desc = SubElement(tei_header, 'fileDesc')
@@ -437,7 +438,7 @@ if __name__ == "__main__":
         logging.error('File not found')
         sys.exit(1)
 
-    cmi_object = CSV2CMI()
+    cmi_object = CMI()
 
     # check internet connection via DNB
     connection = check_connectivity()
