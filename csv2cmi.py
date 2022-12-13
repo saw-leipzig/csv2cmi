@@ -13,10 +13,11 @@ import random
 import string
 import sys
 import urllib.request
-import uuid
 from csv import DictReader
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
+from secrets import token_hex
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
@@ -367,19 +368,17 @@ class CMI():
     def generate_id(self, id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == '':
-            id_prefix = ''.join(random.choice(
-                string.ascii_lowercase) for _ in range(8))
-        generated_id = id_prefix.strip() + '-' + ''.join(random.sample('0123456789abcdef', 4)) + \
-            '-' + ''.join(random.sample('0123456789abcdef', 4)) + \
-            '-' + ''.join(random.sample('0123456789abcdef', 10))
+            id_prefix = ''.join(random.choice(string.ascii_lowercase)
+                                for _ in range(8))
+        generated_id = id_prefix.strip() + '-' + token_hex(4)
         return generated_id
 
     def generate_uuid(self) -> str:
         """Generate a UUID of type xs:ID."""
-        generated_uuid = str(uuid.UUID(bytes=bytes(random.getrandbits(8)
-                                                   for _ in range(16)), version=4))
+        generated_uuid = str(UUID(bytes=bytes(random.getrandbits(8)
+                                              for _ in range(16)), version=4))
         if generated_uuid[0].isdigit():
-            generated_uuid = self.generate_uuid()
+            return self.generate_uuid()
         return generated_uuid
 
     def process_date(self, letter, correspondent):
@@ -513,7 +512,7 @@ if __name__ == "__main__":
                     # By default use edition value as is
                     edition = edition.strip()
                     edition_id = cmi_object.get_id_by_title(edition)
-                    if not(edition or args.all):
+                    if not (edition or args.all):
                         continue
                     if edition and not edition_id:
                         random.seed(edition)
