@@ -284,7 +284,8 @@ class CMI():
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach VIAF (%s)', str(connection_issue.reason))
+                                logging.error('Failed to reach VIAF (%s)', str(
+                                    connection_issue.reason))
                             else:
                                 viafrdf_root = viafrdf.getroot()
                                 if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', RDF_NS) is not None:
@@ -302,13 +303,16 @@ class CMI():
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach GND (%s)', str(connection_issue.reason))
+                                logging.error('Failed to reach GND (%s)', str(
+                                    connection_issue.reason))
                             except UnicodeEncodeError:
                                 logging.error(
                                     'Failed to encode %s', authority_file_uri)
                             else:
-                                corporatelike = ('Corporate', 'Company', 'ReligiousAdministrativeUnit')
-                                personlike = ('DifferentiatedPerson', 'Royal', 'Family', 'Legendary')
+                                corporatelike = (
+                                    'Corporate', 'Company', 'ReligiousAdministrativeUnit')
+                                personlike = ('DifferentiatedPerson',
+                                              'Royal', 'Family', 'Legendary')
                                 gndrdf_root = gndrdf.getroot()
                                 current_id = gndrdf_root[0].get(
                                     '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
@@ -337,7 +341,8 @@ class CMI():
                                 logging.error(
                                     'Authority file not found for %sID in line %s', name_string, table.line_num)
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach LOC (%s)', str(connection_issue.reason))
+                                logging.error('Failed to reach LOC (%s)', str(
+                                    connection_issue.reason))
                             else:
                                 locrdf_root = locrdf.getroot()
                                 if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', RDF_NS) is not None:
