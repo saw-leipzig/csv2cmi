@@ -370,7 +370,8 @@ class CMI():
                 correspondent_list.append(correspondent)
         return correspondent_list
 
-    def generate_id(self, id_prefix: str) -> str:
+    @staticmethod
+    def generate_id(id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == '':
             id_prefix = ''.join(random.choice(string.ascii_lowercase)
