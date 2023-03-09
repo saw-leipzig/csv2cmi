@@ -517,16 +517,14 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         if ('edition' in table.fieldnames):
             del editions[:]
             del editionIDs[:]
-            if subdlm:
-                edition_values = letter['edition'].split(subdlm)
-            else:
-                edition_values = [letter['edition']]
+            if not (letter['edition'] or args.all):
+                continue
+            edition_values = letter['edition'].split(
+                subdlm) if subdlm else [letter['edition']]
             for edition in edition_values:
                 # By default use edition value as is
                 edition = edition.strip()
                 editionID = getEditonID(edition)
-                if not(edition or args.all):
-                    continue
                 if edition and not editionID:
                     random.seed(edition)
                     editionID = generateUUID()
