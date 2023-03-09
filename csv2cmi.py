@@ -353,7 +353,7 @@ def createPlaceName(placeNameText, placeNameRef):
             placeName.set('ref', str(placeNameRef))
         else:
             logging.warning(
-                '"%s" is no standardized GeoNames ID', placeNameRef)
+                '"%s" is a non-standard GeoNames ID', placeNameRef)
     return placeName
 
 
