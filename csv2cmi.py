@@ -149,7 +149,7 @@ def createFileDesc(config):
     publishers = config.get('Project', 'publisher').splitlines()
     for entity in publishers:
         SubElement(publicationStmt, 'publisher').text = entity
-    if not(list(publicationStmt)):
+    if not list(publicationStmt):
         for editor in titleStmt.findall('editor'):
             SubElement(publicationStmt, 'publisher').text = editor.text
     idno = SubElement(publicationStmt, 'idno')
@@ -294,12 +294,12 @@ def createCorrespondent(nameString):
                              table.line_num)
             correspondent.text = person
             correspondents.append(correspondent)
-    return(correspondents)
+    return correspondents
 
 
 def createDate(dateString):
     """Convert an EDTF date into a proper TEI element."""
-    if not(dateString):
+    if not dateString:
         return None
     date = Element('date')
     # normalize date
@@ -501,7 +501,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
         sys.exit(1)
     editions = []
     editionIDs = []
-    if not('edition' in table.fieldnames):
+    if not 'edition' in table.fieldnames:
         try:
             edition = config.get('Edition', 'title')
         except configparser.Error:
@@ -542,7 +542,7 @@ with open(args.filename, 'rt', encoding='utf-8') as letterTable:
             # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
             entry.set('source', '#' + ' #'.join(editionIDs))
         if 'key' in table.fieldnames and letter['key']:
-            if not(edition):
+            if not edition:
                 logging.error('Key without edition in line %s', table.line_num)
             else:
                 if str(letter['key']).startswith('http'):
