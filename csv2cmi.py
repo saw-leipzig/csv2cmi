@@ -15,11 +15,12 @@ import urllib.request
 import uuid
 from csv import DictReader
 from datetime import datetime
+from email.utils import parseaddr
 from os import path
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
-__version__ = '2.1.1'
+__version__ = '2.2.0'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')
@@ -134,7 +135,12 @@ def createFileDesc(config):
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
-        SubElement(titleStmt, 'editor').text = entity
+        editor = SubElement(titleStmt, 'editor')
+        if "@" in entity:
+            editor.text = parseaddr(entity)[0] + " "
+            SubElement(editor, 'email').text = parseaddr(entity)[-1]
+        else:
+            editor.text = entity
     if len(list(titleStmt)) == 1:
         logging.warning('Editor missing')
         SubElement(titleStmt, 'editor')
