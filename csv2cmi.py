@@ -164,7 +164,7 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
         else:
             logging.warning(
                 '"%s" is a non-standard GeoNames ID', placeNameRef)
-    return placeName
+    return place_name
 
 
 class CMI():
@@ -202,13 +202,13 @@ class CMI():
         for entity in editors:
             mailbox = parseaddr(entity)
             if "@" in entity and any(mailbox):
-                editor = SubElement(titleStmt, 'editor')
+                editor = SubElement(title_stmt, 'editor')
                 if mailbox[0]:
                     editor.text = mailbox[0] + " "
                 if mailbox[-1]:
                     SubElement(editor, 'email').text = mailbox[-1]
             else:
-                SubElement(titleStmt, 'editor').text = entity
+                SubElement(title_stmt, 'editor').text = entity
         if len(list(title_stmt)) == 1:
             logging.warning('Editor missing')
             SubElement(title_stmt, 'editor')
