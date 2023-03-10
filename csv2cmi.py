@@ -200,7 +200,15 @@ class CMI():
         editors = ['']
         editors = project.get('Project', 'editor').splitlines()
         for entity in editors:
-            SubElement(title_stmt, 'editor').text = entity
+            mailbox = parseaddr(entity)
+            if "@" in entity and any(mailbox):
+                editor = SubElement(titleStmt, 'editor')
+                if mailbox[0]:
+                    editor.text = mailbox[0] + " "
+                if mailbox[-1]:
+                    SubElement(editor, 'email').text = mailbox[-1]
+            else:
+                SubElement(titleStmt, 'editor').text = entity
         if len(list(title_stmt)) == 1:
             logging.warning('Editor missing')
             SubElement(title_stmt, 'editor')
