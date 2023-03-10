@@ -15,10 +15,10 @@ import sys
 import urllib.request
 from csv import DictReader
 from datetime import datetime
-from pathlib import Path
-from uuid import UUID
-from secrets import token_hex
 from email.utils import parseaddr
+from pathlib import Path
+from secrets import token_hex
+from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
