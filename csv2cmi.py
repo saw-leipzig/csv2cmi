@@ -135,12 +135,15 @@ def createFileDesc(config):
     editors = ['']
     editors = config.get('Project', 'editor').splitlines()
     for entity in editors:
-        editor = SubElement(titleStmt, 'editor')
-        if "@" in entity:
-            editor.text = parseaddr(entity)[0] + " "
-            SubElement(editor, 'email').text = parseaddr(entity)[-1]
+        mailbox = parseaddr(entity)
+        if "@" in entity and any(mailbox):
+            editor = SubElement(titleStmt, 'editor')
+            if mailbox[0]:
+                editor.text = mailbox[0] + " "
+            if mailbox[-1]:
+                SubElement(editor, 'email').text = mailbox[-1]
         else:
-            editor.text = entity
+            SubElement(titleStmt, 'editor').text = entity
     if len(list(titleStmt)) == 1:
         logging.warning('Editor missing')
         SubElement(titleStmt, 'editor')
