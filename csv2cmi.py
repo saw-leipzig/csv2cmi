@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 from secrets import token_hex
+from email.utils import parseaddr
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = "MIT"
@@ -162,8 +163,8 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
             place_name.set('ref', str(geonames_uri))
         else:
             logging.warning(
-                '"%s" is no GeoNames URI', geonames_uri)
-    return place_name
+                '"%s" is a non-standard GeoNames ID', placeNameRef)
+    return placeName
 
 
 class CMI():
