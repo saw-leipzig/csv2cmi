@@ -519,16 +519,14 @@ if __name__ == "__main__":
             if 'edition' in table.fieldnames:
                 del editions[:]
                 del edition_ids[:]
-                if subdlm:
-                    edition_values = letter['edition'].split(subdlm)
-                else:
-                    edition_values = [letter['edition']]
+                if not (letter['edition'] or args.all):
+                    continue
+                edition_values = letter['edition'].split(
+                    subdlm) if subdlm else [letter['edition']]
                 for edition in edition_values:
                     # By default use edition value as is
                     edition = edition.strip()
                     edition_id = cmi_object.get_id_by_title(edition)
-                    if not (edition or args.all):
-                        continue
                     if edition and not edition_id:
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
