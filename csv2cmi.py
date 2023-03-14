@@ -204,7 +204,7 @@ class CMI():
             if "@" in entity and any(mailbox):
                 editor = SubElement(title_stmt, 'editor')
                 if mailbox[0]:
-                    editor.text = mailbox[0] + " "
+                    editor.text = mailbox[0]
                 if mailbox[-1]:
                     SubElement(editor, 'email').text = mailbox[-1]
             else:
