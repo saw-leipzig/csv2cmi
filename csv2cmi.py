@@ -163,7 +163,7 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
             place_name.set('ref', str(geonames_uri))
         else:
             logging.warning(
-                '"%s" is a non-standard GeoNames ID', placeNameRef)
+                '"%s" is a non-standard GeoNames ID', geonames_uri)
     return place_name
 
 
