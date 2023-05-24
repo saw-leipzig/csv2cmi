@@ -1,7 +1,7 @@
 """
 CSV2CMI
 
-Copyright (c) 2015-2022 Klaus Rettinghaus
+Copyright (c) 2015-2023 Klaus Rettinghaus
 programmed by Klaus Rettinghaus
 licensed under MIT license
 """
@@ -228,7 +228,7 @@ class CMI():
         availability = SubElement(publication_stmt, 'availability')
         licence = SubElement(availability, 'licence')
         licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
-        licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
+        licence.text = 'CC-BY 4.0'
         # The CC-BY licence may not apply to the final CMI file
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
