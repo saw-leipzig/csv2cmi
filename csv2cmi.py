@@ -54,7 +54,7 @@ parser.add_argument('--extra-delimiter',
 def check_connectivity() -> bool:
     """Simple check for internet connection."""
     try:
-        urllib.request.urlopen('http://193.175.100.220', timeout=1)
+        urllib.request.urlopen('https://193.175.100.220', timeout=1)
         return True
     except urllib.error.URLError:
         logging.error('No internet connection')
@@ -228,7 +228,7 @@ class CMI():
         availability = SubElement(publication_stmt, 'availability')
         licence = SubElement(availability, 'licence')
         licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
-        licence.text = 'CC-BY 4.0'
+        licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
         # The CC-BY licence may not apply to the final CMI file
         #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
         #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
@@ -538,7 +538,7 @@ if __name__ == "__main__":
             if args.line_numbers:
                 entry.set('n', str(table.line_num))
             if any(edition_ids):
-                # multiple entries needs te be seperated by whitespace
+                # multiple entries needs te be separated by whitespace
                 # https://tei-c.org/release/doc/tei-p5-doc/en/html/ref-att.global.source.html
                 entry.set('source', '#' + ' #'.join(edition_ids))
             if 'key' in table.fieldnames and letter['key']:
