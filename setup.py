@@ -8,6 +8,7 @@ filename = package_name + '.py'
 
 def get_version():
     import ast
+
     with open(filename) as input_file:
         for line in input_file:
             if line.startswith('__version__'):
@@ -30,18 +31,12 @@ setup(
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Topic :: Text Processing :: Markup :: XML'
+        'Topic :: Text Processing :: Markup :: XML',
     ],
     author='Klaus Rettinghaus',
     author_email='rettinghaus@bach-leipzig.de',
     url='https://github.com/saw-leipzig/csv2cmi',
     py_modules=[package_name],
-    keywords=[
-        'TEI',
-        'CSV',
-        'CMIF',
-        'digital humanities',
-        'correspondence'
-    ],
+    keywords=['TEI', 'CSV', 'CMIF', 'digital humanities', 'correspondence'],
     license='License :: OSI Approved :: MIT License',
 )
