@@ -21,7 +21,7 @@ from secrets import token_hex
 from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
-__license__ = "MIT"
+__license__ = 'MIT'
 __version__ = '3.0.0-alpha'
 __author__ = 'Klaus Rettinghaus'
 
@@ -33,22 +33,15 @@ logs = logging.getLogger()
 RDF_NS = {'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'}
 
 # define arguments
-parser = argparse.ArgumentParser(
-    description='convert tables of letters to CMI')
+parser = argparse.ArgumentParser(description='convert tables of letters to CMI')
 parser.add_argument('filename', help='input file (.csv)')
-parser.add_argument('-a', '--all',
-                    help='include unedited letters', action='store_true')
-parser.add_argument('-n', '--notes', help='transfer notes',
-                    action='store_true')
-parser.add_argument('-o', '--output', metavar="FILE", help='output file name')
-parser.add_argument('-v', '--verbose',
-                    help='increase output verbosity', action='store_true')
-parser.add_argument('--line-numbers',
-                    help='add line numbers', action='store_true')
-parser.add_argument('--version', action='version',
-                    version='%(prog)s ' + __version__)
-parser.add_argument('--extra-delimiter',
-                    help='delimiter for different values within cells')
+parser.add_argument('-a', '--all', help='include unedited letters', action='store_true')
+parser.add_argument('-n', '--notes', help='transfer notes', action='store_true')
+parser.add_argument('-o', '--output', metavar='FILE', help='output file name')
+parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
+parser.add_argument('--line-numbers', help='add line numbers', action='store_true')
+parser.add_argument('--version', action='version', version='%(prog)s ' + __version__)
+parser.add_argument('--extra-delimiter', help='delimiter for different values within cells')
 
 
 def check_connectivity() -> bool:
@@ -107,8 +100,7 @@ def create_date(date_string: str) -> Element:
         return None
     tei_date = Element('date')
     # normalize date
-    normalized_date = date_string.translate(
-        date_string.maketrans('', '', '?~%'))
+    normalized_date = date_string.translate(date_string.maketrans('', '', '?~%'))
     if len(normalized_date) > 4 and normalized_date[-1] == 'X':
         # remove day and month with unspecified digits
         normalized_date = normalized_date[0:-3]
@@ -116,15 +108,14 @@ def create_date(date_string: str) -> Element:
             normalized_date = normalized_date[0:-3]
     if normalized_date[-1] == 'X':
         # change year with unspecified digits to interval
-        normalized_date = normalized_date.replace(
-            'X', '0') + '/' + normalized_date.replace('X', '9')
+        normalized_date = normalized_date.replace('X', '0') + '/' + normalized_date.replace('X', '9')
     if check_datable_w3c(normalized_date):
         tei_date.set('when', str(normalized_date))
     elif normalized_date.startswith('[') and normalized_date.endswith(']'):
         # one of set
-        date_list = normalized_date[1:-1].split(",")
-        date_first = date_list[0].split(".")[0]
-        date_last = date_list[-1].split(".")[-1]
+        date_list = normalized_date[1:-1].split(',')
+        date_first = date_list[0].split('.')[0]
+        date_last = date_list[-1].split('.')[-1]
         if date_first or date_last:
             if check_datable_w3c(date_first):
                 tei_date.set('notBefore', str(date_first))
@@ -141,8 +132,7 @@ def create_date(date_string: str) -> Element:
     if tei_date.attrib:
         if normalized_date != date_string:
             tei_date.set('cert', 'medium')
-            logging.info(
-                'Added @cert to <date> from line %s', table.line_num)
+            logging.info('Added @cert to <date> from line %s', table.line_num)
         return tei_date
     raise ValueError(f'unable to parse "{date_string}" as TEI date')
 
@@ -154,28 +144,25 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
     if place_name_text.startswith('[') and place_name_text.endswith(']'):
         place_name.set('evidence', 'conjecture')
         place_name_text = place_name_text[1:-1]
-        logging.info(
-            'Added @evidence to <placeName> from line %s', table.line_num)
+        logging.info('Added @evidence to <placeName> from line %s', table.line_num)
     place_name.text = str(place_name_text)
     if geonames_uri:
         geonames_uri = geonames_uri.strip()
         if 'www.geonames.org' in geonames_uri:
             place_name.set('ref', str(geonames_uri))
         else:
-            logging.warning(
-                '"%s" is a non-standard GeoNames ID', geonames_uri)
+            logging.warning('"%s" is a non-standard GeoNames ID', geonames_uri)
     return place_name
 
 
-class CMI():
+class CMI:
     """Transform a table of letters into the CMI format."""
 
     def __init__(self):
         """Create an empty TEI file."""
         self.cmi = Element('TEI')
         self.cmi.set('xmlns', 'http://www.tei-c.org/ns/1.0')
-        self.cmi.append(
-            Comment(' Generated with CSV2CMI ' + __version__ + ' '))
+        self.cmi.append(Comment(' Generated with CSV2CMI ' + __version__ + ' '))
         # TEI header
         tei_header = SubElement(self.cmi, 'teiHeader')
         self.file_desc = SubElement(tei_header, 'fileDesc')
@@ -193,15 +180,14 @@ class CMI():
         # title statement
         title_stmt = self.file_desc.find('titleStmt')
         title = SubElement(title_stmt, 'title')
-        title.text = project.get(
-            'Project', 'title', fallback='untitled letters project')
+        title.text = project.get('Project', 'title', fallback='untitled letters project')
         random.seed(title.text)
         title.set('xml:id', self.generate_id('title'))
         editors = ['']
         editors = project.get('Project', 'editor').splitlines()
         for entity in editors:
             mailbox = parseaddr(entity)
-            if "@" in entity and any(mailbox):
+            if '@' in entity and any(mailbox):
                 editor = SubElement(title_stmt, 'editor')
                 if mailbox[0]:
                     editor.text = mailbox[0]
@@ -223,15 +209,14 @@ class CMI():
         idno = SubElement(publication_stmt, 'idno')
         idno.set('type', 'url')
         idno.text = project.get('Project', 'fileURL')
-        SubElement(publication_stmt, 'date').set(
-            'when', str(datetime.now().isoformat()))
+        SubElement(publication_stmt, 'date').set('when', str(datetime.now().isoformat()))
         availability = SubElement(publication_stmt, 'availability')
         licence = SubElement(availability, 'licence')
         licence.set('target', 'https://creativecommons.org/licenses/by/4.0/')
         licence.text = 'This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0'
         # The CC-BY licence may not apply to the final CMI file
-        #licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
-        #licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
+        # licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
+        # licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
 
     def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str) -> None:
         """Create a new bibliographic entry."""
@@ -258,13 +243,13 @@ class CMI():
             if subdlm:
                 persons = letter[name_string].split(subdlm)
                 try:
-                    person_ids = letter[name_string + "ID"].split(subdlm)
+                    person_ids = letter[name_string + 'ID'].split(subdlm)
                 except KeyError:
                     person_ids = []
             else:
                 persons = [letter[name_string]]
                 try:
-                    person_ids = [letter[name_string + "ID"]]
+                    person_ids = [letter[name_string + 'ID']]
                 except KeyError:
                     person_ids = []
             for index, person in enumerate(persons):
@@ -273,11 +258,12 @@ class CMI():
                 # assigning authority file IDs to their correspondents if provided
                 if (index < len(person_ids)) and person_ids[index]:
                     # by default complete GND-IDNs to full URI
-                    if not str(person_ids[index].strip()).startswith('http') and str(person_ids[index].strip())[:-2].isdigit():
-                        logging.debug('Assigning ID %s to GND', str(
-                            person_ids[index].strip()))
-                        authority_file_uri = 'https://d-nb.info/gnd/' + \
-                            str(person_ids[index].strip())
+                    if (
+                        not str(person_ids[index].strip()).startswith('http')
+                        and str(person_ids[index].strip())[:-2].isdigit()
+                    ):
+                        logging.debug('Assigning ID %s to GND', str(person_ids[index].strip()))
+                        authority_file_uri = 'https://d-nb.info/gnd/' + str(person_ids[index].strip())
                     else:
                         authority_file_uri = str(person_ids[index].strip())
                     if self.profile_desc.findall(f'correspDesc/correspAction/persName[@ref="{authority_file_uri}"]'):
@@ -287,49 +273,60 @@ class CMI():
                     elif CONNECTION:
                         if 'viaf' in authority_file_uri:
                             try:
-                                viafrdf = ElementTree(
-                                    file=urllib.request.urlopen(authority_file_uri + '/rdf.xml'))
+                                viafrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + '/rdf.xml'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num
+                                )
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach VIAF (%s)', str(
-                                    connection_issue.reason))
+                                logging.error('Failed to reach VIAF (%s)', str(connection_issue.reason))
                             else:
                                 viafrdf_root = viafrdf.getroot()
-                                if viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]', RDF_NS) is not None:
+                                if (
+                                    viafrdf_root.find(
+                                        './rdf:Description/rdf:type[@rdf:resource="http://schema.org/Organization"]',
+                                        RDF_NS,
+                                    )
+                                    is not None
+                                ):
                                     correspondent = Element('orgName')
-                                elif viafrdf_root.find('./rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', RDF_NS) is not None:
+                                elif (
+                                    viafrdf_root.find(
+                                        './rdf:Description/rdf:type[@rdf:resource="http://schema.org/Person"]', RDF_NS
+                                    )
+                                    is not None
+                                ):
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
-                                        '%sID in line %s links to unprocessable authority file', name_string, table.line_num)
+                                        '%sID in line %s links to unprocessable authority file',
+                                        name_string,
+                                        table.line_num,
+                                    )
                         elif 'gnd' in authority_file_uri:
                             try:
-                                gndrdf = ElementTree(
-                                    file=urllib.request.urlopen(authority_file_uri + '/about/rdf'))
+                                gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + '/about/rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num
+                                )
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach GND (%s)', str(
-                                    connection_issue.reason))
+                                logging.error('Failed to reach GND (%s)', str(connection_issue.reason))
                             except UnicodeEncodeError:
-                                logging.error(
-                                    'Failed to encode %s', authority_file_uri)
+                                logging.error('Failed to encode %s', authority_file_uri)
                             else:
-                                corporatelike = (
-                                    'Corporate', 'Company', 'ReligiousAdministrativeUnit')
-                                personlike = ('DifferentiatedPerson',
-                                              'Royal', 'Family', 'Legendary')
+                                corporatelike = ('Corporate', 'Company', 'ReligiousAdministrativeUnit')
+                                personlike = ('DifferentiatedPerson', 'Royal', 'Family', 'Legendary')
                                 gndrdf_root = gndrdf.getroot()
-                                current_id = gndrdf_root[0].get(
-                                    '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
-                                if urllib.parse.urlparse(authority_file_uri).path != urllib.parse.urlparse(current_id).path:
-                                    logging.info(
-                                        '%s returns new ID %s', authority_file_uri, current_id)
-                                rdftype = gndrdf_root.find(
-                                    './/rdf:type', RDF_NS).get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                                current_id = gndrdf_root[0].get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
+                                if (
+                                    urllib.parse.urlparse(authority_file_uri).path
+                                    != urllib.parse.urlparse(current_id).path
+                                ):
+                                    logging.info('%s returns new ID %s', authority_file_uri, current_id)
+                                rdftype = gndrdf_root.find('.//rdf:type', RDF_NS).get(
+                                    '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'
+                                )
                                 if any(entity in rdftype for entity in corporatelike):
                                     correspondent = Element('orgName')
                                 elif any(entity in rdftype for entity in personlike):
@@ -338,43 +335,56 @@ class CMI():
                                     authority_file_uri = ''
                                     if 'UndifferentiatedPerson' in rdftype:
                                         logging.warning(
-                                            '%sID in line %s links to undifferentiated Person', name_string, table.line_num)
+                                            '%sID in line %s links to undifferentiated Person',
+                                            name_string,
+                                            table.line_num,
+                                        )
                                     else:
-                                        logging.error(
-                                            '%sID in line %s has wrong rdf:type', name_string, table.line_num)
+                                        logging.error('%sID in line %s has wrong rdf:type', name_string, table.line_num)
                         elif 'loc' in authority_file_uri:
                             try:
-                                locrdf = ElementTree(
-                                    file=urllib.request.urlopen(authority_file_uri + '.rdf'))
+                                locrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + '.rdf'))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    'Authority file not found for %sID in line %s', name_string, table.line_num)
+                                    'Authority file not found for %sID in line %s', name_string, table.line_num
+                                )
                             except urllib.error.URLError as connection_issue:
-                                logging.error('Failed to reach LOC (%s)', str(
-                                    connection_issue.reason))
+                                logging.error('Failed to reach LOC (%s)', str(connection_issue.reason))
                             else:
                                 locrdf_root = locrdf.getroot()
-                                if locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]', RDF_NS) is not None:
+                                if (
+                                    locrdf_root.find(
+                                        './/rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Organization"]',
+                                        RDF_NS,
+                                    )
+                                    is not None
+                                ):
                                     correspondent = Element('orgName')
-                                elif locrdf_root.find('.//rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]', RDF_NS) is not None:
+                                elif (
+                                    locrdf_root.find(
+                                        './/rdf:type[@rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"]',
+                                        RDF_NS,
+                                    )
+                                    is not None
+                                ):
                                     correspondent = Element('persName')
                                 else:
                                     logging.warning(
-                                        '%sID in line %s links to unprocessable authority file', name_string, table.line_num)
+                                        '%sID in line %s links to unprocessable authority file',
+                                        name_string,
+                                        table.line_num,
+                                    )
                         else:
                             authority_file_uri = ''
-                            logging.error(
-                                'No proper authority record in line %s for %s', table.line_num, name_string)
+                            logging.error('No proper authority record in line %s for %s', table.line_num, name_string)
                     if authority_file_uri:
                         correspondent.set('ref', authority_file_uri)
                 else:
-                    logging.debug('ID for "%s" missing in line %s',
-                                  person, table.line_num)
+                    logging.debug('ID for "%s" missing in line %s', person, table.line_num)
                 if person.startswith('[') and person.endswith(']'):
                     correspondent.set('evidence', 'conjecture')
                     person = person[1:-1]
-                    logging.info('Added @evidence to <%s> from line %s', correspondent.tag,
-                                 table.line_num)
+                    logging.info('Added @evidence to <%s> from line %s', correspondent.tag, table.line_num)
                 correspondent.text = person
                 correspondent_list.append(correspondent)
         return correspondent_list
@@ -383,15 +393,13 @@ class CMI():
     def generate_id(id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == '':
-            id_prefix = ''.join(random.choice(string.ascii_lowercase)
-                                for _ in range(8))
+            id_prefix = ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
         generated_id = id_prefix.strip() + '-' + token_hex(4)
         return generated_id
 
     def generate_uuid(self) -> str:
         """Generate a UUID of type xs:ID."""
-        generated_uuid = str(UUID(bytes=bytes(random.getrandbits(8)
-                                              for _ in range(16)), version=4))
+        generated_uuid = str(UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
         if generated_uuid[0].isdigit():
             return self.generate_uuid()
         return generated_uuid
@@ -404,8 +412,7 @@ class CMI():
         except (KeyError, TypeError):
             pass
         except ValueError:
-            logging.warning(
-                'Could not parse %sDate in line %s', correspondent, table.line_num)
+            logging.warning('Could not parse %sDate in line %s', correspondent, table.line_num)
         else:
             if correspDate is None:
                 correspDate = Element('date')
@@ -430,7 +437,7 @@ class CMI():
         return create_place_name(place_name, place_id)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     args = parser.parse_args()
 
     # set verbosity
@@ -461,13 +468,11 @@ if __name__ == "__main__":
     # read config file
     config = configparser.ConfigParser()
     # set default values
-    config['Project'] = {'editor': '', 'publisher': '',
-                         'fileURL': letters_csv.with_suffix('.xml')}
+    config['Project'] = {'editor': '', 'publisher': '', 'fileURL': letters_csv.with_suffix('.xml')}
 
     INI_FILE = 'csv2cmi.ini'
     try:
-        config.read_file(
-            open(Path(letters_csv.parent, INI_FILE), encoding='utf-8'))
+        config.read_file(open(Path(letters_csv.parent, INI_FILE), encoding='utf-8'))
     except IOError:
         try:
             config.read_file(open(INI_FILE, encoding='utf-8'))
@@ -507,7 +512,7 @@ if __name__ == "__main__":
             try:
                 edition = config.get('Edition', 'title')
             except configparser.Error:
-                edition = ""
+                edition = ''
                 logging.warning('No edition stated. Please set manually.')
             finally:
                 random.seed(edition)
@@ -521,8 +526,7 @@ if __name__ == "__main__":
                 del edition_ids[:]
                 if not (letter['edition'] or args.all):
                     continue
-                edition_values = letter['edition'].split(
-                    subdlm) if subdlm else [letter['edition']]
+                edition_values = letter['edition'].split(subdlm) if subdlm else [letter['edition']]
                 for edition in edition_values:
                     # By default use edition value as is
                     edition = edition.strip()
@@ -530,8 +534,7 @@ if __name__ == "__main__":
                     if edition and not edition_id:
                         random.seed(edition)
                         edition_id = cmi_object.generate_uuid()
-                        cmi_object.add_edition(
-                            edition, edition_type, edition_id)
+                        cmi_object.add_edition(edition, edition_type, edition_id)
                     editions.append(edition)
                     edition_ids.append(edition_id)
             entry = Element('correspDesc')
@@ -543,8 +546,7 @@ if __name__ == "__main__":
                 entry.set('source', '#' + ' #'.join(edition_ids))
             if 'key' in table.fieldnames and letter['key']:
                 if not edition:
-                    logging.error(
-                        'Key without edition in line %s', table.line_num)
+                    logging.error('Key without edition in line %s', table.line_num)
                 else:
                     if str(letter['key']).startswith('http'):
                         entry.set('ref', str(letter['key']).strip())
@@ -552,7 +554,11 @@ if __name__ == "__main__":
                         entry.set('key', str(letter['key']).strip())
 
             # sender info block
-            if letter['sender'] or ('senderPlace' in table.fieldnames and letter['senderPlace']) or letter['senderDate']:
+            if (
+                letter['sender']
+                or ('senderPlace' in table.fieldnames and letter['senderPlace'])
+                or letter['senderDate']
+            ):
                 action = SubElement(entry, 'correspAction')
                 action.set('xml:id', cmi_object.generate_id('sender'))
                 action.set('type', 'sent')
@@ -563,40 +569,41 @@ if __name__ == "__main__":
                     for sender in correspondents:
                         action.append(sender)
                 # add place_name
-                senderPlace = cmi_object.process_place(letter, "sender")
+                senderPlace = cmi_object.process_place(letter, 'sender')
                 if senderPlace.attrib or senderPlace.text:
                     action.append(senderPlace)
                 # add date
-                senderDate = cmi_object.process_date(letter, "sender")
+                senderDate = cmi_object.process_date(letter, 'sender')
                 if senderDate.attrib or senderDate.text:
                     action.append(senderDate)
             else:
-                logging.info(
-                    'No information on sender in line %s', table.line_num)
+                logging.info('No information on sender in line %s', table.line_num)
 
             # addressee info block
-            if letter['addressee'] or ('addresseePlace' in table.fieldnames and letter['addresseePlace']) or ('addresseeDate' in table.fieldnames and letter['addresseeDate']):
+            if (
+                letter['addressee']
+                or ('addresseePlace' in table.fieldnames and letter['addresseePlace'])
+                or ('addresseeDate' in table.fieldnames and letter['addresseeDate'])
+            ):
                 action = SubElement(entry, 'correspAction')
                 action.set('xml:id', cmi_object.generate_id('addressee'))
                 action.set('type', 'received')
 
                 # add name of addressee
                 if letter['addressee']:
-                    correspondents = cmi_object.create_correspondent(
-                        'addressee')
+                    correspondents = cmi_object.create_correspondent('addressee')
                     for addressee in correspondents:
                         action.append(addressee)
                 # add place_name
-                addresseePlace = cmi_object.process_place(letter, "addressee")
+                addresseePlace = cmi_object.process_place(letter, 'addressee')
                 if addresseePlace.attrib or addresseePlace.text:
                     action.append(addresseePlace)
                 # add date
-                addresseeDate = cmi_object.process_date(letter, "addressee")
+                addresseeDate = cmi_object.process_date(letter, 'addressee')
                 if addresseeDate.attrib or addresseeDate.text:
                     action.append(addresseeDate)
             else:
-                logging.info('No information on addressee in line %s',
-                             table.line_num)
+                logging.info('No information on addressee in line %s', table.line_num)
             entry.set('xml:id', cmi_object.generate_id('letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
@@ -620,8 +627,7 @@ if __name__ == "__main__":
             bibl.text = edition_title
             bibl.set('type', edition_type)
         except configparser.NoOptionError:
-            logging.warning(
-                'Incomplete section %s in ini file. Title and type option must be set.', editionKey)
+            logging.warning('Incomplete section %s in ini file. Title and type option must be set.', editionKey)
         except configparser.NoSectionError:
             # if there is no matching section, we assume that there shouldn't be one
             pass
@@ -634,8 +640,7 @@ if __name__ == "__main__":
         letters_xml = letters_csv.with_suffix('.xml')
 
     try:
-        tree.write(letters_xml, encoding="utf-8",
-                   xml_declaration=True, method="xml")
+        tree.write(letters_xml, encoding='utf-8', xml_declaration=True, method='xml')
         print(f'CMI file written to {letters_xml}')
         sys.exit(0)
     except PermissionError:
