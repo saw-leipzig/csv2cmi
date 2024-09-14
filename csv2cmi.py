@@ -16,8 +16,10 @@ import urllib.request
 from csv import DictReader
 from datetime import datetime
 from email.utils import parseaddr
+from enum import StrEnum
 from pathlib import Path
 from secrets import token_hex
+from typing import Optional
 from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
@@ -94,7 +96,7 @@ def check_datable_w3c(date_string):
                 return False
 
 
-def create_date(date_string: str) -> Element:
+def create_date(date_string: Optional[str]) -> Optional[Element]:
     """Convert an EDTF date into a proper TEI element."""
     if not date_string:
         return None
@@ -153,6 +155,11 @@ def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
         else:
             logging.warning('"%s" is a non-standard GeoNames ID', geonames_uri)
     return place_name
+
+
+class Correspondents(StrEnum):
+    SENDER = 'sender'
+    ADDRESSEE = 'addressee'
 
 
 class CMI:
@@ -226,7 +233,7 @@ class CMI:
         tei_bibl.set('xml:id', bibl_id)
         self.source_desc.append(tei_bibl)
 
-    def get_id_by_title(self, title: str) -> str:
+    def get_id_by_title(self, title: str) -> Optional[str]:
         """Get the ID for an edition by title."""
         for bibliographic_entry in self.source_desc.findall('bibl'):
             if title == bibliographic_entry.text:
@@ -404,7 +411,7 @@ class CMI:
             return self.generate_uuid()
         return generated_uuid
 
-    def process_date(self, letter, correspondent):
+    def process_date(self, letter: dict, correspondent: str):
         """Process date."""
         correspDate = Element('date')
         try:
@@ -422,7 +429,7 @@ class CMI:
             pass
         return correspDate
 
-    def process_place(self, letter, correspondent_type: str):
+    def process_place(self, letter: dict, correspondent_type: str):
         """Process place."""
         place_name, place_id = '', ''
         try:
@@ -553,64 +560,39 @@ if __name__ == '__main__':
                     else:
                         entry.set('key', str(letter['key']).strip())
 
-            # sender info block
-            if (
-                letter['sender']
-                or ('senderPlace' in table.fieldnames and letter['senderPlace'])
-                or letter['senderDate']
-            ):
-                action = SubElement(entry, 'correspAction')
-                action.set('xml:id', cmi_object.generate_id('sender'))
-                action.set('type', 'sent')
+            for correnspondent in Correspondents:
+                if (
+                    letter[correnspondent]
+                    or (correnspondent + 'Place' in table.fieldnames and letter[correnspondent + 'Place'])
+                    or letter[correnspondent + 'Date']
+                ):
+                    action = SubElement(entry, 'correspAction')
+                    action.set('xml:id', cmi_object.generate_id(correnspondent))
+                    action.set('type', 'sent')
 
-                # add name of sender
-                if letter['sender']:
-                    correspondents = cmi_object.create_correspondent('sender')
-                    for sender in correspondents:
-                        action.append(sender)
-                # add place_name
-                senderPlace = cmi_object.process_place(letter, 'sender')
-                if senderPlace.attrib or senderPlace.text:
-                    action.append(senderPlace)
-                # add date
-                senderDate = cmi_object.process_date(letter, 'sender')
-                if senderDate.attrib or senderDate.text:
-                    action.append(senderDate)
-            else:
-                logging.info('No information on sender in line %s', table.line_num)
+                    # add name of sender
+                    if letter[correnspondent]:
+                        correspondents = cmi_object.create_correspondent(correnspondent)
+                        for sender in correspondents:
+                            action.append(sender)
+                    # add place_name
+                    senderPlace = cmi_object.process_place(letter, correnspondent)
+                    if senderPlace.attrib or senderPlace.text:
+                        action.append(senderPlace)
+                    # add date
+                    senderDate = cmi_object.process_date(letter, correnspondent)
+                    if senderDate.attrib or senderDate.text:
+                        action.append(senderDate)
+                else:
+                    logging.info('No information on %s in line %s', correnspondent, table.line_num)
 
-            # addressee info block
-            if (
-                letter['addressee']
-                or ('addresseePlace' in table.fieldnames and letter['addresseePlace'])
-                or ('addresseeDate' in table.fieldnames and letter['addresseeDate'])
-            ):
-                action = SubElement(entry, 'correspAction')
-                action.set('xml:id', cmi_object.generate_id('addressee'))
-                action.set('type', 'received')
-
-                # add name of addressee
-                if letter['addressee']:
-                    correspondents = cmi_object.create_correspondent('addressee')
-                    for addressee in correspondents:
-                        action.append(addressee)
-                # add place_name
-                addresseePlace = cmi_object.process_place(letter, 'addressee')
-                if addresseePlace.attrib or addresseePlace.text:
-                    action.append(addresseePlace)
-                # add date
-                addresseeDate = cmi_object.process_date(letter, 'addressee')
-                if addresseeDate.attrib or addresseeDate.text:
-                    action.append(addresseeDate)
-            else:
-                logging.info('No information on addressee in line %s', table.line_num)
             entry.set('xml:id', cmi_object.generate_id('letter'))
             if args.notes:
                 if ('note' in table.fieldnames) and letter['note']:
                     note = SubElement(entry, 'note')
                     note.set('xml:id', cmi_object.generate_id('note'))
                     note.text = str(letter['note'])
-            if entry.find('*'):
+            if entry.find('*') is not None:
                 cmi_object.profile_desc.append(entry)
 
     # replace short titles, if configured
