@@ -46,16 +46,6 @@ parser.add_argument('--version', action='version', version='%(prog)s ' + __versi
 parser.add_argument('--extra-delimiter', help='delimiter for different values within cells')
 
 
-def check_connectivity() -> bool:
-    """Simple check for internet connection."""
-    try:
-        urllib.request.urlopen('https://193.175.100.220', timeout=1)
-        return True
-    except urllib.error.URLError:
-        logging.error('No internet connection')
-        return False
-
-
 def check_isodate(date_string):
     """Check if a string is from datatype teidata.temporal.iso."""
     try:
@@ -243,7 +233,7 @@ class CMI:
     def create_correspondent(self, name_string: str) -> list:
         """Create a correspondent."""
         if letter[name_string]:
-            correspondent_list = list()
+            correspondent_list: list = []
             # Turning the cells of correspondent names and their IDs into lists since cells
             # can contain various correspondents split by an extra delimiter.
             # In that case it is essential to be able to call each by their index.
@@ -277,7 +267,7 @@ class CMI:
                         correspondent = Element('persName')
                     elif self.profile_desc.findall(f'correspDesc/correspAction/orgName[@ref="{authority_file_uri}"]'):
                         correspondent = Element('orgName')
-                    elif CONNECTION:
+                    else:
                         if 'viaf' in authority_file_uri:
                             try:
                                 viafrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + '/rdf.xml'))
@@ -468,9 +458,6 @@ if __name__ == '__main__':
         sys.exit(1)
 
     cmi_object = CMI()
-
-    # check internet connection via DNB
-    CONNECTION = check_connectivity()
 
     # read config file
     config = configparser.ConfigParser()
