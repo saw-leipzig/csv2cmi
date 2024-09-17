@@ -21,5 +21,8 @@ classifiers = [
 ]
 keywords = ["TEI", "CSV", "CMIF", "digital humanities", "correspondence"]
 
+[tool.ruff]
+line-length = 120
+
 [tool.setuptools.dynamic]
 version = {attr = "package.__version__"}
