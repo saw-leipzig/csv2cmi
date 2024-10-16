@@ -425,7 +425,8 @@ class CMI:
             return self.generate_uuid()
         return generated_uuid
 
-    def process_date(self, letter: dict, correspondent: str):
+    @staticmethod
+    def process_date(letter: dict, correspondent: Correspondents) -> Optional[Element]:
         """Process date."""
         correspDate = Element("date")
         try:
@@ -443,16 +444,17 @@ class CMI:
             pass
         return correspDate
 
-    def process_place(self, letter: dict, correspondent_type: str):
+    @staticmethod
+    def process_place(letter: dict, correspondent: Correspondents) -> Element:
         """Process place."""
         place_name, place_id = "", ""
         try:
-            place_name = letter[correspondent_type + "Place"]
+            place_name = letter[correspondent + "Place"]
         except KeyError:
             pass
         else:
             try:
-                place_id = letter[correspondent_type + "PlaceID"]
+                place_id = letter[correspondent + "PlaceID"]
             except KeyError:
                 pass
         return create_place_name(place_name, place_id)
