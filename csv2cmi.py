@@ -387,6 +387,30 @@ class CMI:
         return correspondent_list
 
     @staticmethod
+    def create_corresp_action(letter: dict, correnspondent: Correspondents) -> Element: 
+        action = Element("correspAction")
+        action.set("xml:id", cmi_object.generate_id(correnspondent))
+        type: str = "sent" if correnspondent == Correspondents.SENDER else "received"
+        action.set("type", type)
+
+        # add name of sender
+        if letter[correnspondent]:
+            correspondents = cmi_object.create_correspondent(correnspondent)
+            for sender in correspondents:
+                action.append(sender)
+        # add place_name
+        senderPlace = cmi_object.process_place(letter, correnspondent)
+        if senderPlace.attrib or senderPlace.text:
+            action.append(senderPlace)
+        # add date
+        senderDate = cmi_object.process_date(letter, correnspondent)
+        if senderDate.attrib or senderDate.text:
+            action.append(senderDate)
+
+        return action
+
+
+    @staticmethod
     def generate_id(id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == "":
@@ -553,23 +577,8 @@ if __name__ == "__main__":
                     or (correnspondent + "Place" in table.fieldnames and letter[correnspondent + "Place"])
                     or letter[correnspondent + "Date"]
                 ):
-                    action = SubElement(entry, "correspAction")
-                    action.set("xml:id", cmi_object.generate_id(correnspondent))
-                    action.set("type", "sent")
-
-                    # add name of sender
-                    if letter[correnspondent]:
-                        correspondents = cmi_object.create_correspondent(correnspondent)
-                        for sender in correspondents:
-                            action.append(sender)
-                    # add place_name
-                    senderPlace = cmi_object.process_place(letter, correnspondent)
-                    if senderPlace.attrib or senderPlace.text:
-                        action.append(senderPlace)
-                    # add date
-                    senderDate = cmi_object.process_date(letter, correnspondent)
-                    if senderDate.attrib or senderDate.text:
-                        action.append(senderDate)
+                    action = cmi_object.create_corresp_action(correnspondent=correnspondent, letter=letter)
+                    entry.append(action)
                 else:
                     logging.info("No information on %s in line %s", correnspondent, table.line_num)
 
