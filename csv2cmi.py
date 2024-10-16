@@ -387,7 +387,8 @@ class CMI:
         return correspondent_list
 
     @staticmethod
-    def create_corresp_action(letter: dict, correnspondent: Correspondents) -> Element: 
+    def create_corresp_action(letter: dict, correnspondent: Correspondents) -> Element:
+        """Create a correspondence action."""
         action = Element("correspAction")
         action.set("xml:id", cmi_object.generate_id(correnspondent))
         type: str = "sent" if correnspondent == Correspondents.SENDER else "received"
@@ -408,7 +409,6 @@ class CMI:
             action.append(senderDate)
 
         return action
-
 
     @staticmethod
     def generate_id(id_prefix: str) -> str:
