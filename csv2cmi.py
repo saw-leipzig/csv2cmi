@@ -457,6 +457,26 @@ class CMI:
                 pass
         return self.create_place_name(place_name, place_id)
 
+    def replace_short_titles(self, project: configparser) -> None:
+        """Replace short titles by full title defined in config file."""
+        for bibl in self.source_desc.findall("bibl"):
+            # Try to use bibliographic text as key for section in config file
+            editionKey = bibl.text
+            try:
+                edition_title = project.get(editionKey, "title")
+                try:
+                    edition_type = project.get(editionKey, "type")
+                except configparser.NoOptionError:
+                    # if type is not set, use the default one
+                    pass
+                bibl.text = edition_title
+                bibl.set("type", edition_type)
+            except configparser.NoOptionError:
+                logging.warning("Incomplete section %s in ini file. Title and type option must be set.", editionKey)
+            except configparser.NoSectionError:
+                # if there is no matching section, we assume that there shouldn't be one
+                pass
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -591,24 +611,7 @@ if __name__ == "__main__":
             if entry.find("*") is not None:
                 cmi_object.profile_desc.append(entry)
 
-    # replace short titles, if configured
-    for bibl in cmi_object.source_desc.findall("bibl"):
-        # Try to use bibliographic text as key for section in config file
-        editionKey = bibl.text
-        try:
-            edition_title = config.get(editionKey, "title")
-            try:
-                edition_type = config.get(editionKey, "type")
-            except configparser.NoOptionError:
-                # if type is not set, use the default one
-                pass
-            bibl.text = edition_title
-            bibl.set("type", edition_type)
-        except configparser.NoOptionError:
-            logging.warning("Incomplete section %s in ini file. Title and type option must be set.", editionKey)
-        except configparser.NoSectionError:
-            # if there is no matching section, we assume that there shouldn't be one
-            pass
+    cmi_object.replace_short_titles(config)
 
     # save cmi to file
     tree = ElementTree(cmi_object.cmi)
