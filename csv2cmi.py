@@ -86,67 +86,6 @@ def check_datable_w3c(date_string):
                 return False
 
 
-def create_date(date_string: Optional[str]) -> Optional[Element]:
-    """Convert an EDTF date into a proper TEI element."""
-    if not date_string:
-        return None
-    tei_date = Element("date")
-    # normalize date
-    normalized_date = date_string.translate(date_string.maketrans("", "", "?~%"))
-    if len(normalized_date) > 4 and normalized_date[-1] == "X":
-        # remove day and month with unspecified digits
-        normalized_date = normalized_date[0:-3]
-        if normalized_date[-1] == "X":
-            normalized_date = normalized_date[0:-3]
-    if normalized_date[-1] == "X":
-        # change year with unspecified digits to interval
-        normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
-    if check_datable_w3c(normalized_date):
-        tei_date.set("when", str(normalized_date))
-    elif normalized_date.startswith("[") and normalized_date.endswith("]"):
-        # one of set
-        date_list = normalized_date[1:-1].split(",")
-        date_first = date_list[0].split(".")[0]
-        date_last = date_list[-1].split(".")[-1]
-        if date_first or date_last:
-            if check_datable_w3c(date_first):
-                tei_date.set("notBefore", str(date_first))
-            if check_datable_w3c(date_last):
-                tei_date.set("notAfter", str(date_last))
-    else:
-        # time interval
-        date_list = normalized_date.split("/")
-        if len(date_list) == 2 and (date_list[0] or date_list[1]):
-            if check_datable_w3c(date_list[0]):
-                tei_date.set("from", str(date_list[0]))
-            if check_datable_w3c(date_list[1]):
-                tei_date.set("to", str(date_list[1]))
-    if tei_date.attrib:
-        if normalized_date != date_string:
-            tei_date.set("cert", "medium")
-            logging.info("Added @cert to <date> from line %s", table.line_num)
-        return tei_date
-    raise ValueError(f'unable to parse "{date_string}" as TEI date')
-
-
-def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
-    """Create a placeName element."""
-    place_name = Element("placeName")
-    place_name_text = place_name_text.strip()
-    if place_name_text.startswith("[") and place_name_text.endswith("]"):
-        place_name.set("evidence", "conjecture")
-        place_name_text = place_name_text[1:-1]
-        logging.info("Added @evidence to <placeName> from line %s", table.line_num)
-    place_name.text = str(place_name_text)
-    if geonames_uri:
-        geonames_uri = geonames_uri.strip()
-        if "www.geonames.org" in geonames_uri:
-            place_name.set("ref", str(geonames_uri))
-        else:
-            logging.warning('"%s" is a non-standard GeoNames ID', geonames_uri)
-    return place_name
-
-
 class Correspondents(StrEnum):
     SENDER = "sender"
     ADDRESSEE = "addressee"
@@ -411,6 +350,67 @@ class CMI:
         return action
 
     @staticmethod
+    def create_date(date_string: Optional[str]) -> Optional[Element]:
+        """Convert an EDTF date into a proper TEI element."""
+        if not date_string:
+            return None
+        tei_date = Element("date")
+        # normalize date
+        normalized_date = date_string.translate(date_string.maketrans("", "", "?~%"))
+        if len(normalized_date) > 4 and normalized_date[-1] == "X":
+            # remove day and month with unspecified digits
+            normalized_date = normalized_date[0:-3]
+            if normalized_date[-1] == "X":
+                normalized_date = normalized_date[0:-3]
+        if normalized_date[-1] == "X":
+            # change year with unspecified digits to interval
+            normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
+        if check_datable_w3c(normalized_date):
+            tei_date.set("when", str(normalized_date))
+        elif normalized_date.startswith("[") and normalized_date.endswith("]"):
+            # one of set
+            date_list = normalized_date[1:-1].split(",")
+            date_first = date_list[0].split(".")[0]
+            date_last = date_list[-1].split(".")[-1]
+            if date_first or date_last:
+                if check_datable_w3c(date_first):
+                    tei_date.set("notBefore", str(date_first))
+                if check_datable_w3c(date_last):
+                    tei_date.set("notAfter", str(date_last))
+        else:
+            # time interval
+            date_list = normalized_date.split("/")
+            if len(date_list) == 2 and (date_list[0] or date_list[1]):
+                if check_datable_w3c(date_list[0]):
+                    tei_date.set("from", str(date_list[0]))
+                if check_datable_w3c(date_list[1]):
+                    tei_date.set("to", str(date_list[1]))
+        if tei_date.attrib:
+            if normalized_date != date_string:
+                tei_date.set("cert", "medium")
+                logging.info("Added @cert to <date> from line %s", table.line_num)
+            return tei_date
+        raise ValueError(f'unable to parse "{date_string}" as TEI date')
+
+    @staticmethod
+    def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
+        """Create a placeName element."""
+        place_name = Element("placeName")
+        place_name_text = place_name_text.strip()
+        if place_name_text.startswith("[") and place_name_text.endswith("]"):
+            place_name.set("evidence", "conjecture")
+            place_name_text = place_name_text[1:-1]
+            logging.info("Added @evidence to <placeName> from line %s", table.line_num)
+        place_name.text = str(place_name_text)
+        if geonames_uri:
+            geonames_uri = geonames_uri.strip()
+            if "www.geonames.org" in geonames_uri:
+                place_name.set("ref", str(geonames_uri))
+            else:
+                logging.warning('"%s" is a non-standard GeoNames ID', geonames_uri)
+        return place_name
+
+    @staticmethod
     def generate_id(id_prefix: str) -> str:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == "":
@@ -425,12 +425,11 @@ class CMI:
             return self.generate_uuid()
         return generated_uuid
 
-    @staticmethod
-    def process_date(letter: dict, correspondent: Correspondents) -> Optional[Element]:
+    def process_date(self, letter: dict, correspondent: Correspondents) -> Optional[Element]:
         """Process date."""
         correspDate = Element("date")
         try:
-            correspDate = create_date(letter[correspondent + "Date"])
+            correspDate = self.create_date(letter[correspondent + "Date"])
         except (KeyError, TypeError):
             pass
         except ValueError:
@@ -444,8 +443,7 @@ class CMI:
             pass
         return correspDate
 
-    @staticmethod
-    def process_place(letter: dict, correspondent: Correspondents) -> Element:
+    def process_place(self, letter: dict, correspondent: Correspondents) -> Element:
         """Process place."""
         place_name, place_id = "", ""
         try:
@@ -457,7 +455,7 @@ class CMI:
                 place_id = letter[correspondent + "PlaceID"]
             except KeyError:
                 pass
-        return create_place_name(place_name, place_id)
+        return self.create_place_name(place_name, place_id)
 
 
 if __name__ == "__main__":
