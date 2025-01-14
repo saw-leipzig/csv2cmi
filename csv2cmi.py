@@ -368,7 +368,7 @@ class CMI:
         if check_datable_w3c(normalized_date):
             tei_date.set("when", str(normalized_date))
         elif normalized_date.startswith("[") and normalized_date.endswith("]"):
-            # one of set
+            # One of a set
             date_list = normalized_date[1:-1].split(",")
             date_first = date_list[0].split(".")[0]
             date_last = date_list[-1].split(".")[-1]
@@ -377,8 +377,18 @@ class CMI:
                     tei_date.set("notBefore", str(date_first))
                 if check_datable_w3c(date_last):
                     tei_date.set("notAfter", str(date_last))
+        elif normalized_date.startswith("{") and normalized_date.endswith("}"):
+            # All Members
+            date_list = normalized_date[1:-1].split(",")
+            date_first = date_list[0].split(".")[0]
+            date_last = date_list[-1].split(".")[-1]
+            if date_first or date_last:
+                if check_datable_w3c(date_first):
+                    tei_date.set("from", str(date_first))
+                if check_datable_w3c(date_last):
+                    tei_date.set("to", str(date_last))
         else:
-            # time interval
+            # Time Interval
             date_list = normalized_date.split("/")
             if len(date_list) == 2 and (date_list[0] or date_list[1]):
                 if check_datable_w3c(date_list[0]):
