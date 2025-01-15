@@ -330,8 +330,8 @@ class CMI:
         """Create a correspondence action."""
         action = Element("correspAction")
         action.set("xml:id", cmi_object.generate_id(correnspondent))
-        type: str = "sent" if correnspondent == Correspondents.SENDER else "received"
-        action.set("type", type)
+        action_type: str = "sent" if correnspondent == Correspondents.SENDER else "received"
+        action.set("type", action_type)
 
         # add name of sender
         if letter[correnspondent]:
