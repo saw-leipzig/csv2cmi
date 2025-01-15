@@ -387,11 +387,11 @@ class CMI:
                 tei_date.set("to", str(date_last))
         elif normalized_date.count("/") == 1:
             # Time Interval
-            date_list = normalized_date.split("/")
-            if is_datable_w3c(date_list[0]):
-                tei_date.set("from", str(date_list[0]))
-            if is_datable_w3c(date_list[1]):
-                tei_date.set("to", str(date_list[1]))
+            date_first, date_last = normalized_date.split("/")
+            if is_datable_w3c(date_first):
+                tei_date.set("from", str(date_first))
+            if is_datable_w3c(date_last):
+                tei_date.set("to", str(date_last))
         if tei_date.attrib:
             if normalized_date != date_string:
                 tei_date.set("cert", "medium")
