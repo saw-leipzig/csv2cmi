@@ -46,7 +46,7 @@ parser.add_argument("--version", action="version", version="%(prog)s " + __versi
 parser.add_argument("--extra-delimiter", help="delimiter for different values within cells")
 
 
-def check_isodate(date_string):
+def is_datable_iso(date_string) -> bool:
     """Check if a string is from datatype teidata.temporal.iso."""
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
@@ -63,12 +63,12 @@ def check_isodate(date_string):
                 return False
 
 
-def check_datable_w3c(date_string):
+def is_datable_w3c(date_string) -> bool:
     """Check if a string is from datatype teidata.temporal.w3c."""
     # handle negative dates
     if date_string.startswith("-") and len(date_string) > 4 and date_string[1].isdigit():
         date_string = date_string[1:]
-    if check_isodate(date_string):
+    if is_datable_iso(date_string):
         return True
     # handle dates without year
     try:
@@ -363,38 +363,35 @@ class CMI:
             if normalized_date[-1] == "X":
                 normalized_date = normalized_date[0:-3]
         if normalized_date[-1] == "X":
-            # change year with unspecified digits to interval
+            # convert year with unspecified digits into interval
             normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
-        if check_datable_w3c(normalized_date):
+        if is_datable_w3c(normalized_date):
             tei_date.set("when", str(normalized_date))
         elif normalized_date.startswith("[") and normalized_date.endswith("]"):
             # One of a set
             date_list = normalized_date[1:-1].split(",")
             date_first = date_list[0].split(".")[0]
             date_last = date_list[-1].split(".")[-1]
-            if date_first or date_last:
-                if check_datable_w3c(date_first):
-                    tei_date.set("notBefore", str(date_first))
-                if check_datable_w3c(date_last):
-                    tei_date.set("notAfter", str(date_last))
+            if is_datable_w3c(date_first):
+                tei_date.set("notBefore", str(date_first))
+            if is_datable_w3c(date_last):
+                tei_date.set("notAfter", str(date_last))
         elif normalized_date.startswith("{") and normalized_date.endswith("}"):
             # All Members
             date_list = normalized_date[1:-1].split(",")
             date_first = date_list[0].split(".")[0]
             date_last = date_list[-1].split(".")[-1]
-            if date_first or date_last:
-                if check_datable_w3c(date_first):
-                    tei_date.set("from", str(date_first))
-                if check_datable_w3c(date_last):
-                    tei_date.set("to", str(date_last))
-        else:
+            if is_datable_w3c(date_first):
+                tei_date.set("from", str(date_first))
+            if is_datable_w3c(date_last):
+                tei_date.set("to", str(date_last))
+        elif normalized_date.count("/") == 1:
             # Time Interval
             date_list = normalized_date.split("/")
-            if len(date_list) == 2 and (date_list[0] or date_list[1]):
-                if check_datable_w3c(date_list[0]):
-                    tei_date.set("from", str(date_list[0]))
-                if check_datable_w3c(date_list[1]):
-                    tei_date.set("to", str(date_list[1]))
+            if is_datable_w3c(date_list[0]):
+                tei_date.set("from", str(date_list[0]))
+            if is_datable_w3c(date_list[1]):
+                tei_date.set("to", str(date_list[1]))
         if tei_date.attrib:
             if normalized_date != date_string:
                 tei_date.set("cert", "medium")
