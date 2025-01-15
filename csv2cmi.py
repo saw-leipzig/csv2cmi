@@ -484,6 +484,17 @@ class CMI:
                 # if there is no matching section, we assume that there shouldn't be one
                 pass
 
+    def save_to_file(self, file_name: Path) -> None:
+        """Save CMI to file."""
+        tree = ElementTree(self.cmi)
+        try:
+            tree.write(file_name, encoding="utf-8", xml_declaration=True, method="xml")
+            print(f"CMI file written to {file_name}")
+            sys.exit(0)
+        except PermissionError:
+            logging.error("Could not save the file due to insufficient permission")
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -621,16 +632,9 @@ if __name__ == "__main__":
     cmi_object.replace_short_titles(config)
 
     # save cmi to file
-    tree = ElementTree(cmi_object.cmi)
     if args.output:
         letters_xml = Path(args.output)
     else:
         letters_xml = letters_csv.with_suffix(".xml")
 
-    try:
-        tree.write(letters_xml, encoding="utf-8", xml_declaration=True, method="xml")
-        print(f"CMI file written to {letters_xml}")
-        sys.exit(0)
-    except PermissionError:
-        logging.error("Could not save the file due to insufficient permission")
-        sys.exit(1)
+    cmi_object.save_to_file(letters_xml)
