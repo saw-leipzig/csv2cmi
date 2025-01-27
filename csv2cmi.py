@@ -16,7 +16,6 @@ import urllib.request
 from csv import DictReader
 from datetime import datetime
 from email.utils import parseaddr
-from enum import StrEnum
 from pathlib import Path
 from secrets import token_hex
 from typing import Optional
@@ -26,6 +25,11 @@ from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 __license__ = "MIT"
 __version__ = "3.0.0-alpha"
 __author__ = "Klaus Rettinghaus"
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from backports.strenum import StrEnum
 
 # define log output
 logging.basicConfig(format="%(levelname)s: %(message)s")
