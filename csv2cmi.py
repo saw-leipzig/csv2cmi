@@ -1,7 +1,7 @@
 """
 CSV2CMI
 
-Copyright (c) 2015-2023 Klaus Rettinghaus
+Copyright (c) 2015-2025 Klaus Rettinghaus
 programmed by Klaus Rettinghaus
 licensed under MIT license
 """
@@ -617,7 +617,7 @@ if __name__ == "__main__":
                 if (
                     letter[correnspondent]
                     or (correnspondent + "Place" in table.fieldnames and letter[correnspondent + "Place"])
-                    or letter[correnspondent + "Date"]
+                    or (correnspondent + "Date" in table.fieldnames and letter[correnspondent + "Date"])
                 ):
                     action = cmi_object.create_corresp_action(correnspondent=correnspondent, letter=letter)
                     entry.append(action)
