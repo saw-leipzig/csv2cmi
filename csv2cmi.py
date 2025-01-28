@@ -20,7 +20,7 @@ from pathlib import Path
 from secrets import token_hex
 from typing import Optional
 from uuid import UUID
-from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
+from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement, tostring
 
 __license__ = "MIT"
 __version__ = "3.0.0-alpha"
@@ -114,6 +114,9 @@ class CMI:
         text = SubElement(self.cmi, "text")
         tei_body = SubElement(text, "body")
         SubElement(tei_body, "p")
+
+    def __str__(self) -> str:
+        return tostring(self.cmi, method="xml").decode("utf-8")
 
     def create_file_desc(self, project: configparser) -> None:
         """Create a TEI file description from config file."""
