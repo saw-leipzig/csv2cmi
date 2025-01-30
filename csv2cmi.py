@@ -23,7 +23,7 @@ from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement, tostring
 
 __license__ = "MIT"
-__version__ = "3.0.0-alpha"
+__version__ = "3.0.0-beta"
 __author__ = "Klaus Rettinghaus"
 
 if sys.version_info >= (3, 11):
