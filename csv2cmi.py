@@ -169,13 +169,14 @@ class CMI:
         tei_licence.set("target", chosen_license.get("url"))
         tei_licence.text = chosen_license["text"]
 
-    def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str) -> None:
-        """Create a new bibliographic entry."""
+    def add_edition(self, bibl_text: str, bibl_type: str = "print") -> str:
+        """Create a new bibliographic entry and return its ID."""
         tei_bibl = Element("bibl")
         tei_bibl.text = bibl_text
         tei_bibl.set("type", bibl_type)
-        tei_bibl.set("xml:id", bibl_id)
+        tei_bibl.set("xml:id", self.generate_uuid())
         self.source_desc.append(tei_bibl)
+        return tei_bibl.get("xml:id")
 
     def get_id_by_title(self, title: str) -> Optional[str]:
         """Get the ID for an edition by title."""
@@ -589,8 +590,7 @@ if __name__ == "__main__":
                 logging.warning("No edition stated. Please set manually.")
             finally:
                 random.seed(edition)
-                edition_id = cmi_object.generate_uuid()
-                cmi_object.add_edition(edition, edition_type, edition_id)
+                edition_id = cmi_object.add_edition(edition, bibl_type=edition_type)
                 editions.append(edition)
                 edition_ids.append(edition_id)
         for letter in table:
@@ -606,8 +606,7 @@ if __name__ == "__main__":
                     edition_id = cmi_object.get_id_by_title(edition)
                     if edition and not edition_id:
                         random.seed(edition)
-                        edition_id = cmi_object.generate_uuid()
-                        cmi_object.add_edition(edition, edition_type, edition_id)
+                        edition_id = cmi_object.add_edition(edition, bibl_type=edition_type)
                     editions.append(edition)
                     edition_ids.append(edition_id)
             entry = Element("correspDesc")
