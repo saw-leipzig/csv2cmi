@@ -38,6 +38,18 @@ logs = logging.getLogger()
 # define namespace
 RDF_NS = {"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"}
 
+# define licenses
+LICENSES = {
+    "cc-by": {
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "text": "This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0.",
+    },
+    "cc0": {
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "text": "This file has been marked as dedicated to the public domain.",
+    },
+}
+
 # define arguments
 parser = argparse.ArgumentParser(description="convert tables of letters to CMI")
 parser.add_argument("filename", help="input file (.csv)")
@@ -45,6 +57,7 @@ parser.add_argument("-a", "--all", help="include unedited letters", action="stor
 parser.add_argument("-n", "--notes", help="transfer notes", action="store_true")
 parser.add_argument("-o", "--output", metavar="FILE", help="output file name")
 parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+parser.add_argument("--cc0", help="mark as public domain", action="store_true")
 parser.add_argument("--line-numbers", help="add line numbers", action="store_true")
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 parser.add_argument("--extra-delimiter", help="delimiter for different values within cells")
@@ -121,45 +134,43 @@ class CMI:
     def create_file_desc(self, project: configparser) -> None:
         """Create a TEI file description from config file."""
         # title statement
-        title_stmt = self.file_desc.find("titleStmt")
-        title = SubElement(title_stmt, "title")
-        title.text = project.get("Project", "title", fallback="untitled letters project")
-        random.seed(title.text)
-        title.set("xml:id", self.generate_id("title"))
+        tei_title_stmt = self.file_desc.find("titleStmt")
+        tei_title = SubElement(tei_title_stmt, "title")
+        tei_title.text = project.get("Project", "title", fallback="untitled letters project")
+        random.seed(tei_title.text)
+        tei_title.set("xml:id", self.generate_id("title"))
         editors = [""]
         editors = project.get("Project", "editor").splitlines()
         for entity in editors:
             mailbox = parseaddr(entity)
             if "@" in entity and any(mailbox):
-                editor = SubElement(title_stmt, "editor")
+                tei_editor = SubElement(tei_title_stmt, "editor")
                 if mailbox[0]:
-                    editor.text = mailbox[0]
+                    tei_editor.text = mailbox[0]
                 if mailbox[-1]:
-                    SubElement(editor, "email").text = mailbox[-1]
+                    SubElement(tei_editor, "email").text = mailbox[-1]
             else:
-                SubElement(title_stmt, "editor").text = entity
-        if len(list(title_stmt)) == 1:
+                SubElement(tei_title_stmt, "editor").text = entity
+        if len(list(tei_title_stmt)) == 1:
             logging.warning("Editor missing")
-            SubElement(title_stmt, "editor")
+            SubElement(tei_title_stmt, "editor")
         # publication statement
-        publication_stmt = self.file_desc.find("publicationStmt")
+        tei_publication_stmt = self.file_desc.find("publicationStmt")
         publishers = project.get("Project", "publisher").splitlines()
         for entity in publishers:
-            SubElement(publication_stmt, "publisher").text = entity
-        if not list(publication_stmt):
-            for editor in title_stmt.findall("editor"):
-                SubElement(publication_stmt, "publisher").text = editor.text
-        idno = SubElement(publication_stmt, "idno")
-        idno.set("type", "url")
-        idno.text = project.get("Project", "fileURL")
-        SubElement(publication_stmt, "date").set("when", str(datetime.now().isoformat()))
-        availability = SubElement(publication_stmt, "availability")
-        licence = SubElement(availability, "licence")
-        licence.set("target", "https://creativecommons.org/licenses/by/4.0/")
-        licence.text = "This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0"
-        # The CC-BY licence may not apply to the final CMI file
-        # licence.set('target', 'https://creativecommons.org/publicdomain/zero/1.0/')
-        # licence.text = 'This file is licensed under a Creative Commons Zero 1.0 License.'
+            SubElement(tei_publication_stmt, "publisher").text = entity
+        if not list(tei_publication_stmt):
+            for editor in tei_title_stmt.findall("editor"):
+                SubElement(tei_publication_stmt, "publisher").text = editor.text
+        tei_idno = SubElement(tei_publication_stmt, "idno")
+        tei_idno.set("type", "url")
+        tei_idno.text = project.get("Project", "fileURL")
+        SubElement(tei_publication_stmt, "date").set("when", str(datetime.now().isoformat()))
+        availability = SubElement(tei_publication_stmt, "availability")
+        tei_licence = SubElement(availability, "licence")
+        chosen_license = LICENSES.get(project.get("Project", "license"))
+        tei_licence.set("target", chosen_license.get("url"))
+        tei_licence.text = chosen_license["text"]
 
     def add_edition(self, bibl_text: str, bibl_type: str, bibl_id: str) -> None:
         """Create a new bibliographic entry."""
@@ -531,7 +542,9 @@ if __name__ == "__main__":
     # read config file
     config = configparser.ConfigParser()
     # set default values
-    config["Project"] = {"editor": "", "publisher": "", "fileURL": letters_csv.with_suffix(".xml")}
+    config["Project"] = {"editor": "", "publisher": "", "fileURL": letters_csv.with_suffix(".xml"), "license": "cc-by"}
+    if args.cc0:
+        config["Project"]["license"] = "cc0"
 
     INI_FILE = "csv2cmi.ini"
     try:
