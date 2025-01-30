@@ -506,7 +506,6 @@ class CMI:
         try:
             tree.write(file_name, encoding="utf-8", xml_declaration=True, method="xml")
             print(f"CMI file written to {file_name}")
-            sys.exit(0)
         except PermissionError:
             logging.error("Could not save the file due to insufficient permission")
             sys.exit(1)
