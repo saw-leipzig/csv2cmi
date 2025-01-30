@@ -139,9 +139,7 @@ class CMI:
         tei_title.text = project.get("Project", "title", fallback="untitled letters project")
         random.seed(tei_title.text)
         tei_title.set("xml:id", self.generate_id("title"))
-        editors = [""]
-        editors = project.get("Project", "editor").splitlines()
-        for entity in editors:
+        for entity in project.get("Project", "editor", fallback="").splitlines():
             mailbox = parseaddr(entity)
             if "@" in entity and any(mailbox):
                 tei_editor = SubElement(tei_title_stmt, "editor")
@@ -156,19 +154,18 @@ class CMI:
             SubElement(tei_title_stmt, "editor")
         # publication statement
         tei_publication_stmt = self.file_desc.find("publicationStmt")
-        publishers = project.get("Project", "publisher").splitlines()
-        for entity in publishers:
+        for entity in project.get("Project", "publisher", fallback="").splitlines():
             SubElement(tei_publication_stmt, "publisher").text = entity
         if not list(tei_publication_stmt):
             for editor in tei_title_stmt.findall("editor"):
                 SubElement(tei_publication_stmt, "publisher").text = editor.text
         tei_idno = SubElement(tei_publication_stmt, "idno")
         tei_idno.set("type", "url")
-        tei_idno.text = project.get("Project", "fileURL")
+        tei_idno.text = project.get("Project", "fileURL", fallback="www.example.com")
         SubElement(tei_publication_stmt, "date").set("when", str(datetime.now().isoformat()))
         availability = SubElement(tei_publication_stmt, "availability")
         tei_licence = SubElement(availability, "licence")
-        chosen_license = LICENSES.get(project.get("Project", "license"))
+        chosen_license = LICENSES.get(project.get("Project", "license", fallback="cc-by").lower())
         tei_licence.set("target", chosen_license.get("url"))
         tei_licence.text = chosen_license["text"]
 
