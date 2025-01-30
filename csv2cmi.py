@@ -539,7 +539,7 @@ if __name__ == "__main__":
     # read config file
     config = configparser.ConfigParser()
     # set default values
-    config["Project"] = {"editor": "", "publisher": "", "fileURL": letters_csv.with_suffix(".xml"), "license": "cc-by"}
+    config["Project"] = {"fileURL": letters_csv.with_suffix(".xml")}
     if args.cc0:
         config["Project"]["license"] = "cc0"
 
