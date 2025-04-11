@@ -368,11 +368,11 @@ class CMI:
     @staticmethod
     def create_date(date_string: Optional[str]) -> Optional[Element]:
         """Convert an EDTF date into a proper TEI element."""
-        if not date_string:
-            return None
-        tei_date = Element("date")
         # normalize date
         normalized_date = date_string.translate(date_string.maketrans("", "", "?~%"))
+        if not normalized_date:
+            return None
+        tei_date = Element("date")
         if len(normalized_date) > 4 and normalized_date[-1] == "X":
             # remove day and month with unspecified digits
             normalized_date = normalized_date[0:-3]
