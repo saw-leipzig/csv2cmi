@@ -381,9 +381,7 @@ class CMI:
         if normalized_date[-1] == "X":
             # convert year with unspecified digits into interval
             normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
-        if is_datable_w3c(normalized_date):
-            tei_date.set("when", str(normalized_date))
-        elif normalized_date.startswith("[") and normalized_date.endswith("]"):
+        if normalized_date.startswith("[") and normalized_date.endswith("]"):
             # One of a set
             date_list = normalized_date[1:-1].split(",")
             date_first = date_list[0].split(".")[0]
@@ -408,6 +406,8 @@ class CMI:
                 tei_date.set("from", str(date_first))
             if is_datable_w3c(date_last):
                 tei_date.set("to", str(date_last))
+        elif is_datable_w3c(normalized_date):
+            tei_date.set("when", str(normalized_date))
         if tei_date.attrib:
             if normalized_date != date_string:
                 tei_date.set("cert", "medium")
