@@ -40,11 +40,11 @@ RDF_NS = {"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"}
 
 # define licenses
 LICENSES = {
-    "cc-by": {
+    "CC-BY-4.0": {
         "url": "https://creativecommons.org/licenses/by/4.0/",
         "text": "This file is licensed under the terms of the Creative-Commons-License CC-BY 4.0.",
     },
-    "cc0": {
+    "CC0-1.0": {
         "url": "https://creativecommons.org/publicdomain/zero/1.0/",
         "text": "This file has been marked as dedicated to the public domain.",
     },
@@ -165,7 +165,7 @@ class CMI:
         SubElement(tei_publication_stmt, "date").set("when", str(datetime.now().isoformat()))
         availability = SubElement(tei_publication_stmt, "availability")
         tei_licence = SubElement(availability, "licence")
-        chosen_license = LICENSES.get(project.get("Project", "license", fallback="cc-by").lower())
+        chosen_license = LICENSES.get(project.get("Project", "license", fallback="CC-BY-4.0"))
         tei_licence.set("target", chosen_license.get("url"))
         tei_licence.text = chosen_license["text"]
 
@@ -541,7 +541,7 @@ if __name__ == "__main__":
     # set default values
     config["Project"] = {"fileURL": letters_csv.with_suffix(".xml")}
     if args.cc0:
-        config["Project"]["license"] = "cc0"
+        config["Project"]["license"] = "CC0-1.0"
 
     INI_FILE = "csv2cmi.ini"
     try:
