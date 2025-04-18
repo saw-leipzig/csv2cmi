@@ -336,7 +336,7 @@ def createDate(dateString):
                 date.set('to', str(dateList[1]))
     if date.attrib:
         if normalizedDate != dateString:
-            date.set('cert', 'medium')
+            date.set('cert', 'low')
             logging.info('Added @cert to <date> from line %s', table.line_num)
         return date
     else:
