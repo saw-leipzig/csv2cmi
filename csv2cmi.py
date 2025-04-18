@@ -410,7 +410,7 @@ class CMI:
             tei_date.set("when", str(normalized_date))
         if tei_date.attrib:
             if normalized_date != date_string:
-                tei_date.set("cert", "medium")
+                tei_date.set("cert", "low")
                 logging.info("Added @cert to <date> from line %s", table.line_num)
             return tei_date
         raise ValueError(f'unable to parse "{date_string}" as TEI date')
