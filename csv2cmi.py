@@ -115,7 +115,7 @@ class CMI:
         """Create an empty TEI file."""
         self.cmi = Element("TEI")
         self.cmi.set("xmlns", "http://www.tei-c.org/ns/1.0")
-        self.cmi.append(Comment(" Generated with CSV2CMI " + __version__ + " "))
+        self.cmi.append(Comment(f" Generated with CSV2CMI {__version__} "))
         # TEI header
         tei_header = SubElement(self.cmi, "teiHeader")
         self.file_desc = SubElement(tei_header, "fileDesc")
@@ -438,7 +438,7 @@ class CMI:
         """Generate a prefixed ID of type xs:ID."""
         if id_prefix.strip() == "":
             id_prefix = "".join(random.choice(string.ascii_lowercase) for _ in range(8))
-        generated_id = id_prefix.strip() + "-" + token_hex(4)
+        generated_id = f"{id_prefix.strip()}-{token_hex(4)}"
         return generated_id
 
     def generate_uuid(self) -> str:
