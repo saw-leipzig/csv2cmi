@@ -218,10 +218,9 @@ class CMI:
                         authority_file_uri = "https://d-nb.info/gnd/" + str(person_ids[index].strip())
                     else:
                         authority_file_uri = str(person_ids[index].strip())
-                    if self.profile_desc.findall(f'correspDesc/correspAction/persName[@ref="{authority_file_uri}"]'):
-                        correspondent = Element("persName")
-                    elif self.profile_desc.findall(f'correspDesc/correspAction/orgName[@ref="{authority_file_uri}"]'):
-                        correspondent = Element("orgName")
+                    processed_correspondent = self.profile_desc.find(f'correspDesc/correspAction/*[@ref="{authority_file_uri}"]')
+                    if processed_correspondent is not None:
+                        correspondent = Element(processed_correspondent.tag)
                     else:
                         if "viaf" in authority_file_uri:
                             try:
