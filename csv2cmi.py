@@ -218,7 +218,9 @@ class CMI:
                         authority_file_uri = "https://d-nb.info/gnd/" + str(person_ids[index].strip())
                     else:
                         authority_file_uri = str(person_ids[index].strip())
-                    processed_correspondent = self.profile_desc.find(f'correspDesc/correspAction/*[@ref="{authority_file_uri}"]')
+                    processed_correspondent = self.profile_desc.find(
+                        f'correspDesc/correspAction/*[@ref="{authority_file_uri}"]'
+                    )
                     if processed_correspondent is not None:
                         correspondent = Element(processed_correspondent.tag)
                     else:
