@@ -461,6 +461,7 @@ class CMI:
         else:
             if correspDate is None:
                 correspDate = Element("date")
+                correspDate.text = letter[correspondent + "Date"].strip()
         try:
             correspDate.text = letter[correspondent + "DateText"].strip()
         except (KeyError, TypeError):
