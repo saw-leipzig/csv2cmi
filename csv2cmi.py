@@ -469,16 +469,8 @@ class CMI:
 
     def process_place(self, letter: dict, correspondent: Correspondents) -> Element:
         """Process place."""
-        place_name, place_id = "", ""
-        try:
-            place_name = letter[correspondent + "Place"]
-        except KeyError:
-            pass
-        else:
-            try:
-                place_id = letter[correspondent + "PlaceID"]
-            except KeyError:
-                pass
+        place_name = letter.get(correspondent + "Place", "")
+        place_id = letter.get(correspondent + "PlaceID", "")
         return self.create_place_name(place_name, place_id)
 
     def replace_short_titles(self, project: configparser) -> None:
