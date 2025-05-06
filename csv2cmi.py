@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # csv2cmi
 #
-# Copyright (c) 2015-2020 Klaus Rettinghaus
+# Copyright (c) 2015-2025 Klaus Rettinghaus
 # programmed by Klaus Rettinghaus
 # licensed under MIT license
 
@@ -20,7 +20,7 @@ from os import path
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement
 
 __license__ = 'MIT'
-__version__ = '2.2.0'
+__version__ = '2.2.1'
 
 # define log output
 logging.basicConfig(format='%(levelname)s: %(message)s')

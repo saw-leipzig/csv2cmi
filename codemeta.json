@@ -4,11 +4,11 @@
   "identifier": "CSV2CMI",
   "name": "CSV2CMI",
   "description": "convert a table of letters into CMI format",
-  "softwareVersion": "2.2.0",
+  "softwareVersion": "2.2.1",
   "license": "OSI Approved :: MIT License",
   "programmingLanguage": "Python :: 3",
   "maintainer": "https://orcid.org/0000-0003-1898-2543",
-  "datePublished": "2023-03-10",
+  "datePublished": "2025-05-06",
   "codeRepository": "https://github.com/saw-leipzig/csv2cmi",
   "author": [{
     "@id": "https://orcid.org/0000-0003-1898-2543",
