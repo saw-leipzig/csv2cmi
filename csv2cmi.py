@@ -417,7 +417,7 @@ class CMI:
         raise ValueError(f'unable to parse "{date_string}" as TEI date')
 
     @staticmethod
-    def create_place_name(place_name_text: str, geonames_uri: str) -> Element:
+    def create_place_name(place_name_text: str, geonames_uri: str | None = None) -> Element:
         """Create a placeName element."""
         place_name = Element("placeName")
         place_name_text = place_name_text.strip()
@@ -470,7 +470,7 @@ class CMI:
     def process_place(self, letter: dict, correspondent: Correspondents) -> Element:
         """Process place."""
         place_name = letter.get(correspondent + "Place", "")
-        place_id = letter.get(correspondent + "PlaceID", "")
+        place_id = letter.get(correspondent + "PlaceID")
         return self.create_place_name(place_name, place_id)
 
     def replace_short_titles(self, project: configparser) -> None:
