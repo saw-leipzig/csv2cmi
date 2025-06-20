@@ -20,7 +20,8 @@ from pathlib import Path
 from secrets import token_hex
 from typing import Optional
 from uuid import UUID
-from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement, tostring
+
+from lxml.etree import Comment, Element, ElementTree, SubElement, tostring
 
 __license__ = "MIT"
 __version__ = "3.0.0-beta"
@@ -138,7 +139,7 @@ class CMI:
         tei_title = SubElement(tei_title_stmt, "title")
         tei_title.text = project.get("Project", "title", fallback="untitled letters project")
         random.seed(tei_title.text)
-        tei_title.set("xml:id", self.generate_id("title"))
+        tei_title.set("{http://www.w3.org/XML/1998/namespace}id", self.generate_id("title"))
         for entity in project.get("Project", "editor", fallback="").splitlines():
             mailbox = parseaddr(entity)
             if "@" in entity and any(mailbox):
@@ -174,15 +175,15 @@ class CMI:
         tei_bibl = Element("bibl")
         tei_bibl.text = bibl_text
         tei_bibl.set("type", bibl_type)
-        tei_bibl.set("xml:id", self.generate_uuid())
+        tei_bibl.set("{http://www.w3.org/XML/1998/namespace}id", self.generate_uuid())
         self.source_desc.append(tei_bibl)
-        return tei_bibl.get("xml:id")
+        return tei_bibl.get("{http://www.w3.org/XML/1998/namespace}id")
 
     def get_id_by_title(self, title: str) -> Optional[str]:
         """Get the ID for an edition by title."""
         for bibliographic_entry in self.source_desc.findall("bibl"):
             if title == bibliographic_entry.text:
-                return bibliographic_entry.get("xml:id")
+                return bibliographic_entry.get("{http://www.w3.org/XML/1998/namespace}id")
         return None
 
     def create_correspondent(self, name_string: str) -> list:
@@ -346,7 +347,7 @@ class CMI:
     def create_corresp_action(letter: dict, correnspondent: Correspondents) -> Element:
         """Create a correspondence action."""
         action = Element("correspAction")
-        action.set("xml:id", cmi_object.generate_id(correnspondent))
+        action.set("{http://www.w3.org/XML/1998/namespace}id", cmi_object.generate_id(correnspondent))
         action_type: str = "sent" if correnspondent == Correspondents.SENDER else "received"
         action.set("type", action_type)
 
@@ -630,11 +631,11 @@ if __name__ == "__main__":
                 else:
                     logging.info("No information on %s in line %s", correnspondent, table.line_num)
 
-            entry.set("xml:id", cmi_object.generate_id("letter"))
+            entry.set("{http://www.w3.org/XML/1998/namespace}id", cmi_object.generate_id("letter"))
             if args.notes:
                 if ("note" in table.fieldnames) and letter["note"]:
                     note = SubElement(entry, "note")
-                    note.set("xml:id", cmi_object.generate_id("note"))
+                    note.set("{http://www.w3.org/XML/1998/namespace}id", cmi_object.generate_id("note"))
                     note.text = str(letter["note"])
             if entry.find("*") is not None:
                 cmi_object.profile_desc.append(entry)
