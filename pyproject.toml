@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "csv2cmi"
 dynamic = ["version"]
 dependencies = [
+    "edtf",
     "lxml",
     "backports.strenum; python_version < '3.11'",
 ]
