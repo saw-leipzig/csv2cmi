@@ -377,8 +377,7 @@ class CMI:
         try:
             edtf_date = edtf.parse_edtf(date_string)
         except edtf.EDTFParseException:
-            logging.warning(f"unable to parse {date_string} as TEI date")
-            return None
+            raise ValueError(f"Unable to parse {date_string} as EDTF date")
 
         date_elem = Element("date")
         if isinstance(edtf_date, edtf.parser.parser_classes.UncertainOrApproximate):
