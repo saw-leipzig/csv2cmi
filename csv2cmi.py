@@ -390,22 +390,22 @@ class CMI:
             date_elem.set("when", str(edtf_date))
             return date_elem
         elif isinstance(edtf_date, edtf.parser.parser_classes.OneOfASet):
-            print("OneOfASet:" + edtf_date.__dict__)
-            if hasattr(edtf_date, 'lower'):
-                print(f"lower_str: {str(edtf_date.lower)}")
-                #date_elem.set("notBefore", str(edtf_date.lower))
-            elif hasattr(edtf_date, 'upper'):
-                print(f"upper_str: {edtf_date.upper_str}")
-                #date_elem.set("notAfter", str(edtf_date.upper))
+            taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
+            tpq_date = edtf.struct_time_to_date(edtf_date.upper_strict())
+            date_elem.set("notBefore", str(taq_date))
+            date_elem.set("notAfter", str(tpq_date))
             return date_elem
         elif isinstance(edtf_date, edtf.parser.parser_classes.Interval):
             if hasattr(edtf_date, 'lower'):
                 date_elem.set("from", str(edtf_date.lower))
-            elif hasattr(edtf_date, 'upper'):
+            if hasattr(edtf_date, 'upper'):
                 date_elem.set("to", str(edtf_date.upper))
             return date_elem
         else:
-            print("OneOfASet:" + edtf_date.__dict__)
+            if edtf_date.lower_strict():
+                print(edtf.struct_time_to_date(edtf_date.lower_strict()))
+            if edtf_date.upper_strict():
+                print(edtf.struct_time_to_date(edtf_date.upper_strict()))
             if hasattr(edtf_date, 'lower'):
                 print(f"lower_str: {str(edtf_date.lower)}")
                 #date_elem.set("notBefore", str(edtf_date.lower))
