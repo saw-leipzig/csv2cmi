@@ -23,6 +23,8 @@ from uuid import UUID
 
 from lxml.etree import Comment, Element, ElementTree, SubElement, tostring
 
+import edtf
+
 __license__ = "MIT"
 __version__ = "3.0.0-beta"
 __author__ = "Klaus Rettinghaus"
@@ -230,7 +232,7 @@ class CMI:
                                 viafrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/rdf.xml"))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    "Authority file not found for %sID in line %s", name_string, table.line_num
+                                    "Authority file not found for %s", authority_file_uri
                                 )
                             except urllib.error.URLError as connection_issue:
                                 logging.error("Failed to reach VIAF (%s)", str(connection_issue.reason))
@@ -262,7 +264,7 @@ class CMI:
                                 gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/about/rdf"))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    "Authority file not found for %sID in line %s", name_string, table.line_num
+                                    "Authority file not found for %s", authority_file_uri
                                 )
                             except urllib.error.URLError as connection_issue:
                                 logging.error("Failed to reach GND (%s)", str(connection_issue.reason))
@@ -300,7 +302,7 @@ class CMI:
                                 locrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + ".rdf"))
                             except urllib.error.HTTPError:
                                 logging.error(
-                                    "Authority file not found for %sID in line %s", name_string, table.line_num
+                                    "Authority file not found for %s", authority_file_uri
                                 )
                             except urllib.error.URLError as connection_issue:
                                 logging.error("Failed to reach LOC (%s)", str(connection_issue.reason))
@@ -370,52 +372,53 @@ class CMI:
     @staticmethod
     def create_date(date_string: Optional[str]) -> Optional[Element]:
         """Convert an EDTF date into a proper TEI element."""
-        # normalize date
-        normalized_date = date_string.translate(date_string.maketrans("", "", "?~%"))
-        if not normalized_date:
+        if not date_string:
             return None
-        tei_date = Element("date")
-        if len(normalized_date) > 4 and normalized_date[-1] == "X":
-            # remove day and month with unspecified digits
-            normalized_date = normalized_date[0:-3]
-            if normalized_date[-1] == "X":
-                normalized_date = normalized_date[0:-3]
-        if normalized_date[-1] == "X":
-            # convert year with unspecified digits into interval
-            normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
-        if normalized_date.startswith("[") and normalized_date.endswith("]"):
-            # One of a set
-            date_list = normalized_date[1:-1].split(",")
-            date_first = date_list[0].split(".")[0]
-            date_last = date_list[-1].split(".")[-1]
-            if is_datable_w3c(date_first):
-                tei_date.set("notBefore", str(date_first))
-            if is_datable_w3c(date_last):
-                tei_date.set("notAfter", str(date_last))
-        elif normalized_date.startswith("{") and normalized_date.endswith("}"):
-            # All Members
-            date_list = normalized_date[1:-1].split(",")
-            date_first = date_list[0].split(".")[0]
-            date_last = date_list[-1].split(".")[-1]
-            if is_datable_w3c(date_first):
-                tei_date.set("from", str(date_first))
-            if is_datable_w3c(date_last):
-                tei_date.set("to", str(date_last))
-        elif normalized_date.count("/") == 1:
-            # Time Interval
-            date_first, date_last = normalized_date.split("/")
-            if is_datable_w3c(date_first):
-                tei_date.set("from", str(date_first))
-            if is_datable_w3c(date_last):
-                tei_date.set("to", str(date_last))
-        elif is_datable_w3c(normalized_date):
-            tei_date.set("when", str(normalized_date))
-        if tei_date.attrib:
-            if normalized_date != date_string:
-                tei_date.set("cert", "low")
-                logging.info("Added @cert to <date> from line %s", table.line_num)
-            return tei_date
-        raise ValueError(f'unable to parse "{date_string}" as TEI date')
+        try:
+            edtf_date = edtf.parse_edtf(date_string)
+        except edtf.EDTFParseException:
+            logging.warning(f"unable to parse {date_string} as TEI date")
+            return None
+
+        date_elem = Element("date")
+        if isinstance(edtf_date, edtf.parser.parser_classes.UncertainOrApproximate):
+            date_elem.set("when", edtf_date.date)
+            date_elem.set("cert", "low")
+            return date_elem
+        elif isinstance(edtf_date, edtf.parser.parser_classes.Date):
+            if edtf_date.is_approximate or edtf_date.is_uncertain:
+                print(edtf_date.__dict__)
+            date_elem.set("when", str(edtf_date))
+            return date_elem
+        elif isinstance(edtf_date, edtf.parser.parser_classes.OneOfASet):
+            print("OneOfASet:" + edtf_date.__dict__)
+            if hasattr(edtf_date, 'lower'):
+                print(f"lower_str: {str(edtf_date.lower)}")
+                #date_elem.set("notBefore", str(edtf_date.lower))
+            elif hasattr(edtf_date, 'upper'):
+                print(f"upper_str: {edtf_date.upper_str}")
+                #date_elem.set("notAfter", str(edtf_date.upper))
+            return date_elem
+        elif isinstance(edtf_date, edtf.parser.parser_classes.Interval):
+            if hasattr(edtf_date, 'lower'):
+                date_elem.set("from", str(edtf_date.lower))
+            elif hasattr(edtf_date, 'upper'):
+                date_elem.set("to", str(edtf_date.upper))
+            return date_elem
+        else:
+            print("OneOfASet:" + edtf_date.__dict__)
+            if hasattr(edtf_date, 'lower'):
+                print(f"lower_str: {str(edtf_date.lower)}")
+                #date_elem.set("notBefore", str(edtf_date.lower))
+            elif hasattr(edtf_date, 'upper'):
+                print(f"upper_str: {edtf_date.upper}")
+                #date_elem.set("notAfter", str(edtf_date.upper))
+            return date_elem
+
+        print(type(edtf_date))
+        # Fallback: Original-String
+        date_elem.text = date_string
+        return date_elem
 
     @staticmethod
     def create_place_name(place_name_text: str, geonames_uri: Optional[str] = None) -> Element:
