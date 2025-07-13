@@ -342,7 +342,7 @@ class CMI:
         date_elem = Element("date")
         if isinstance(edtf_date, edtf.parser.parser_classes.Date):
             if edtf_date.is_approximate or edtf_date.is_uncertain:
-                print(edtf_date.__dict__)
+                date_elem.set("cert", "low")
             date_elem.set("when", str(edtf_date))
             return date_elem
         elif isinstance(edtf_date, edtf.parser.parser_classes.OneOfASet):
