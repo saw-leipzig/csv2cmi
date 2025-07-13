@@ -341,7 +341,6 @@ class CMI:
 
         date_elem = Element("date")
         if isinstance(edtf_date, edtf.parser.parser_classes.PartialUncertainOrApproximate):
-            print(edtf_date)
             taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
             tpq_date = edtf.struct_time_to_date(edtf_date.upper_strict())
             if (taq_date == tpq_date):
