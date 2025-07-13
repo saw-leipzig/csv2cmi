@@ -66,46 +66,6 @@ parser.add_argument("--version", action="version", version="%(prog)s " + __versi
 parser.add_argument("--extra-delimiter", help="delimiter for different values within cells")
 
 
-def is_datable_iso(date_string) -> bool:
-    """Check if a string is from datatype teidata.temporal.iso."""
-    try:
-        datetime.strptime(date_string, "%Y-%m-%d")
-        return True
-    except ValueError:
-        try:
-            datetime.strptime(date_string, "%Y-%m")
-            return True
-        except ValueError:
-            try:
-                datetime.strptime(date_string, "%Y")
-                return True
-            except ValueError:
-                return False
-
-
-def is_datable_w3c(date_string) -> bool:
-    """Check if a string is from datatype teidata.temporal.w3c."""
-    # handle negative dates
-    if date_string.startswith("-") and len(date_string) > 4 and date_string[1].isdigit():
-        date_string = date_string[1:]
-    if is_datable_iso(date_string):
-        return True
-    # handle dates without year
-    try:
-        datetime.strptime(date_string, "--%m-%d")
-        return True
-    except ValueError:
-        try:
-            datetime.strptime(date_string, "--%m")
-            return True
-        except ValueError:
-            try:
-                datetime.strptime(date_string, "---%d")
-                return True
-            except ValueError:
-                return False
-
-
 class Correspondents(StrEnum):
     SENDER = "sender"
     ADDRESSEE = "addressee"
