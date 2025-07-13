@@ -390,34 +390,22 @@ class CMI:
             date_elem.set("when", str(edtf_date))
             return date_elem
         elif isinstance(edtf_date, edtf.parser.parser_classes.OneOfASet):
-            taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
-            tpq_date = edtf.struct_time_to_date(edtf_date.upper_strict())
-            date_elem.set("notBefore", str(taq_date))
-            date_elem.set("notAfter", str(tpq_date))
-            return date_elem
-        elif isinstance(edtf_date, edtf.parser.parser_classes.Interval):
-            if hasattr(edtf_date, 'lower'):
-                date_elem.set("from", str(edtf_date.lower))
-            if hasattr(edtf_date, 'upper'):
-                date_elem.set("to", str(edtf_date.upper))
+            # One of a set
+            if not isinstance(edtf_date.lower_strict(), float):
+                taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
+                date_elem.set("notBefore", str(taq_date))
+            if not isinstance(edtf_date.upper_strict(), float):
+                tpq_date = edtf.struct_time_to_date(edtf_date.upper_strict())
+                date_elem.set("notAfter", str(tpq_date))
             return date_elem
         else:
-            if edtf_date.lower_strict():
-                print(edtf.struct_time_to_date(edtf_date.lower_strict()))
-            if edtf_date.upper_strict():
-                print(edtf.struct_time_to_date(edtf_date.upper_strict()))
-            if hasattr(edtf_date, 'lower'):
-                print(f"lower_str: {str(edtf_date.lower)}")
-                #date_elem.set("notBefore", str(edtf_date.lower))
-            elif hasattr(edtf_date, 'upper'):
-                print(f"upper_str: {edtf_date.upper}")
-                #date_elem.set("notAfter", str(edtf_date.upper))
+            if not isinstance(edtf_date.lower_strict(), float):
+                taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
+                date_elem.set("from", str(taq_date))
+            if not isinstance(edtf_date.upper_strict(), float):
+                tpq_date = edtf.struct_time_to_date(edtf_date.upper_strict())
+                date_elem.set("to", str(tpq_date))
             return date_elem
-
-        print(type(edtf_date))
-        # Fallback: Original-String
-        date_elem.text = date_string
-        return date_elem
 
     @staticmethod
     def create_place_name(place_name_text: str, geonames_uri: Optional[str] = None) -> Element:
