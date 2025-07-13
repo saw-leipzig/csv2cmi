@@ -380,11 +380,7 @@ class CMI:
             raise ValueError(f"Unable to parse {date_string} as EDTF date")
 
         date_elem = Element("date")
-        if isinstance(edtf_date, edtf.parser.parser_classes.UncertainOrApproximate):
-            date_elem.set("when", edtf_date.date)
-            date_elem.set("cert", "low")
-            return date_elem
-        elif isinstance(edtf_date, edtf.parser.parser_classes.Date):
+        if isinstance(edtf_date, edtf.parser.parser_classes.Date):
             if edtf_date.is_approximate or edtf_date.is_uncertain:
                 print(edtf_date.__dict__)
             date_elem.set("when", str(edtf_date))
