@@ -355,6 +355,9 @@ class CMI:
                 date_elem.set("notAfter", str(tpq_date))
             return date_elem
         else:
+            if isinstance(edtf_date, edtf.parser.parser_classes.Interval):
+                if isinstance(edtf_date.lower, edtf.parser.parser_classes.UncertainOrApproximate) or isinstance(edtf_date.upper, edtf.parser.parser_classes.UncertainOrApproximate):
+                    date_elem.set("cert", "low")
             if not isinstance(edtf_date.lower_strict(), float):
                 taq_date = edtf.struct_time_to_date(edtf_date.lower_strict())
                 date_elem.set("from", str(taq_date))

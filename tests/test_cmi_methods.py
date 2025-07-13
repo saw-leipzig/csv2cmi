@@ -15,7 +15,7 @@ def test_create_date_valid():
     assert csv2cmi.CMI.create_date("[1760-12..]").attrib["notBefore"] == "1760-12-01"
     assert csv2cmi.CMI.create_date("1979-10-12/").attrib["from"] == "1979-10-12"
     assert csv2cmi.CMI.create_date("/1985-04-12").attrib["to"] == "1985-04-12"
-    assert csv2cmi.CMI.create_date("{-0400,-0390,-0370}") is not None
+    assert csv2cmi.CMI.create_date("1708-03~/1710-02").attrib["cert"] == "low"
 
 
 def test_create_date_invalid():
