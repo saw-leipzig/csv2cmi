@@ -11,11 +11,15 @@ def table():
 def test_create_date_valid():
     assert csv2cmi.CMI.create_date("2016-04-01").attrib["when"] == "2016-04-01"
     assert csv2cmi.CMI.create_date("1673-05").attrib["when"] == "1673-05"
-    assert csv2cmi.CMI.create_date("[..1760-12-03]").attrib["notAfter"] == "1760-12-03"
+    assert csv2cmi.CMI.create_date("~1348-01-29").attrib["when"] == "1348-01-29"
     assert csv2cmi.CMI.create_date("[1760-12..]").attrib["notBefore"] == "1760-12-01"
+    assert csv2cmi.CMI.create_date("[1804,1807,1809]").attrib["notBefore"] == "1804-01-01"
+    assert csv2cmi.CMI.create_date("[1999..2002]").attrib["notAfter"] == "2002-12-31"
+    assert csv2cmi.CMI.create_date("[..1760-12-03]").attrib["notAfter"] == "1760-12-03"
     assert csv2cmi.CMI.create_date("1979-10-12/").attrib["from"] == "1979-10-12"
     assert csv2cmi.CMI.create_date("/1985-04-12").attrib["to"] == "1985-04-12"
     assert csv2cmi.CMI.create_date("1708-03~/1710-02").attrib["cert"] == "low"
+    assert csv2cmi.CMI.create_date("?1689-07-03").attrib["cert"] == "low"
 
 
 def test_create_date_invalid():
