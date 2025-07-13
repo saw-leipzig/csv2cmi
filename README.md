@@ -40,6 +40,9 @@ For providing essential CMI information like the editor's name or the publisher 
 
 For options and further information check the [wiki](https://github.com/saw-leipzig/csv2cmi/wiki).
 
+> [!IMPORTANT]
+> This version uses [python-edtf](https://github.com/ixc/python-edtf) for parsing the dates, which always set full ISO Level 0 dates for attribute values.
+
 ## License
 
 This program is available under [The MIT License (MIT)](https://opensource.org/licenses/MIT)
