@@ -442,11 +442,12 @@ class CMI:
         generated_id = f"{id_prefix.strip()}-{token_hex(4)}"
         return generated_id
 
-    def generate_uuid(self) -> str:
+    @staticmethod
+    def generate_uuid() -> str:
         """Generate a UUID of type xs:ID."""
         generated_uuid = str(UUID(bytes=bytes(random.getrandbits(8) for _ in range(16)), version=4))
         if generated_uuid[0].isdigit():
-            return self.generate_uuid()
+            return CMI.generate_uuid()
         return generated_uuid
 
     def process_date(self, letter: dict, correspondent: Correspondents) -> Optional[Element]:
