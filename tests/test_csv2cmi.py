@@ -33,6 +33,4 @@ def test_missing_file(monkeypatch: pytest.MonkeyPatch):
     sys_argv = ["csv2cmi.py", "nonexistent.csv"]
     monkeypatch.setattr(sys, "argv", sys_argv)
     with pytest.raises(SystemExit):
-        import runpy
-
         runpy.run_module("csv2cmi", run_name="__main__")
