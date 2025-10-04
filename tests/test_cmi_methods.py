@@ -3,11 +3,6 @@ import pytest
 import csv2cmi
 
 
-@pytest.fixture
-def table():
-    table
-
-
 def test_create_date_valid():
     assert csv2cmi.CMI.create_date("2016-04-01").attrib["when"] == "2016-04-01"
     assert csv2cmi.CMI.create_date("1673-05").attrib["when"] == "1673-05"
