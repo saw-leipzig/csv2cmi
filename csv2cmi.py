@@ -374,12 +374,12 @@ class CMI:
         if not normalized_date:
             return None
         tei_date = Element("date")
-        if len(normalized_date) > 4 and normalized_date[-1] == "X":
+        if len(normalized_date) > 4 and normalized_date.endswith("X"):
             # remove day and month with unspecified digits
             normalized_date = normalized_date[0:-3]
-            if normalized_date[-1] == "X":
+            if normalized_date.endswith("X"):
                 normalized_date = normalized_date[0:-3]
-        if normalized_date[-1] == "X":
+        if normalized_date.endswith("X"):
             # convert year with unspecified digits into interval
             normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
         if normalized_date.startswith("[") and normalized_date.endswith("]"):
