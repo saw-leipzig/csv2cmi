@@ -1,10 +1,14 @@
 """
 CSV2CMI
 
-Copyright (c) 2015-2025 Klaus Rettinghaus
+Copyright (c) 2015-2026 Klaus Rettinghaus
 programmed by Klaus Rettinghaus
 licensed under MIT license
 """
+
+__author__ = "Klaus Rettinghaus"
+__license__ = "MIT"
+__version__ = "3.0.0-beta"
 
 import argparse
 import configparser
@@ -21,10 +25,6 @@ from secrets import token_hex
 from typing import Optional
 from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement, tostring
-
-__license__ = "MIT"
-__version__ = "3.0.0-beta"
-__author__ = "Klaus Rettinghaus"
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
