@@ -1,10 +1,14 @@
 """
 CSV2CMI
 
-Copyright (c) 2015-2025 Klaus Rettinghaus
+Copyright (c) 2015-2026 Klaus Rettinghaus
 programmed by Klaus Rettinghaus
 licensed under MIT license
 """
+
+__author__ = "Klaus Rettinghaus"
+__license__ = "MIT"
+__version__ = "3.0.0-beta"
 
 import argparse
 import configparser
@@ -21,10 +25,6 @@ from secrets import token_hex
 from typing import Optional
 from uuid import UUID
 from xml.etree.ElementTree import Comment, Element, ElementTree, SubElement, tostring
-
-__license__ = "MIT"
-__version__ = "3.0.0-beta"
-__author__ = "Klaus Rettinghaus"
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -374,12 +374,12 @@ class CMI:
         if not normalized_date:
             return None
         tei_date = Element("date")
-        if len(normalized_date) > 4 and normalized_date[-1] == "X":
+        if len(normalized_date) > 4 and normalized_date.endswith("X"):
             # remove day and month with unspecified digits
             normalized_date = normalized_date[0:-3]
-            if normalized_date[-1] == "X":
+            if normalized_date.endswith("X"):
                 normalized_date = normalized_date[0:-3]
-        if normalized_date[-1] == "X":
+        if normalized_date.endswith("X"):
             # convert year with unspecified digits into interval
             normalized_date = normalized_date.replace("X", "0") + "/" + normalized_date.replace("X", "9")
         if normalized_date.startswith("[") and normalized_date.endswith("]"):
