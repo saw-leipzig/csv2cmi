@@ -632,6 +632,7 @@ if __name__ == "__main__":
 
             entry.set("xml:id", cmi_object.generate_id("letter"))
             if ("sourceID" in table.fieldnames) and letter["sourceID"]:
+                # proposed for CMIF v2
                 source = SubElement(entry, "note")
                 ref = SubElement(source, "ref")
                 ref.set("type", "https://lod.academy/cmif/vocab/terms#isEditionOf")
