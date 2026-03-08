@@ -631,6 +631,11 @@ if __name__ == "__main__":
                     logging.info("No information on %s in line %s", correnspondent, table.line_num)
 
             entry.set("xml:id", cmi_object.generate_id("letter"))
+            if ("sourceID" in table.fieldnames) and letter["sourceID"]:
+                source = SubElement(entry, "note")
+                ref = SubElement(source, "ref")
+                ref.set("type", "https://lod.academy/cmif/vocab/terms#isEditionOf")
+                ref.set("target", letter["sourceID"].strip())
             if args.notes:
                 if ("note" in table.fieldnames) and letter["note"]:
                     note = SubElement(entry, "note")
