@@ -258,7 +258,7 @@ class CMI:
                                     )
                         elif "gnd" in authority_file_uri:
                             try:
-                                gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/about/rdf"))
+                                gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/about/lds.rdf"))
                             except urllib.error.HTTPError:
                                 logging.error(
                                     "Authority file not found for %sID in line %s", name_string, table.line_num
