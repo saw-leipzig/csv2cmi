@@ -32,6 +32,8 @@ Various senders or addressees of a letter have to be written in the same cell wi
 
 Dates have to be entered in ISO format. Support for [EDTF](https://www.loc.gov/standards/datetime/edtf.html) is implemented to parse uncertain / approximate dates, intervals and sets.
 
+It is possible to add a URI to identify the letter in the ‘sourceID’ column, as proposed for [CMIF v2](https://correspsearch.net/en/documentation.html#cmif-v2).
+
 The default license of the generated files will be a [CC-BY-4.0 license](https://creativecommons.org/licenses/by/4.0/deed.de). If you want to mark is a public domain just add the `"--cc0"` parameter.
 
 For providing essential CMI information like the editor's name or the publisher an [INI file](https://en.wikipedia.org/wiki/INI_file) is needed.
