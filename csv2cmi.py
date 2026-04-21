@@ -258,7 +258,7 @@ class CMI:
                                     )
                         elif "gnd" in authority_file_uri:
                             try:
-                                gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/about/rdf"))
+                                gndrdf = ElementTree(file=urllib.request.urlopen(authority_file_uri + "/about/lds.rdf"))
                             except urllib.error.HTTPError:
                                 logging.error(
                                     "Authority file not found for %sID in line %s", name_string, table.line_num
@@ -631,6 +631,12 @@ if __name__ == "__main__":
                     logging.info("No information on %s in line %s", correnspondent, table.line_num)
 
             entry.set("xml:id", cmi_object.generate_id("letter"))
+            if ("sourceID" in table.fieldnames) and letter["sourceID"]:
+                # proposed for CMIF v2
+                source = SubElement(entry, "note")
+                ref = SubElement(source, "ref")
+                ref.set("type", "https://lod.academy/cmif/vocab/terms#isEditionOf")
+                ref.set("target", letter["sourceID"].strip())
             if args.notes:
                 if ("note" in table.fieldnames) and letter["note"]:
                     note = SubElement(entry, "note")
